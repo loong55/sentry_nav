@@ -18,7 +18,25 @@
 ### src/standard_robot_pp_ros2/launch/standard_robot_pp_ros2.launch.py
 ### src/standard_robot_pp_ros2/src/standard_robot_pp_ros2.cpp
 
+### 编译
+#### 1.工作空间外安装 small_gicp
+```bash
+sudo apt install -y libeigen3-dev libomp-dev
 
+git clone https://github.com/koide3/small_gicp.git
+cd small_gicp
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release && make -j
+sudo make install
+```
+#### 2.创建工作空间并编译
+```bash
+mkdir -p ~/sentry_ws
+cd ~/ros_ws
+```
+```bash
+git clone --recursive https://github.com/loong55/sentry_nav.git
+```
 
 
 ## 1.导航包（实车+仿真）
