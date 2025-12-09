@@ -32,7 +32,7 @@ sudo make install
 #### 2.创建工作空间并编译
 ```bash
 mkdir -p ~/sentry_ws
-cd ~/ros_ws
+cd ~/sentry_ws
 ```
 ```bash
 git clone --recursive https://github.com/loong55/sentry_nav.git
