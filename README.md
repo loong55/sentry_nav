@@ -4,18 +4,19 @@
 ### 其中包含：导航包（实车+仿真），物理仿真包，串口通信包和行为树包，如图所示
 ![impb2025_sentry](pb2025_sentry.png)
 ### 更改内容：更改内容如下：
-1、pb_rm_interfaces 数据接口GameRobotHP
-2、pb2025_robot_description 增加了符合fjut的机器人模型和相应launch文件
-3、pb2025_sentry_behavior 增加了行为树相关的xml（src/pb2025_sentry_behavior/behavior_trees）,和行为树相关节点的cpp与hpp文件，和相应launch文件与cmake文件。
-（src/pb2025_sentry_behavior/plugins/condition）
-（src/pb2025_sentry_behavior/include/pb2025_sentry_behavior/plugins/condition）
-4.更改了livox驱动中的雷达ip(src/pb2025_sentry_nav/livox_ros_driver2/config/MID360_config.json)
-5.更改感知建图和导航相关参数，与同文件夹中的launch文件
-（src/pb2025_sentry_nav/pb2025_nav_bringup/config/reality）
-6.串口文件更改
-src/standard_robot_pp_ros2/include/standard_robot_pp_ros2/packet_typedef.hpp
-src/standard_robot_pp_ros2/launch/standard_robot_pp_ros2.launch.py
-src/standard_robot_pp_ros2/src/standard_robot_pp_ros2.cpp
+### 1、pb_rm_interfaces 数据接口GameRobotHP
+### 2、pb2025_robot_description 增加了符合fjut的机器人模型和相应launch文件
+### 3、pb2025_sentry_behavior 增加了行为树相关的xml（src/pb2025_sentry_behavior/behavior_trees）
+### 和行为树相关节点的cpp与hpp文件，和相应launch文件与cmake文件。
+### （src/pb2025_sentry_behavior/plugins/condition）
+### （src/pb2025_sentry_behavior/include/pb2025_sentry_behavior/plugins/condition）
+### 4.更改了livox驱动中的雷达ip(src/pb2025_sentry_nav/livox_ros_driver2/config/MID360_config.json)
+### 5.更改感知建图和导航相关参数，与同文件夹中的launch文件
+### （src/pb2025_sentry_nav/pb2025_nav_bringup/config/reality）
+### 6.串口文件更改
+### src/standard_robot_pp_ros2/include/standard_robot_pp_ros2/packet_typedef.hpp
+### src/standard_robot_pp_ros2/launch/standard_robot_pp_ros2.launch.py
+### src/standard_robot_pp_ros2/src/standard_robot_pp_ros2.cpp
 
 
 
