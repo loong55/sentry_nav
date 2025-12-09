@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+  <BehaviorTree ID="check_energy">
+    <Fallback>
+      <IsEnergyEnough remaining_energy="51"
+                      key_port="{@referee_buff}"/>
+      <PubNav2Goal    goal="1.0;-0.5;0"
+                      topic_name="goal_pose"/>
+    </Fallback>
+  </BehaviorTree>
+    <TreeNodesModel>
+    <Condition ID="IsEnergyEnough">
+      <input_port name="remaining_energy"
+                  default="20"
+                  type="int">底盘剩余能量</input_port>
+      <input_port name="key_port"
+                  default="{@referee_buff}"
+                  type="pb_rm_interfaces::msg::buff_&lt;std::allocator&lt;void&gt; &gt;">Buff port on blackboard</input_port>
+    </Condition>
+    <Condition ID="PubNav2Goal">
+      <input_port name="goal"
+                  default="0;0;0"
+                  type="geometry_msgs::msg::PoseStamped_&lt;std::allocator&lt;void&gt; &gt;">Expected goal pose that send to nav2. Fill with format `x;y;yaw`</input_port>
+      <input_port name="topic_name"
+                  default="__default__placeholder__"
+                  type="std::string">Topic name</input_port>
+    </Condition>
+    <Action ID="PublishSpinSpeed">
+      <input_port name="spin_speed"
+                  default="0.000000"
+                  type="double">Angular Z velocity (rad/s)</input_port>
+      <input_port name="duration"
+                  type="std::chrono::milliseconds">Publish then sleep duration in milliseconds</input_port>
+      <input_port name="topic_name"
+                  default="__default__placeholder__"
+                  type="std::string">Topic name</input_port>
+    </Action>
+    <Action ID="PublishTwist">
+      <input_port name="v_y"
+                  default="0.000000"
+                  type="double">Linear Y velocity (m/s)</input_port>
+      <input_port name="v_yaw"
+                  default="0.000000"
+                  type="double">Angular Z velocity (rad/s)</input_port>
+      <input_port name="v_x"
+                  default="0.000000"
+                  type="double">Linear X velocity (m/s)</input_port>
+      <input_port name="duration"
+                  type="std::chrono::milliseconds">Publish then sleep duration in milliseconds</input_port>
+      <input_port name="topic_name"
+                  default="__default__placeholder__"
+                  type="std::string">Topic name</input_port>
+    </Action>
+  </TreeNodesModel>
+
+</root>

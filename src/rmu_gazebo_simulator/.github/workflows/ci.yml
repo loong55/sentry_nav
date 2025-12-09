@@ -1,0 +1,21 @@
+name: Build and Test
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    container:
+      image: rostooling/setup-ros-docker:ubuntu-jammy-ros-humble-desktop-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+
+      - name: Build rmu_gazebo_simulator
+        uses: ros-tooling/action-ros-ci@v0.3
+        with:
+          package-name: rmu_gazebo_simulator
+          target-ros2-distro: humble
+          vcs-repo-file-url: "${{ github.workspace }}/dependencies.repos"
+          skip-tests: true

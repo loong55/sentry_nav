@@ -1,0 +1,23 @@
+# 排除.vscode目录
+.vscode/
+
+# 排除build目录
+build/
+
+# 排除install目录
+install/
+
+# 排除log目录
+log/
+
+# 排除src/pb2025_sentry_nav/point_lio/PCD目录下的所有文件
+src/pb2025_sentry_nav/point_lio/PCD/*
+
+# 排除src/pb2025_sentry_nav/pb2025_nav_bringup/map/reality目录下的所有文件
+src/pb2025_sentry_nav/pb2025_nav_bringup/map/reality/*
+
+# 排除src/pb2025_sentry_nav/pb2025_nav_bringup/pcd/reality目录下的所有文件
+src/pb2025_sentry_nav/pb2025_nav_bringup/pcd/reality/*
+
+# 排除src/pb2025_sentry_nav/pb2025_nav_bringup/pcd/simulation目录下以.pcd结尾的文件
+src/pb2025_sentry_nav/pb2025_nav_bringup/pcd/simulation/*.pcd

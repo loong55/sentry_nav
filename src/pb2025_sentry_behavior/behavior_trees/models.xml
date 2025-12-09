@@ -1,0 +1,92 @@
+<root BTCPP_format="4">
+    <TreeNodesModel>
+        <Condition ID="CalculateAttackPose">
+            <input_port name="costmap_port" type="nav_msgs::msg::OccupancyGrid_&lt;std::allocator&lt;void&gt; &gt;" default="{@nav_globalCostmap}">GlobalCostmap port on blackboard</input_port>
+            <input_port name="tracker_port" type="auto_aim_interfaces::msg::Target_&lt;std::allocator&lt;void&gt; &gt;" default="{@tracker_target}">Vision target port on blackboard</input_port>
+            <output_port name="goal" type="geometry_msgs::msg::PoseStamped_&lt;std::allocator&lt;void&gt; &gt;" default="{attack_pose}">Expected goal pose that send to nav2. Fill with format `x;y;yaw`</output_port>
+            <input_port name="topic_name" type="std::string" default="__default__placeholder__">Topic name</input_port>
+        </Condition>
+        <Condition ID="IsATKOP">
+            <input_port name="op_hp" type="int" default="0">前哨血量</input_port>
+            <input_port name="key_port" type="pb_rm_interfaces::msg::GameRobotHP_&lt;std::allocator&lt;void&gt; &gt;" default="{@referee_allRobotHP}">GameRobotHP port on blackboard</input_port>
+        </Condition>
+        <Condition ID="IsAttacked">
+            <output_port name="gimbal_yaw" type="float" default="{gimbal_yaw}">Move gimbal_yaw to the direction of the hit armor plate</output_port>
+            <output_port name="gimbal_pitch" type="float" default="{gimbal_pitch}">Move gimbal_pitch (const 0.0) to the direction of the hit armor plate</output_port>
+            <input_port name="key_port" type="pb_rm_interfaces::msg::RobotStatus_&lt;std::allocator&lt;void&gt; &gt;" default="{@referee_robotStatus}">RobotStatus port on blackboard</input_port>
+        </Condition>
+        <Condition ID="IsDetectEnemy">
+            <input_port name="armor_id" type="std::vector&lt;int, std::allocator&lt;int&gt; &gt;" default="1;2;3;4;5;7">Expected id of armors. Multiple numbers should be separated by the character `;` in Groot2</input_port>
+            <input_port name="max_distance" type="float" default="8.000000">Distance to enemy target</input_port>
+            <input_port name="key_port" type="auto_aim_interfaces::msg::Armors_&lt;std::allocator&lt;void&gt; &gt;" default="{@detector_armors}">Vision detector port on blackboard</input_port>
+        </Condition>
+        <Condition ID="IsEnergyEnough">
+            <input_port name="remaining_energy" type="int" default="20">剩余能量</input_port>
+            <input_port name="key_port" type="pb_rm_interfaces::msg::Buff_&lt;std::allocator&lt;void&gt; &gt;" default="{@referee_buff}">Buff port on blackboard</input_port>
+        </Condition>
+        <Condition ID="IsGameStatus">
+            <input_port name="max_remain_time" type="int" default="420">Maximum remaining time (s)</input_port>
+            <input_port name="min_remain_time" type="int" default="0">Minimum remaining time (s)</input_port>
+            <input_port name="expected_game_progress" type="int" default="4">Expected game progress stage</input_port>
+            <input_port name="key_port" type="pb_rm_interfaces::msg::GameStatus_&lt;std::allocator&lt;void&gt; &gt;" default="{@referee_gameStatus}">GameStatus port on blackboard</input_port>
+        </Condition>
+        <Condition ID="IsRfidDetected">
+            <input_port name="enemy_central_highland_gain_point" type="bool" default="false">对方中央高地增益点</input_port>
+            <input_port name="friendly_supply_zone_exchange" type="bool" default="false">己方与兑换区重叠的补给区</input_port>
+            <input_port name="friendly_supply_zone_non_exchange" type="bool" default="false">己方与兑换区不重叠的补给区 / RMUL 补给区</input_port>
+            <input_port name="friendly_fortress_gain_point" type="bool" default="false">己方堡垒增益点</input_port>
+            <input_port name="key_port" type="pb_rm_interfaces::msg::RfidStatus_&lt;std::allocator&lt;void&gt; &gt;" default="{@referee_rfidStatus}">RfidStatus port on blackboard</input_port>
+        </Condition>
+        <Condition ID="IsStatusOK">
+            <input_port name="ammo_min" type="int" default="0">Lower then minimum ammo will return FAILURE</input_port>
+            <input_port name="heat_max" type="int" default="350">Maximum heat. NOTE: Sentry heat limit is 400</input_port>
+            <input_port name="hp_min" type="int" default="300">Minimum HP. NOTE: Sentry init/max HP is 400</input_port>
+            <input_port name="key_port" type="pb_rm_interfaces::msg::RobotStatus_&lt;std::allocator&lt;void&gt; &gt;" default="{@referee_robotStatus}">RobotStatus port on blackboard</input_port>
+        </Condition>
+        <Condition ID="PubNav2Goal">
+            <input_port name="goal" type="geometry_msgs::msg::PoseStamped_&lt;std::allocator&lt;void&gt; &gt;" default="0;0;0">Expected goal pose that send to nav2. Fill with format `x;y;yaw`</input_port>
+            <input_port name="topic_name" type="std::string" default="__default__placeholder__">Topic name</input_port>
+        </Condition>
+        <Action ID="PublishGimbalAbsolute">
+            <input_port name="topic_name" type="std::string" default="__default__placeholder__">Topic name</input_port>
+            <input_port name="duration" type="std::chrono::milliseconds">Publish duration</input_port>
+            <input_port name="gimbal_yaw" type="float">Expected Yaw angle (rad)</input_port>
+            <input_port name="gimbal_pitch" type="float">Expected Pitch angle (rad)</input_port>
+        </Action>
+        <Action ID="PublishGimbalVelocity">
+            <input_port name="duration" type="std::chrono::milliseconds">Publish duration</input_port>
+            <input_port name="yaw_min" type="float" default="-3.140000">Minimum yaw range</input_port>
+            <input_port name="pitch_min" type="float" default="-1.570000">Minimum pitch range</input_port>
+            <input_port name="yaw_max" type="float" default="3.140000">Maximum yaw range</input_port>
+            <input_port name="pitch_max" type="float" default="1.570000">Maximum pitch range</input_port>
+            <input_port name="gimbal_vel_yaw" type="float" default="0.000000">Yaw velocity (rad/s)</input_port>
+            <input_port name="topic_name" type="std::string" default="__default__placeholder__">Topic name</input_port>
+            <input_port name="gimbal_vel_pitch" type="float" default="0.000000">Pitch velocity (rad/s)</input_port>
+        </Action>
+        <Action ID="PublishSpinSpeed">
+            <input_port name="spin_speed" type="double" default="0.000000">Angular Z velocity (rad/s)</input_port>
+            <input_port name="duration" type="std::chrono::milliseconds" default="">Publish then sleep duration in milliseconds</input_port>
+            <input_port name="topic_name" type="std::string" default="__default__placeholder__">Topic name</input_port>
+        </Action>
+        <Action ID="PublishTwist">
+            <input_port name="v_y" type="double" default="0.000000">Linear Y velocity (m/s)</input_port>
+            <input_port name="v_yaw" type="double" default="0.000000">Angular Z velocity (rad/s)</input_port>
+            <input_port name="v_x" type="double" default="0.000000">Linear X velocity (m/s)</input_port>
+            <input_port name="duration" type="std::chrono::milliseconds" default="">Publish then sleep duration in milliseconds</input_port>
+            <input_port name="topic_name" type="std::string" default="__default__placeholder__">Topic name</input_port>
+        </Action>
+        <Decorator ID="RateController">
+            <input_port name="hz" type="double" default="10.000000">Rate</input_port>
+        </Decorator>
+        <Control ID="RecoveryNode">
+            <input_port name="num_attempts" type="int" default="999">Number of retries</input_port>
+        </Control>
+        <Action ID="SendNav2Goal">
+            <input_port name="goal" type="geometry_msgs::msg::PoseStamped_&lt;std::allocator&lt;void&gt; &gt;" default="0;0;0">Expected goal pose that send to nav2. Fill with format `x;y;yaw`</input_port>
+            <input_port name="action_name" type="std::string" default="">Action server name</input_port>
+        </Action>
+        <Decorator ID="TickAfterTimeout">
+            <input_port name="timeout" type="float">time in s to wait before ticking child again</input_port>
+        </Decorator>
+    </TreeNodesModel>
+</root>

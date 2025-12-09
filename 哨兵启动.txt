@@ -1,0 +1,52 @@
+编译
+colcon build
+运行前
+source ./install/setup.bash
+
+启动雷达 
+发雷达数据+rviz显示
+ros2 launch livox_ros_driver2 rviz_MID360_launch.py
+
+单纯发雷达数据
+ros2 launch livox_ros_driver2 msg_MID360_launch.py
+
+新终端，查看雷达imu数据
+ros2 topic echo livox/imu
+根据参数写入nav2_param.yaml 重力加速度值gravity，gravity_init
+/home/nuc/sentry_ws/src/pb2025_sentry_nav/pb2025_nav_bringup/config/reality/nav2_params.yaml
+
+可视化机器人模型
+ros2 launch pb2025_robot_description robot_description_launch.py
+
+查看tf，如果无需 namespace，请删除第二句命令末尾的 -r __ns:=/red_standard_robot1
+ros2 run rqt_tf_tree rqt_tf_tree --ros-args -r /tf:=tf -r /tf_static:=tf_static -r __ns:=/red_standard_robot1
+
+开启串口通信
+ros2 launch standard_robot_pp_ros2 standard_robot_pp_ros2.launch.py
+若开启rviz可视化末尾加 use_rviz:=True
+ros2 launch standard_robot_pp_ros2 standard_robot_pp_ros2.launch.py use_rviz:=True
+
+建图：
+1.启动建图模式
+ros2 launch pb2025_nav_bringup rm_navigation_reality_launch.py \
+slam:=True \
+use_robot_state_pub:=True
+2.保存地图，<YOUR_WORLD_NAME> 请自行设定并替换为字符串。
+ros2 run nav2_map_server map_saver_cli -f my_map  --ros-args -r __ns:=/red_standard_robot1
+ Ctrl+C 终止建图程序
+ 
+3.转移地图文件
+ 将生成的 .pcd 文件重命名为 <YOUR_WORLD_NAME>.pcd，然后放置到 pb2025_nav_bringup/pcd 的 reality 或 simulation 文件夹内。
+
+将生成的 .pgm 文件重命名为 <YOUR_WORLD_NAME>.pgm；.yaml 文件重命名为 <YOUR_WORLD_NAME>.yaml，注意同步修改 .yaml 文件中的 image 字段，将其更新为 <YOUR_WORLD_NAME>.pgm。然后将这两个文件移动到 pb2025_nav_bringup/map 中的 reality 或 simulation 文件夹内。
+
+4.编译
+colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
+
+
+导航：
+修改<YOUR_WORLD_NAME>，use_robot_state_pub 为TF树
+ros2 launch pb2025_nav_bringup rm_sentry_reality_launch.py \
+world:=<YOUR_WORLD_NAME> \
+slam:=False \
+use_robot_state_pub:=True
