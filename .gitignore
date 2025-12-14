@@ -1,6 +1,3 @@
-# 排除.vscode目录
-.vscode/
-
 # 排除build目录
 build/
 
