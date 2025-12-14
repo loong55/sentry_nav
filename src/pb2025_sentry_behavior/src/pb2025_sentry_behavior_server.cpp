@@ -14,13 +14,20 @@
 
 #include "pb2025_sentry_behavior/pb2025_sentry_behavior_server.hpp"
 
+// 包含C++17标准库中的filesystem头文件，用于处理文件系统相关的操作
 #include <filesystem>
+// 包含文件流输入输出头文件，用于文件读写操作
 #include <fstream>
 
+// 包含装甲板相关消息类型定义（自瞄包）
 #include "auto_aim_interfaces/msg/armors.hpp"
+// 包含目标相关消息类型定义（自瞄包）
 #include "auto_aim_interfaces/msg/target.hpp"
+// 包含BehaviorTree XML解析相关功能
 #include "behaviortree_cpp/xml_parsing.h"
+// 包含占用栅格地图相关消息类型定义
 #include "nav_msgs/msg/occupancy_grid.hpp"
+// 包含裁判系统相关消息类型定义
 #include "pb_rm_interfaces/msg/buff.hpp"
 #include "pb_rm_interfaces/msg/event_data.hpp"
 #include "pb_rm_interfaces/msg/game_robot_hp.hpp"
@@ -33,6 +40,7 @@ namespace pb2025_sentry_behavior
 
 template <typename T>
 void SentryBehaviorServer::subscribe(
+  //(Quality of Service)参数配置,影响消息的传输质量和可靠性
   const std::string & topic, const std::string & bb_key, const rclcpp::QoS & qos)
 {
   auto sub = node()->create_subscription<T>(
