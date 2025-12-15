@@ -50,6 +50,7 @@ void SentryBehaviorServer::subscribe(
   subscriptions_.push_back(sub);//根据qos,最多储存10条消息
 }
 
+//服务器订阅消息
 SentryBehaviorServer::SentryBehaviorServer(const rclcpp::NodeOptions & options)
 : TreeExecutionServer(options)//TreeExecutionServer是一个行为树执行服务器的基类，而options是ROS2的节点配置参数。
 {
@@ -77,7 +78,7 @@ SentryBehaviorServer::SentryBehaviorServer(const rclcpp::NodeOptions & options)
     "global_costmap/costmap", "nav_globalCostmap", costmap_qos);
 }
 
-//行为树服务器目标接收函数，接收到目标返回true
+//行为树生命周期管理，行为树服务器目标接收函数，接收到目标返回true
 bool SentryBehaviorServer::onGoalReceived(
   const std::string & tree_name, const std::string & payload)//payload是目标坐标点信息
 {
@@ -87,7 +88,7 @@ bool SentryBehaviorServer::onGoalReceived(
   return true;
 }
 
-//调试阶段，监控行为树的创建，use_cout_logger_默认为false，不在控制台监控树的创建
+//行为树生命周期管理，调试阶段，监控行为树的创建，use_cout_logger_默认为false，不在控制台监控树的创建
 //可以通过参数文件 sentry_behavior.yaml 进行配置：use_cout_logger: true
 void SentryBehaviorServer::onTreeCreated(BT::Tree & tree)
 {

@@ -25,24 +25,52 @@
 namespace pb2025_sentry_behavior
 {
 
+/**
+ * @brief 哨兵行为树客户端类
+ * 
+ * 该类继承自rclcpp::Node，用于与行为树服务器通信，
+ * 发送行为树执行请求并处理执行结果和反馈。
+ */
 class SentryBehaviorClient : public rclcpp::Node
 {
 public:
-  using BTExecuteTree = btcpp_ros2_interfaces::action::ExecuteTree;
-  using GoalHandleBTExecuateTree = rclcpp_action::ClientGoalHandle<BTExecuteTree>;
+  // 类型别名定义
+  using BTExecuteTree = btcpp_ros2_interfaces::action::ExecuteTree;  // 行为树执行action类型
+  using GoalHandleBTExecuateTree = rclcpp_action::ClientGoalHandle<BTExecuteTree>;  // action目标句柄类型
 
+  /**
+   * @brief 构造函数
+   * @param options ROS2节点选项
+   */
   explicit SentryBehaviorClient(const rclcpp::NodeOptions & options);
 
 private:
+  /**
+   * @brief 发送行为树执行目标
+   * 
+   * 从参数服务器读取目标行为树名称，
+   * 构造并发送执行请求到行为树服务器
+   */
   void sendGoal();
+
+  /**
+   * @brief 处理行为树执行结果回调
+   * @param result 执行结果包装器，包含最终执行状态和返回消息
+   */
   void resultCallback(const GoalHandleBTExecuateTree::WrappedResult & result);
+
+  /**
+   * @brief 处理行为树执行反馈回调
+   * @param goal_handle 目标句柄
+   * @param feedback 执行反馈信息
+   */
   void feedbackCallback(
     GoalHandleBTExecuateTree::SharedPtr goal_handle,
     const std::shared_ptr<const BTExecuteTree::Feedback> feedback);
 
-  rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp_action::Client<BTExecuteTree>::SharedPtr action_client_;
-  std::string target_tree_;
+  rclcpp::TimerBase::SharedPtr timer_;  // 定时器，用于周期性发送目标
+  rclcpp_action::Client<BTExecuteTree>::SharedPtr action_client_;  // action客户端
+  std::string target_tree_;  // 要执行的目标行为树名称
 };
 
 }  // namespace pb2025_sentry_behavior
