@@ -1,11 +1,11 @@
 pb2025_sentry_behavior_server:
   ros__parameters:
     use_sim_time: true
-    action_name: pb2025_sentry_behavior         # Optional
-    tick_frequency: 5                          # Optional (defaults to 100 Hz)
-    groot2_port: 1667                           # Optional (defaults to 1667)
+    action_name: pb2025_sentry_behavior         # 动作服务器名称
+    tick_frequency: 5                           # 行为树执行频率 (defaults to 100 Hz)
+    groot2_port: 1667                           # Groot2调试端口 (defaults to 1667)
     ros_plugins_timeout: 1000                   # Optional (defaults 1000 ms)
-    use_cout_logger: false                      # Optional (defaults to false)
+    use_cout_logger: false                      # 是否在控制台输出树状态 (defaults to false)
 
     plugins:
       - pb2025_sentry_behavior/bt_plugins
@@ -23,4 +23,4 @@ pb2025_sentry_behavior_server:
 pb2025_sentry_behavior_client:
   ros__parameters:
     use_sim_time: true
-    target_tree: test
+    target_tree: test                           # 要执行的行为树名称

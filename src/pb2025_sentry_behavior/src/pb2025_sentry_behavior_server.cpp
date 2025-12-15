@@ -78,7 +78,9 @@ SentryBehaviorServer::SentryBehaviorServer(const rclcpp::NodeOptions & options)
     "global_costmap/costmap", "nav_globalCostmap", costmap_qos);
 }
 
-//行为树生命周期管理，行为树服务器目标接收函数，接收到目标返回true
+/*******行为树生命周期管理*******/
+
+//接收目标前调用（在树创建前），行为树服务器目标接收函数，接收到目标返回true
 bool SentryBehaviorServer::onGoalReceived(
   const std::string & tree_name, const std::string & payload)//payload是目标坐标点信息
 {
@@ -88,7 +90,7 @@ bool SentryBehaviorServer::onGoalReceived(
   return true;
 }
 
-//行为树生命周期管理，调试阶段，监控行为树的创建，use_cout_logger_默认为false，不在控制台监控树的创建
+//树创建后调用，调试阶段，监控行为树的创建，use_cout_logger_默认为false，不在控制台监控树的创建
 //可以通过参数文件 sentry_behavior.yaml 进行配置：use_cout_logger: true
 void SentryBehaviorServer::onTreeCreated(BT::Tree & tree)
 {
@@ -98,14 +100,14 @@ void SentryBehaviorServer::onTreeCreated(BT::Tree & tree)
   tick_count_ = 0;
 }
 
-//行为树执行周期数，optional表示一个可能包含也可能不包含值的类型
+//每次tick后调用，optional表示一个可能包含也可能不包含值的类型
 std::optional<BT::NodeStatus> SentryBehaviorServer::onLoopAfterTick(BT::NodeStatus /*status*/)
 {
   ++tick_count_;
   return std::nullopt;//返回一个空的optional值
 }
 
-//行为树执行完成，status表示行为树执行状态，was_cancelled表示行为树是否被取消
+//行为树执行完成调用，status表示行为树执行状态，was_cancelled表示行为树是否被取消
 //返回结果字符串
 std::optional<std::string> SentryBehaviorServer::onTreeExecutionCompleted(
   BT::NodeStatus status, bool was_cancelled)

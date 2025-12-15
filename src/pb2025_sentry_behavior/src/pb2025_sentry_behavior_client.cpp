@@ -29,7 +29,7 @@ SentryBehaviorClient::SentryBehaviorClient(const rclcpp::NodeOptions & options)
 {
   // 1. 声明并获取参数 参数名为"target_tree" 默认值为"test_attacked_feedback"
   declare_parameter<std::string>("target_tree", "test_attacked_feedback");
-  get_parameter("target_tree", target_tree_);
+  get_parameter("target_tree", target_tree_);//从sentry_behavior.yaml获取参数，并赋值到target_tree_
 
   // 2. 创建了一个名为action_client_的动作客户端，用于与名为"pb2025_sentry_behavior"的动作服务器进行通信。
   // 处理BTExecuteTree类型的动作，包含目标、结果和反馈等结构，此动作类型与服务端相匹配
