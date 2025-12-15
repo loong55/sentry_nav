@@ -76,7 +76,7 @@ private:
   void subscribe(
     const std::string & topic, const std::string & bb_key,
     // 定义一个ROS 2 Quality of Service (QoS)配置的常量引用
-    // 该配置设置为10的历史深度
+    // 该配置设置为10的历史深度，即保留最近10条消息
     const rclcpp::QoS & qos = rclcpp::QoS(10));
 
   std::vector<std::shared_ptr<rclcpp::SubscriptionBase>> subscriptions_;  // 订阅器列表

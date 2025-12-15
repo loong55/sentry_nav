@@ -37,24 +37,26 @@
 #include "pb_rm_interfaces/msg/robot_status.hpp"
 namespace pb2025_sentry_behavior
 {
-
+//订阅器；参数：话题名称，黑板键名，服务质量
 template <typename T>
 void SentryBehaviorServer::subscribe(
   //(Quality of Service)参数配置,影响消息的传输质量和可靠性
   const std::string & topic, const std::string & bb_key, const rclcpp::QoS & qos)
 {
+  // 创建订阅器，订阅指定话题的消息，并将消息存储到全局黑板中
   auto sub = node()->create_subscription<T>(
     topic, qos,
     [this, bb_key](const typename T::SharedPtr msg) { globalBlackboard()->set(bb_key, *msg); });
-  subscriptions_.push_back(sub);
+  subscriptions_.push_back(sub);//根据qos,最多储存10条消息
 }
 
 SentryBehaviorServer::SentryBehaviorServer(const rclcpp::NodeOptions & options)
-: TreeExecutionServer(options)
+: TreeExecutionServer(options)//TreeExecutionServer是一个行为树执行服务器的基类，而options是ROS2的节点配置参数。
 {
-  node()->declare_parameter("use_cout_logger", false);
-  node()->get_parameter("use_cout_logger", use_cout_logger_);
+  node()->declare_parameter("use_cout_logger", false);//声明一个参数，用于配置是否使用cout日志记录器
+  node()->get_parameter("use_cout_logger", use_cout_logger_);//获取参数的值
 
+  //订阅裁判系统信息
   subscribe<pb_rm_interfaces::msg::EventData>("referee/event_data", "referee_eventData");
   subscribe<pb_rm_interfaces::msg::GameRobotHP>("referee/all_robot_hp", "referee_allRobotHP");
   subscribe<pb_rm_interfaces::msg::GameStatus>("referee/game_status", "referee_gameStatus");
@@ -64,18 +66,20 @@ SentryBehaviorServer::SentryBehaviorServer(const rclcpp::NodeOptions & options)
   subscribe<pb_rm_interfaces::msg::RobotStatus>("referee/robot_status", "referee_robotStatus");
   subscribe<pb_rm_interfaces::msg::Buff>("referee/buff", "referee_buff");
 
-  auto detector_qos = rclcpp::SensorDataQoS();
-  subscribe<auto_aim_interfaces::msg::Armors>("detector/armors", "detector_armors", detector_qos);
+  auto detector_qos = rclcpp::SensorDataQoS();//创建一个高频传感器数据质量服务对象
+  subscribe<auto_aim_interfaces::msg::Armors>("detector/armors", "detector_armors", detector_qos);//装甲板
   auto tracker_qos = rclcpp::SensorDataQoS();
-  subscribe<auto_aim_interfaces::msg::Target>("tracker/target", "tracker_target", tracker_qos);
+  subscribe<auto_aim_interfaces::msg::Target>("tracker/target", "tracker_target", tracker_qos);//目标
 
+  //订阅全局地图，KeepLast(1)表示只保留最新的1个消息，transient_local()表示消息只在本地保存，reliable()表示消息可靠传输
   auto costmap_qos = rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable();
   subscribe<nav_msgs::msg::OccupancyGrid>(
     "global_costmap/costmap", "nav_globalCostmap", costmap_qos);
 }
 
+//行为树服务器目标接收函数，接收到目标返回true
 bool SentryBehaviorServer::onGoalReceived(
-  const std::string & tree_name, const std::string & payload)
+  const std::string & tree_name, const std::string & payload)//payload是目标坐标点信息
 {
   RCLCPP_INFO(
     node()->get_logger(), "onGoalReceived with tree name '%s' with payload '%s'", tree_name.c_str(),
@@ -83,6 +87,8 @@ bool SentryBehaviorServer::onGoalReceived(
   return true;
 }
 
+//调试阶段，监控行为树的创建，use_cout_logger_默认为false，不在控制台监控树的创建
+//可以通过参数文件 sentry_behavior.yaml 进行配置：use_cout_logger: true
 void SentryBehaviorServer::onTreeCreated(BT::Tree & tree)
 {
   if (use_cout_logger_) {
@@ -91,12 +97,15 @@ void SentryBehaviorServer::onTreeCreated(BT::Tree & tree)
   tick_count_ = 0;
 }
 
+//行为树执行周期数，optional表示一个可能包含也可能不包含值的类型
 std::optional<BT::NodeStatus> SentryBehaviorServer::onLoopAfterTick(BT::NodeStatus /*status*/)
 {
   ++tick_count_;
-  return std::nullopt;
+  return std::nullopt;//返回一个空的optional值
 }
 
+//行为树执行完成，status表示行为树执行状态，was_cancelled表示行为树是否被取消
+//返回结果字符串
 std::optional<std::string> SentryBehaviorServer::onTreeExecutionCompleted(
   BT::NodeStatus status, bool was_cancelled)
 {
@@ -119,10 +128,13 @@ int main(int argc, char * argv[])
   rclcpp::NodeOptions options;
   auto action_server = std::make_shared<pb2025_sentry_behavior::SentryBehaviorServer>(options);
 
+  //[INFO] [1699123456.123456789] [pb2025_sentry_behavior_server]: Starting SentryBehaviorServer
   RCLCPP_INFO(action_server->node()->get_logger(), "Starting SentryBehaviorServer");
 
+  //多线程执行器，参数：执行器的配置选项（默认），单核cpu并发线程数，是否使用定时器，定时器间隔250ms
   rclcpp::executors::MultiThreadedExecutor exec(
     rclcpp::ExecutorOptions(), 0, false, std::chrono::milliseconds(250));
+  //不是固定3个线程，而是所有回调函数根据硬件自动调整，动态线程池
   exec.add_node(action_server->node());
   exec.spin();
   exec.remove_node(action_server->node());
