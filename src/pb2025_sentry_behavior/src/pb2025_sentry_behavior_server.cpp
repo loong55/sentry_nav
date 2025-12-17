@@ -12,6 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/*行为树服务端作用：
+1.订阅并整合所有外部系统数据（裁判系统、自瞄系统、导航全局代价地图）至黑板中
+2.通过继承TreeExecutionServer类，接收客户端发送的树名，管理行为树生命周期：创建、执行、完成；
+  行为树会自行调用行为树插件节点（插件是热插拔的，用工厂注册）
+3.支持Groot2可视化调试，自动生成节点模型XML文件
+*/
+
 #include "pb2025_sentry_behavior/pb2025_sentry_behavior_server.hpp"
 
 // 包含C++17标准库中的filesystem头文件，用于处理文件系统相关的操作

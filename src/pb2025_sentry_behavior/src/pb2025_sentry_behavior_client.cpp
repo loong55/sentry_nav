@@ -12,6 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/*行为树客户端作用：
+  1.从参数服务器读取 target_tree 参数指定要执行的行为树名称
+  2.通过ROS2 Action向服务端发送执行请求
+  3.接收并处理服务端的执行反馈和结果 
+*/
+
+
 #include "pb2025_sentry_behavior/pb2025_sentry_behavior_client.hpp"
 
 #include "rclcpp/logging.hpp"
