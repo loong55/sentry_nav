@@ -78,7 +78,7 @@ SentryBehaviorServer::SentryBehaviorServer(const rclcpp::NodeOptions & options)
     "global_costmap/costmap", "nav_globalCostmap", costmap_qos);
 }
 
-/*******行为树生命周期管理*******/
+/**********************************行为树生命周期管理************************************/
 
 //接收目标前调用（在树创建前），行为树服务器目标接收函数，接收到目标返回true
 bool SentryBehaviorServer::onGoalReceived(
@@ -121,6 +121,8 @@ std::optional<std::string> SentryBehaviorServer::onTreeExecutionCompleted(
                        " after " + std::to_string(tick_count_) + " ticks";
   return result;
 }
+
+/**********************************行为树生命周期管理************************************/
 
 }  // namespace pb2025_sentry_behavior
 
