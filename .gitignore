@@ -18,3 +18,5 @@ src/pb2025_sentry_nav/pb2025_nav_bringup/pcd/reality/*
 
 # 排除src/pb2025_sentry_nav/pb2025_nav_bringup/pcd/simulation目录下以.pcd结尾的文件
 src/pb2025_sentry_nav/pb2025_nav_bringup/pcd/simulation/*.pcd
+
+.trae
