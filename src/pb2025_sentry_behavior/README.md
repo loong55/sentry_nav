@@ -261,3 +261,7 @@ Parameters:
 服务端职责：SentryBehaviorServer 订阅裁判/感知等话题，把最新消息写入全局黑板键（例如 referee_robotStatus 等），然后根据客户端请求的 tree_name 在本地查找 XML、用工厂构树、周期性 tick，节点在运行时从黑板或端口取数、发布控制指令。
 客户端职责：SentryBehaviorClient 只是 ROS 2 Action 客户端，参数 target_tree（在 sentry_behavior.yaml）提供要执行的树名，发送到动作服务器 pb2025_sentry_behavior，并接收反馈/结果；客户端不传输 XML 内容，只传树名。
 交互关系：插件库与服务端通过动态加载+工厂注册耦合，XML 与插件通过节点名耦合，客户端与服务端通过 ExecuteTree Action 耦合；树逻辑和节点实现与客户端是松耦合的，服务器侧可以替换 XML/插件而无需改客户端。
+
+fjut增加文件：
+行为树：atk.xml,check_energy.xml,fjut.xml,rmuc_2025.xml,test.xml
+插件：is_atk_op,is_energy_enough,is_game_status
