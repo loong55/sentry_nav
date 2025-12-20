@@ -23,4 +23,4 @@ pb2025_sentry_behavior_server:
 pb2025_sentry_behavior_client:
   ros__parameters:
     use_sim_time: true
-    target_tree: test                           # 要执行的行为树名称
+    target_tree: three_point_loop               # 要执行的行为树名称

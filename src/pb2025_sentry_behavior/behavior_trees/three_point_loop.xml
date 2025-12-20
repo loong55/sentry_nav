@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+  <!-- 三点循环运动行为树 -->
+  <BehaviorTree ID="three_point_loop">
+    <Repeat num_cycles="-1">
+      <Sequence>
+        <!-- 第一个目标点，等待导航完成 -->
+        <PubNav2Goal goal="0;0;0" topic_name="goal_pose"/>
+        <Sleep msec="5000"/>
+        
+        <!-- 第二个目标点，等待导航完成 -->
+        <PubNav2Goal goal="1;0;0" topic_name="goal_pose"/>
+        <Sleep msec="5000"/>
+        
+        <!-- 第三个目标点，等待导航完成 -->
+        <PubNav2Goal goal="0;1;0" topic_name="goal_pose"/>
+        <Sleep msec="5000"/>
+      </Sequence>
+    </Repeat>
+  </BehaviorTree>
+</root>
