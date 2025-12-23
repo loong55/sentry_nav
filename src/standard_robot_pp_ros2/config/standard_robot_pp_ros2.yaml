@@ -1,22 +1,22 @@
 standard_robot_pp_ros2:
   ros__parameters:
-    device_name: /dev/ttyACM0
-    baud_rate: 115200
-    flow_control: none
-    parity: none
-    stop_bits: "1"
-    set_detector_color: false
-    record_rosbag: false
-    debug: false
+    device_name: /dev/ttyACM0      # 串口设备名
+    baud_rate: 115200              # 波特率
+    flow_control: none             # 流控制
+    parity: none                   # 奇偶校验
+    stop_bits: "1"                 # 停止位
+    set_detector_color: false      # 是否设置识别颜色
+    record_rosbag: false           # 是否记录rosbag
+    debug: false                   # 是否开启调试信息输出
 
 joint_state_publisher:
   ros__parameters:
     use_sim_time: false
-    rate: 200
+    rate: 200            # 发布频率   
     source_list: ["serial/gimbal_joint_state"]
     offset_timestamp: 0.0
 
 robot_state_publisher:
   ros__parameters:
     use_sim_time: false
-    publish_frequency: 200.0
+    publish_frequency: 200.0  # 发布频率
