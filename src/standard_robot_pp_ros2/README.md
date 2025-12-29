@@ -142,22 +142,22 @@ crc (1字节): 帧头CRC8校验
 ### 3.数据类型
 接收数据包类型
 ID	    名称	                 功能
-0x01	DEBUG	                调试数据
+0x01	DEBUG	                  调试数据
 0x02	IMU	                    IMU姿态数据（yaw/pitch/roll及角速度）
-0x03	ROBOT_STATE_INFO	    机器人部位类型和状态
+0x03	ROBOT_STATE_INFO	      机器人部位类型和状态
 0x04	EVENT_DATA	            比赛事件数据
-0x06	ALL_ROBOT_HP	        全场机器人血量
+0x06	ALL_ROBOT_HP	          全场机器人血量
 0x07	GAME_STATUS	            比赛状态和剩余时间
-0x08	ROBOT_MOTION	        机器人速度矢量
-0x09	GROUND_ROBOT_POSITION	地面机器人位置
+0x08	ROBOT_MOTION	          机器人速度矢量
+0x09	GROUND_ROBOT_POSITION	  地面机器人位置
 0x0A	RFID_STATUS	            RFID状态（增益点占领情况）
-0x0B	ROBOT_STATUS	        机器人状态
+0x0B	ROBOT_STATUS	          机器人状态
 0x0C	JOINT_STATE	            关节状态
-0x0D	BUFF	                Buff状态
+0x0D	BUFF	                  Buff状态
 
 发送数据包类型
-ID	    名称	         功能
-0x01	ROBOT_CMD	    机器人控制命令（底盘速度、云台角度、射击指令等）
+ID	    名称	           功能
+0x01	  ROBOT_CMD	      机器人控制命令（底盘速度、云台角度、射击指令等）
 
 ### 4.工作流程
 一、初始化
