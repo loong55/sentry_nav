@@ -15,16 +15,16 @@
 #ifndef STANDARD_ROBOT_PP_ROS2__PACKET_TYPEDEF_HPP_
 #define STANDARD_ROBOT_PP_ROS2__PACKET_TYPEDEF_HPP_
 
-#include <algorithm>
-#include <cstdint>
-#include <vector>
+#include <algorithm>   // std::copy
+#include <cstdint>     // uint8_t, uint16_t 等固定宽度整数类型
+#include <vector>      // std::vector
 
 namespace standard_robot_pp_ros2
 {
-const uint8_t SOF_RECEIVE = 0x5A;
+const uint8_t SOF_RECEIVE = 0x5A; // 起始标志（Start Of Frame）
 const uint8_t SOF_SEND = 0x5A;
 
-// Receive
+// Receive 接收数据包ID映射表
 const uint8_t ID_DEBUG = 0x01;
 const uint8_t ID_IMU = 0x02;
 const uint8_t ID_ROBOT_STATE_INFO = 0x03;
@@ -38,12 +38,13 @@ const uint8_t ID_RFID_STATUS = 0x0A;
 const uint8_t ID_ROBOT_STATUS = 0x0B;
 const uint8_t ID_JOINT_STATE = 0x0C;
 const uint8_t ID_BUFF = 0x0D;
-// Send
+// Send 发送数据包ID映射表
 const uint8_t ID_ROBOT_CMD = 0x01;
 
 const uint8_t DEBUG_PACKAGE_NUM = 10;
 const uint8_t DEBUG_PACKAGE_NAME_LEN = 10;
 
+// 数据包头结构体
 struct HeaderFrame
 {
   uint8_t sof;  // 数据帧起始字节，固定值为 0x5A
