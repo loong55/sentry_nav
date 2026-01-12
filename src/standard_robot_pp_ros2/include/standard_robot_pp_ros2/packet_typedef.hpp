@@ -39,10 +39,10 @@ const uint8_t ID_ROBOT_STATUS = 0x0B;
 const uint8_t ID_JOINT_STATE = 0x0C;
 const uint8_t ID_BUFF = 0x0D;
 // Send 发送数据包ID映射表
-const uint8_t ID_ROBOT_CMD = 0x01;
+const uint8_t ID_ROBOT_CMD = 0x01; // 机器人控制指令
 
-const uint8_t DEBUG_PACKAGE_NUM = 10;
-const uint8_t DEBUG_PACKAGE_NAME_LEN = 10;
+const uint8_t DEBUG_PACKAGE_NUM = 10; // 调试数据包中包含的数据项数量
+const uint8_t DEBUG_PACKAGE_NAME_LEN = 10; // 调试数据包中每个数据项名称的长度
 
 // 数据包头结构体
 struct HeaderFrame
@@ -60,8 +60,8 @@ struct HeaderFrame
 // 串口调试数据包
 struct ReceiveDebugData
 {
-  HeaderFrame frame_header;
-  uint32_t time_stamp;
+  HeaderFrame frame_header; // 数据帧头，4个字节
+  uint32_t time_stamp;  // 时间戳，4个字节
   struct
   {
     uint8_t name[DEBUG_PACKAGE_NAME_LEN];
