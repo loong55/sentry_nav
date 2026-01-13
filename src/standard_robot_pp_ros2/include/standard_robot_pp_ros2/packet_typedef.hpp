@@ -107,7 +107,7 @@ struct ReceiveRobotInfoData
     /// @brief 机器人部位类型 2 bytes
     struct
     {
-      uint16_t chassis : 3;
+      uint16_t chassis : 3; //chassis 指定只占用3个比特位，即000~111,0~7,8种类型
       uint16_t gimbal : 3;
       uint16_t shoot : 3;
       uint16_t arm : 3;
@@ -119,12 +119,12 @@ struct ReceiveRobotInfoData
     /// @note 0: 错误，1: 正常
     struct
     {
-      uint8_t chassis : 1;
-      uint8_t gimbal : 1;
-      uint8_t shoot : 1;
-      uint8_t arm : 1;
-      uint8_t custom_controller : 1;
-      uint8_t reserve : 3;
+      uint8_t chassis : 1; //底盘状态
+      uint8_t gimbal : 1; //云台状态
+      uint8_t shoot : 1; //发射机构状态
+      uint8_t arm : 1; //机械臂状态
+      uint8_t custom_controller : 1;  //自定义控制器状态
+      uint8_t reserve : 3; //保留3位（未使用）
     } __attribute__((packed)) state;
   } __attribute__((packed)) data;
 
@@ -139,21 +139,21 @@ struct ReceiveEventData
 
   struct
   {
-    uint8_t non_overlapping_supply_zone : 1;
-    uint8_t overlapping_supply_zone : 1;
-    uint8_t supply_zone : 1;
+    uint8_t non_overlapping_supply_zone : 1; //占领非重叠补给区？
+    uint8_t overlapping_supply_zone : 1; //占领重叠补给区？
+    uint8_t supply_zone : 1; //占领补给区？
 
-    uint8_t small_energy : 1;
-    uint8_t big_energy : 1;
+    uint8_t small_energy : 1;  // 小能量机关触发？
+    uint8_t big_energy : 1;  // 大能量机关触发？
 
-    uint8_t central_highland : 2;
-    uint8_t reserved1 : 1;
+    uint8_t central_highland : 2; // 中央高地占领状态
+    uint8_t reserved1 : 1;  // 保留1位
 
-    uint8_t trapezoidal_highland : 2;
+    uint8_t trapezoidal_highland : 2; //梯形高地占领状态
 
-    uint8_t center_gain_zone : 2;
+    uint8_t center_gain_zone : 2;// 中心增益区占领状态
 
-    uint8_t reserved2 : 4;
+    uint8_t reserved2 : 4; // 保留4位
   } __attribute__((packed)) data;
   uint16_t crc;
 } __attribute__((packed));
@@ -165,9 +165,9 @@ struct ReceivePidDebugData
   uint32_t time_stamp;
   struct
   {
-    float fdb;
-    float ref;
-    float pid_out;
+    float fdb; //反馈值
+    float ref; //目标值
+    float pid_out; //PID输出值
   } __attribute__((packed)) data;
 
   uint16_t crc;
@@ -182,12 +182,12 @@ struct ReceiveAllRobotHpData
   struct
   {
 
-    uint16_t red_outpost_hp;
-    uint16_t red_base_hp;
+    uint16_t red_outpost_hp; // 红方前哨站血量
+    uint16_t red_base_hp; // 红方基地血量
 
 
-    uint16_t blue_outpost_hp;
-    uint16_t blue_base_hp;
+    uint16_t blue_outpost_hp; // 蓝方前哨站血量
+    uint16_t blue_base_hp; // 蓝方基地血量
   } __attribute__((packed)) data;
 
   uint16_t crc;
@@ -201,8 +201,8 @@ struct ReceiveGameStatusData
 
   struct
   {
-    uint8_t game_progress;
-    uint16_t stage_remain_time;
+    uint8_t game_progress; // 比赛进程
+    uint16_t stage_remain_time; // 阶段剩余时间
   } __attribute__((packed)) data;
 
   uint16_t crc;
@@ -218,13 +218,13 @@ struct ReceiveRobotMotionData
   {
     struct
     {
-      float vx;
-      float vy;
-      float wz;
+      float vx; // x轴速度
+      float vy; // y轴速度
+      float wz; // 角速度
     } __attribute__((packed)) speed_vector;
   } __attribute__((packed)) data;
   uint16_t crc;
-} __attribute__((packed));
+} __attribute__((packed));  
 
 // 地面机器人位置数据包
 struct ReceiveGroundRobotPosition
@@ -233,20 +233,20 @@ struct ReceiveGroundRobotPosition
   uint32_t time_stamp;
   struct
   {
-    float hero_x;
-    float hero_y;
+    float hero_x; // 英雄机器人x坐标
+    float hero_y; // 英雄机器人y坐标
 
-    float engineer_x;
-    float engineer_y;
+    float engineer_x; // 工程机器人x坐标
+    float engineer_y; // 工程机器人y坐标
 
-    float standard_3_x;
-    float standard_3_y;
+    float standard_3_x; // 标准机器人3x坐标
+    float standard_3_y; // 标准机器人3y坐标
 
-    float standard_4_x;
-    float standard_4_y;
+    float standard_4_x; // 标准机器人4x坐标
+    float standard_4_y; // 标准机器人4y坐标
 
-    float reserved1;
-    float reserved2;
+    float reserved1; // 保留
+    float reserved2; // 保留
   } __attribute__((packed)) data;
   uint16_t crc;
 } __attribute__((packed));
@@ -259,31 +259,31 @@ struct ReceiveRfidStatus
 
   struct
   {
-    uint32_t base_gain_point : 1;
-    uint32_t central_highland_gain_point : 1;
-    uint32_t enemy_central_highland_gain_point : 1;
-    uint32_t friendly_trapezoidal_highland_gain_point : 1;
-    uint32_t enemy_trapezoidal_highland_gain_point : 1;
-    uint32_t friendly_fly_ramp_front_gain_point : 1;
-    uint32_t friendly_fly_ramp_back_gain_point : 1;
-    uint32_t enemy_fly_ramp_front_gain_point : 1;
-    uint32_t enemy_fly_ramp_back_gain_point : 1;
-    uint32_t friendly_central_highland_lower_gain_point : 1;
-    uint32_t friendly_central_highland_upper_gain_point : 1;
-    uint32_t enemy_central_highland_lower_gain_point : 1;
-    uint32_t enemy_central_highland_upper_gain_point : 1;
-    uint32_t friendly_highway_lower_gain_point : 1;
-    uint32_t friendly_highway_upper_gain_point : 1;
-    uint32_t enemy_highway_lower_gain_point : 1;
-    uint32_t enemy_highway_upper_gain_point : 1;
-    uint32_t friendly_fortress_gain_point : 1;
-    uint32_t friendly_outpost_gain_point : 1;
-    uint32_t friendly_supply_zone_non_exchange : 1;
-    uint32_t friendly_supply_zone_exchange : 1;
-    uint32_t friendly_big_resource_island : 1;
-    uint32_t enemy_big_resource_island : 1;
-    uint32_t center_gain_point : 1;
-    uint32_t reserved : 8;
+    uint32_t base_gain_point : 1; // 基地得分点
+    uint32_t central_highland_gain_point : 1; // 中央高地得分点
+    uint32_t enemy_central_highland_gain_point : 1; // 敌方中央高地得分点
+    uint32_t friendly_trapezoidal_highland_gain_point : 1; // 友方梯形高地得分点
+    uint32_t enemy_trapezoidal_highland_gain_point : 1; // 敌方梯形高地得分点
+    uint32_t friendly_fly_ramp_front_gain_point : 1; // 友方飞坡前得分点
+    uint32_t friendly_fly_ramp_back_gain_point : 1; // 友方飞坡后得分点
+    uint32_t enemy_fly_ramp_front_gain_point : 1;   // 敌方飞坡前得分点
+    uint32_t enemy_fly_ramp_back_gain_point : 1; // 敌方飞坡后得分点
+    uint32_t friendly_central_highland_lower_gain_point : 1; // 友方中央高地低得分点
+    uint32_t friendly_central_highland_upper_gain_point : 1; // 友方中央高地高得分点
+    uint32_t enemy_central_highland_lower_gain_point : 1; // 敌方中央高地低得分点
+    uint32_t enemy_central_highland_upper_gain_point : 1; // 敌方中央高地高得分点
+    uint32_t friendly_highway_lower_gain_point : 1; // 友方公路低得分点
+    uint32_t friendly_highway_upper_gain_point : 1; // 友方公路高得分点
+    uint32_t enemy_highway_lower_gain_point : 1;   // 敌方公路低得分点
+    uint32_t enemy_highway_upper_gain_point : 1; // 敌方公路高得分点
+    uint32_t friendly_fortress_gain_point : 1; // 友方堡垒得分点
+    uint32_t friendly_outpost_gain_point : 1; // 友方前哨得分点
+    uint32_t friendly_supply_zone_non_exchange : 1; // 友方补给区非交换区
+    uint32_t friendly_supply_zone_exchange : 1; // 友方补给区交换区
+    uint32_t friendly_big_resource_island : 1; // 友方大资源岛
+    uint32_t enemy_big_resource_island : 1; // 敌方大资源岛
+    uint32_t center_gain_point : 1; // 中央高地得分点
+    uint32_t reserved : 8; // 保留8位
   } __attribute__((packed)) data;
   uint16_t crc;
 } __attribute__((packed));
@@ -297,24 +297,24 @@ struct ReceiveRobotStatus
 
   struct
   {
-    uint8_t robot_id;
-    uint8_t robot_level;
-    uint16_t current_up;
-    uint16_t maximum_hp;
-    uint16_t shooter_barrel_cooling_value;
-    uint16_t shooter_barrel_heat_limit;
+    uint8_t robot_id; // 机器人id
+    uint8_t robot_level; // 机器人等级
+    uint16_t current_up; // 当前能量
+    uint16_t maximum_hp; // 最大能量
+    uint16_t shooter_barrel_cooling_value; // 射手冷却值
+    uint16_t shooter_barrel_heat_limit; // 射手热量上限
 
-    uint16_t shooter_17mm_1_barrel_heat;
+    uint16_t shooter_17mm_1_barrel_heat; // 17mm 1号枪管热量
 
-    float robot_pos_x;
-    float robot_pos_y;
-    float robot_pos_angle;
+    float robot_pos_x; // 机器人位置x
+    float robot_pos_y; // 机器人位置y
+    float robot_pos_angle; // 机器人角度
 
-    uint8_t armor_id : 4;
-    uint8_t hp_deduction_reason : 4;
+    uint8_t armor_id : 4; // 装甲id
+    uint8_t hp_deduction_reason : 4; // 伤害扣除原因
 
-    uint16_t projectile_allowance_17mm;
-    uint16_t remaining_gold_coin;
+    uint16_t projectile_allowance_17mm; // 17mm弹丸余量
+    uint16_t remaining_gold_coin; // 剩余金币
   } __attribute__((packed)) data;
   uint16_t crc;
 } __attribute__((packed));
@@ -327,8 +327,8 @@ struct ReceiveJointState
 
   struct
   {
-    float pitch;
-    float yaw;
+    float pitch; // 云台俯仰角度
+    float yaw; // 云台水平角度
   } __attribute__((packed)) data;
 
   uint16_t crc;
@@ -342,12 +342,12 @@ struct ReceiveBuff
 
   struct
   {
-    uint8_t recovery_buff;
-    uint8_t cooling_buff;
-    uint8_t defence_buff;
-    uint8_t vulnerability_buff;
-    uint16_t attack_buff;
-    uint8_t remaining_energy;
+    uint8_t recovery_buff; // 恢复增益
+    uint8_t cooling_buff; // 冷却增益
+    uint8_t defence_buff; // 防御增益
+    uint8_t vulnerability_buff; // 易伤增益
+    uint16_t attack_buff; // 攻击增益
+    uint8_t remaining_energy; // 剩余能量
   } __attribute__((packed)) data;
 
   uint16_t crc;
@@ -366,52 +366,64 @@ struct SendRobotCmdData
   {
     struct
     {
-      float vx;
-      float vy;
-      float wz;
+      float vx; // x轴速度
+      float vy; // y轴速度
+      float wz; // z轴角速度
     } __attribute__((packed)) speed_vector;
 
     struct
     {
-      float roll;
-      float pitch;
-      float yaw;
-      float leg_lenth;
+      float roll; // 横滚角
+      float pitch; // 俯仰角
+      float yaw;  // 偏航角
+      float leg_lenth; // 腿长
     } __attribute__((packed)) chassis;
 
     struct
     {
-      float pitch;
-      float yaw;
+      float pitch; // 云台俯仰角度
+      float yaw; // 云台水平角度
     } __attribute__((packed)) gimbal;
 
     struct
     {
-      uint8_t fire;
-      uint8_t fric_on;
+      uint8_t fire; // 开火命令
+      uint8_t fric_on; // 摩擦轮启动
     } __attribute__((packed)) shoot;
 
     struct
     {
-      bool tracking;
+      bool tracking; // 跟踪命令
     } __attribute__((packed)) tracking;
   } __attribute__((packed)) data;
 
   uint16_t checksum;
 } __attribute__((packed));
 
+//数据流向：ROS2话题 → SendRobotCmdData结构体 → 串口 → 下位机
+
 /********************************************************/
 /* template                                             */
 /********************************************************/
+//1.从字节流转换为结构体,即从下位机传上来的data数据转换为packet结构体
 
+//inline 将函数体直接嵌入到函数调用处，执行的时候不进行跳入跳出的操作，从而提高效率
+//同时，写在头文件中，避免多次定义，被定义多次，但只保留一个定义
+
+//reinterpret_cast<uint8_t *>(&data) 重新解释转换，将data的地址强制转换为uint8_t*类型
+
+//copy的三个参数： 源数据起始地址，源数据结束地址（不含），目标位置的起始地址
 template <typename T>
 inline T fromVector(const std::vector<uint8_t> & data)
 {
   T packet;
+  //&packet 获取packet的首地址，reinterpret_cast<uint8_t *>(&packet) 将packet的首地址强制转换为uint8_t*类型
+  //std::copy 把 data里的一个个字节，直接“灌入”到 packet 的内存空间里。
   std::copy(data.begin(), data.end(), reinterpret_cast<uint8_t *>(&packet));
   return packet;
 }
 
+//2.从结构体（data）转换为字节流packet
 template <typename T>
 inline std::vector<uint8_t> toVector(const T & data)
 {
