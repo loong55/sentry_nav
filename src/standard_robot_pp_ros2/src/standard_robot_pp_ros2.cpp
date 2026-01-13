@@ -21,8 +21,8 @@
 #include "std_srvs/srv/trigger.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
-#define USB_NOT_OK_SLEEP_TIME 1000   // (ms)
-#define USB_PROTECT_SLEEP_TIME 1000  // (ms)
+#define USB_NOT_OK_SLEEP_TIME 1000   // (ms) 串口断开后重新连接的时间间隔
+#define USB_PROTECT_SLEEP_TIME 1000  // (ms) 串口保护时间间隔（防止频繁打开关闭）
 
 using namespace std::chrono_literals;
 

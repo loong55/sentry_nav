@@ -12,14 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/* 标准机器人PP ROS2类的头文件定义 */
 #ifndef STANDARD_ROBOT_PP_ROS2__STANDARD_ROBOT_PP_ROS2_HPP_
 #define STANDARD_ROBOT_PP_ROS2__STANDARD_ROBOT_PP_ROS2_HPP_
 
-#include <memory>
-#include <string>
-#include <unordered_map>
-#include <vector>
+/* 必要的头文件包含 */
+#include <memory> // std::shared_ptr
+#include <string> // std::string
+#include <unordered_map> // 引入字典容器
+#include <vector> // 引入序列容器
 
+/* ROS2相关消息类型包含 */
 #include "auto_aim_interfaces/msg/target.hpp"
 #include "example_interfaces/msg/float64.hpp"
 #include "example_interfaces/msg/u_int8.hpp"
@@ -39,27 +42,42 @@
 #include "standard_robot_pp_ros2/packet_typedef.hpp"
 #include "standard_robot_pp_ros2/robot_info.hpp"
 
+/* 标准机器人PP ROS2的命名空间 */
 namespace standard_robot_pp_ros2
 {
+/* 标准机器人PP ROS2节点类，继承自ROS2节点基类 */
 class StandardRobotPpRos2Node : public rclcpp::Node
 {
 public:
+  /* 构造函数，接受节点选项参数 ，explicit关键字防止隐式转换 ，减少不必要的拷贝构造开销*/
   explicit StandardRobotPpRos2Node(const rclcpp::NodeOptions & options);
 
+  /* 析构函数 */
   ~StandardRobotPpRos2Node() override;
 
 private:
+  /* USB设备状态标志 */
   bool is_usb_ok_;
+  /* 调试模式标志 */
   bool debug_;
+  /* IO上下文所有权 */
   std::unique_ptr<IoContext> owned_ctx_;
+  /* 设备名称 */
   std::string device_name_;
+  /* 设备配置 */
   std::unique_ptr<drivers::serial_driver::SerialPortConfig> device_config_;
+  /* 串口驱动 */
   std::unique_ptr<drivers::serial_driver::SerialDriver> serial_driver_;
+  /* 是否记录rosbag标志 */
   bool record_rosbag_;
+  /* 是否设置检测颜色标志 */
   bool set_detector_color_;
 
+  /* 接收数据线程 */
   std::thread receive_thread_;
+  /* 发送数据线程 */
   std::thread send_thread_;
+  /* 串口保护线程 */
   std::thread serial_port_protect_thread_;
 
   // Publish
