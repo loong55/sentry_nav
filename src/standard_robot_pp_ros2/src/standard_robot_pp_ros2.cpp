@@ -29,16 +29,17 @@ using namespace std::chrono_literals;
 namespace standard_robot_pp_ros2
 {
 
+// 构造函数实现
 StandardRobotPpRos2Node::StandardRobotPpRos2Node(const rclcpp::NodeOptions & options)
 : Node("StandardRobotPpRos2Node", options),
-  owned_ctx_{new IoContext(2)},
-  serial_driver_{new drivers::serial_driver::SerialDriver(*owned_ctx_)}
+  owned_ctx_{new IoContext(2)}, //创建一个IoContext对象（用于异步IO操作），参数2表示使用2个线程
+  serial_driver_{new drivers::serial_driver::SerialDriver(*owned_ctx_)} //创建一个SerialDriver对象，用于串口通信，传入之前创建的IoContext
 {
   RCLCPP_INFO(get_logger(), "Start StandardRobotPpRos2Node!");
 
-  getParams();
-  createPublisher();
-  createSubscription();
+  getParams(); // 获取参数，包括串口名称、波特率等
+  createPublisher(); // 创建发布者，包括IMU数据、机器人状态信息等
+  createSubscription(); // 创建订阅者，包括控制命令、目标点等
 
   robot_models_.chassis = {
     {0, "无底盘"}, {1, "麦轮底盘"}, {2, "全向轮底盘"}, {3, "舵轮底盘"}, {4, "平衡底盘"}};
@@ -47,15 +48,16 @@ StandardRobotPpRos2Node::StandardRobotPpRos2Node(const rclcpp::NodeOptions & opt
   robot_models_.arm = {{0, "无机械臂"}, {1, "mini机械臂"}};
   robot_models_.custom_controller = {{0, "无自定义控制器"}, {1, "mini自定义控制器"}};
 
-  serial_port_protect_thread_ = std::thread(&StandardRobotPpRos2Node::serialPortProtect, this);
-  receive_thread_ = std::thread(&StandardRobotPpRos2Node::receiveData, this);
-  send_thread_ = std::thread(&StandardRobotPpRos2Node::sendData, this);
+  serial_port_protect_thread_ = std::thread(&StandardRobotPpRos2Node::serialPortProtect, this); // 创建一个线程用于串口保护
+  receive_thread_ = std::thread(&StandardRobotPpRos2Node::receiveData, this); // 创建一个线程用于接收数据
+  send_thread_ = std::thread(&StandardRobotPpRos2Node::sendData, this); // 创建一个线程用于发送数据
 }
 
+//析构函数实现
 StandardRobotPpRos2Node::~StandardRobotPpRos2Node()
 {
-  if (send_thread_.joinable()) {
-    send_thread_.join();
+  if (send_thread_.joinable()) { //检查线程是否还在运行且可以被join，返回 true：线程正在运行，返回 false：线程已结束或未启动
+    send_thread_.join(); //阻塞当前线程，等待发送线程完全结束；join的作用，等待线程结束并回收资源，防止删除此时正在访问的数据
   }
 
   if (receive_thread_.joinable()) {
@@ -70,11 +72,14 @@ StandardRobotPpRos2Node::~StandardRobotPpRos2Node()
     serial_driver_->port()->close();
   }
 
-  if (owned_ctx_) {
-    owned_ctx_->waitForExit();
+  if (owned_ctx_) { //检查指针是否有效（非nullptr）
+    owned_ctx_->waitForExit();//等待IO上下文的所有异步操作完成，waitForExit() 阻塞直到这些线程完全停止
   }
 }
 
+//从下位机（串口）接收数据（receiveData方法，将串口字节流转化为自定义结构体） 
+//→ 解析处理（publishImuData 方法，将转化后的结构体，转换为 ROS 2 消息格式） 
+//→ 发布到ROS 2话题
 void StandardRobotPpRos2Node::createPublisher()
 {
   imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>("serial/imu", 10);
