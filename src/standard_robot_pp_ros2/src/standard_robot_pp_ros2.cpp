@@ -77,9 +77,9 @@ StandardRobotPpRos2Node::~StandardRobotPpRos2Node()
   }
 }
 
-//从下位机（串口）接收数据（receiveData方法，将串口字节流转化为自定义结构体） 
-//→ 解析处理（publishImuData 方法，将转化后的结构体，转换为 ROS 2 消息格式） 
-//→ 发布到ROS 2话题
+//从下位机（串口）接收数据（receiveData方法，将串口字节流转化为自定义结构体）→  
+//解析处理（publishImuData 方法，将转化后的结构体，转换为 ROS 2 消息格式） → 
+//发布到ROS 2话题
 void StandardRobotPpRos2Node::createPublisher()
 {
   imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>("serial/imu", 10);
@@ -103,14 +103,16 @@ void StandardRobotPpRos2Node::createPublisher()
   buff_pub_ = this->create_publisher<pb_rm_interfaces::msg::Buff>("referee/buff", 10);
 }
 
+//动态创建调试发布者，用于实时发布下位机的调试变量，name为下位机传入的调试变量名
 void StandardRobotPpRos2Node::createNewDebugPublisher(const std::string & name)
 {
   RCLCPP_INFO(get_logger(), "Create new debug publisher: %s", name.c_str());
   std::string topic_name = "serial/debug/" + name;
   auto debug_pub = this->create_publisher<example_interfaces::msg::Float64>(topic_name, 10);
-  debug_pub_map_.insert(std::make_pair(name, debug_pub));
+  debug_pub_map_.insert(std::make_pair(name, debug_pub));//用键值对形式，储存发布者指针
 }
 
+//动态创建调试订阅者，主要看底盘速度，这个订阅话题由NAV2的路径规划发布
 void StandardRobotPpRos2Node::createSubscription()
 {
   cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
@@ -129,17 +131,30 @@ void StandardRobotPpRos2Node::createSubscription()
     std::bind(&StandardRobotPpRos2Node::visionTargetCallback, this, std::placeholders::_1));
 }
 
+//从ROS2参数服务器读取串口配置参数，初始化串口驱动
+/*三种参数来源
+1. 启动命令行
+  $ ros2 run ... --ros-args -p device_name:=/dev/ttyUSB0
+
+2. 配置文件（YAML）standard_robot_pp_ros2.yaml
+  device_name: /dev/ttyUSB0
+  baud_rate: 115200
+
+3. launch文件
+  <param name="device_name" value="/dev/ttyUSB0"/>
+*/
 void StandardRobotPpRos2Node::getParams()
 {
-  using FlowControl = drivers::serial_driver::FlowControl;
-  using Parity = drivers::serial_driver::Parity;
-  using StopBits = drivers::serial_driver::StopBits;
+  using FlowControl = drivers::serial_driver::FlowControl; //流控制，流控制用于防止数据传输过快导致接收端缓冲区溢出。
+  using Parity = drivers::serial_driver::Parity; //奇偶校验
+  using StopBits = drivers::serial_driver::StopBits; //停止位
 
-  uint32_t baud_rate{};
-  auto fc = FlowControl::NONE;
-  auto pt = Parity::NONE;
-  auto sb = StopBits::ONE;
+  uint32_t baud_rate{}; //波特率
+  auto fc = FlowControl::NONE; //不使用流控制
+  auto pt = Parity::NONE; //不使用奇偶校验
+  auto sb = StopBits::ONE; //1个停止位
 
+  //向ROS2框架声明这个节点有一个参数device_name，从参数服务器读取参数值，如果参数不存在，使用默认值 ""
   try {
     device_name_ = declare_parameter<std::string>("device_name", "");
   } catch (rclcpp::ParameterTypeException & ex) {
@@ -158,11 +173,11 @@ void StandardRobotPpRos2Node::getParams()
     const auto fc_string = declare_parameter<std::string>("flow_control", "");
 
     if (fc_string == "none") {
-      fc = FlowControl::NONE;
+      fc = FlowControl::NONE; //不使用流控制
     } else if (fc_string == "hardware") {
-      fc = FlowControl::HARDWARE;
+      fc = FlowControl::HARDWARE; //硬件流控制
     } else if (fc_string == "software") {
-      fc = FlowControl::SOFTWARE;
+      fc = FlowControl::SOFTWARE; //软件流控制
     } else {
       throw std::invalid_argument{
         "The flow_control parameter must be one of: none, software, or hardware."};
@@ -176,11 +191,11 @@ void StandardRobotPpRos2Node::getParams()
     const auto pt_string = declare_parameter<std::string>("parity", "");
 
     if (pt_string == "none") {
-      pt = Parity::NONE;
+      pt = Parity::NONE; //不使用奇偶校验
     } else if (pt_string == "odd") {
-      pt = Parity::ODD;
+      pt = Parity::ODD; //奇校验
     } else if (pt_string == "even") {
-      pt = Parity::EVEN;
+      pt = Parity::EVEN; //偶校验
     } else {
       throw std::invalid_argument{"The parity parameter must be one of: none, odd, or even."};
     }
@@ -193,11 +208,11 @@ void StandardRobotPpRos2Node::getParams()
     const auto sb_string = declare_parameter<std::string>("stop_bits", "");
 
     if (sb_string == "1" || sb_string == "1.0") {
-      sb = StopBits::ONE;
+      sb = StopBits::ONE; //1位停止位
     } else if (sb_string == "1.5") {
-      sb = StopBits::ONE_POINT_FIVE;
+      sb = StopBits::ONE_POINT_FIVE; //1.5位停止位
     } else if (sb_string == "2" || sb_string == "2.0") {
-      sb = StopBits::TWO;
+      sb = StopBits::TWO; //2位停止位
     } else {
       throw std::invalid_argument{"The stop_bits parameter must be one of: 1, 1.5, or 2."};
     }
@@ -206,12 +221,21 @@ void StandardRobotPpRos2Node::getParams()
     throw ex;
   }
 
+  //std::make_unique 工厂函数，用于创建 std::unique_ptr 智能指针，类似new操作符，但更安全
+  /*
+  // 1. 使用 new 创建原始指针
+      drivers::serial_driver::SerialPortConfig* raw_ptr = 
+      new drivers::serial_driver::SerialPortConfig(baud_rate, fc, pt, sb);
+
+  // 2. 将原始指针的所有权转移给智能指针
+      device_config_.reset(raw_ptr); 
+  */
   device_config_ =
     std::make_unique<drivers::serial_driver::SerialPortConfig>(baud_rate, fc, pt, sb);
 
-  record_rosbag_ = declare_parameter("record_rosbag", false);
-  set_detector_color_ = declare_parameter("set_detector_color", false);
-  debug_ = declare_parameter("debug", false);
+  record_rosbag_ = declare_parameter("record_rosbag", false); //是否记录rosbag
+  set_detector_color_ = declare_parameter("set_detector_color", false); //是否设置检测器颜色
+  debug_ = declare_parameter("debug", false); //是否调试
 }
 
 /********************************************************/
