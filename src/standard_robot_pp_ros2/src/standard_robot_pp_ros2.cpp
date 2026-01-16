@@ -294,13 +294,13 @@ void StandardRobotPpRos2Node::serialPortProtect()
 
 void StandardRobotPpRos2Node::receiveData()
 {
-  RCLCPP_INFO(get_logger(), "Start receiveData!");
+  RCLCPP_INFO(get_logger(), "Start receiveData!"); //线程启动时，打印日志信息
 
-  std::vector<uint8_t> sof(1);
-  std::vector<uint8_t> receive_data;
+  std::vector<uint8_t> sof(1); //储存单字节帧头
+  std::vector<uint8_t> receive_data; //储存接收数据
 
-  int sof_count = 0;
-  int retry_count = 0;
+  int sof_count = 0; //帧头计数
+  int retry_count = 0; // 串口异常重试计数
 
   while (rclcpp::ok()) {
     if (!is_usb_ok_) {
@@ -310,10 +310,10 @@ void StandardRobotPpRos2Node::receiveData()
     }
 
     try {
-      serial_driver_->port()->receive(sof);
+      serial_driver_->port()->receive(sof); // 阻塞式读取1字节
 
-      if (sof[0] != SOF_RECEIVE) {
-        sof_count++;
+      if (sof[0] != SOF_RECEIVE) { // SOF_RECEIVE = 0x5A
+        sof_count++; // 帧头计数
         RCLCPP_INFO(get_logger(), "Find sof, cnt=%d", sof_count);
         continue;
       }
@@ -326,7 +326,7 @@ void StandardRobotPpRos2Node::receiveData()
 
       serial_driver_->port()->receive(header_frame_buf);  // 读取除 sof 外剩下的数据
       header_frame_buf.insert(header_frame_buf.begin(), sof[0]);  // 添加 sof
-      HeaderFrame header_frame = fromVector<HeaderFrame>(header_frame_buf);
+      HeaderFrame header_frame = fromVector<HeaderFrame>(header_frame_buf); // 将串口字节流转化为 HeaderFrame 结构体
 
       // HeaderFrame CRC8 check
       bool crc8_ok = crc8::verify_CRC8_check_sum(
