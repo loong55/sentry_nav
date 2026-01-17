@@ -358,6 +358,8 @@ void StandardRobotPpRos2Node::receiveData()
 
       // 是否开启调试模式，在 getParams() 方法中初始化 debug_ 参数（默认false，可从YAML配置文件或launch文件设置）
       // 根据上位机和下位机的id共同决定，是否处理调试数据包
+      // 开启调试模式后，上位机可以用话题或者rqt_graph查看下位机发送的调试数据
+      // 上位机关闭调试模式后，如果下位机发送调试数据包，则上位机会忽略该数据包
       if (!debug_ && header_frame.id == ID_DEBUG) {
         continue;
       }
