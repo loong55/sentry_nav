@@ -315,7 +315,7 @@ void StandardRobotPpRos2Node::receiveData()
       if (sof[0] != SOF_RECEIVE) { // SOF_RECEIVE = 0x5A
         sof_count++; // 帧头计数
         RCLCPP_INFO(get_logger(), "Find sof, cnt=%d", sof_count);
-        continue;
+        continue; //如果不是帧头，跳出循环，进入下一次 while (rclcpp::ok())循环继续读取
       }
 
       // Reset sof_count when SOF_RECEIVE is found
@@ -329,16 +329,17 @@ void StandardRobotPpRos2Node::receiveData()
       HeaderFrame header_frame = fromVector<HeaderFrame>(header_frame_buf); // 将串口字节流转化为 HeaderFrame 结构体
 
       // HeaderFrame CRC8 check
+      // CRC8 校验只针对帧头部分，下位机通过帧头前3个字节计算 CRC8 校验码，放在第4个字节，上位机接收到帧头后，对前3个字节进行 CRC8 校验
       bool crc8_ok = crc8::verify_CRC8_check_sum(
         reinterpret_cast<uint8_t *>(&header_frame), sizeof(header_frame));
       if (!crc8_ok) {
         RCLCPP_ERROR(get_logger(), "Header frame CRC8 error!");
-        continue;
+        continue; //帧头crc8校验失败，跳出循环，进入下一次 while (rclcpp::ok())循环继续读取
       }
 
       // crc8_ok 校验正确后读取数据段
       // 根据数据段长度读取数据
-      std::vector<uint8_t> data_buf(header_frame.len + 2);  // len + crc
+      std::vector<uint8_t> data_buf(header_frame.len + 2);  // 初始化动态数组data_buf，包含len个数据 + 2字节CRC的长度
       int received_len = serial_driver_->port()->receive(data_buf);
       int received_len_sum = received_len;
       // 考虑到一次性读取数据可能存在数据量过大，读取不完整的情况。需要检测是否读取完整
@@ -352,9 +353,11 @@ void StandardRobotPpRos2Node::receiveData()
         remain_len -= received_len;
       }
 
-      // 数据段读取完成后添加 header_frame_buf 到 data_buf，得到完整数据包
+      // 数据段读取完成后添加 header_frame_buf 到 data_buf，得到完整数据包;之前的data_buf初始化数据长度数据段+CRC16，这里会自动扩容
       data_buf.insert(data_buf.begin(), header_frame_buf.begin(), header_frame_buf.end());
 
+      // 是否开启调试模式，在 getParams() 方法中初始化 debug_ 参数（默认false，可从YAML配置文件或launch文件设置）
+      // 根据上位机和下位机的id共同决定，是否处理调试数据包
       if (!debug_ && header_frame.id == ID_DEBUG) {
         continue;
       }
