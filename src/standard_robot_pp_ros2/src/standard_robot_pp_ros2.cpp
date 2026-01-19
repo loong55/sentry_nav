@@ -436,17 +436,20 @@ void StandardRobotPpRos2Node::receiveData()
   }
 }
 
+//发布调试数据
 void StandardRobotPpRos2Node::publishDebugData(ReceiveDebugData & received_debug_data)
 {
   static rclcpp::Publisher<example_interfaces::msg::Float64>::SharedPtr debug_pub;
+
+  // 遍历所有调试数据包
   for (auto & package : received_debug_data.packages) {
     // Create a vector to hold the non-zero data
     std::vector<uint8_t> non_zero_data;
-    for (unsigned char name : package.name) {
+    for (unsigned char name : package.name) { // 遍历所有数据包中的名称
       if (name != 0) {
         non_zero_data.push_back(name);
       } else {
-        break;
+        break; // 遇到0字节（字符串结尾）就停止
       }
     }
     // Convert the non-zero data to a string
@@ -467,6 +470,8 @@ void StandardRobotPpRos2Node::publishDebugData(ReceiveDebugData & received_debug
   }
 }
 
+
+//发布IMU数据
 void StandardRobotPpRos2Node::publishImuData(ReceiveImuData & imu_data)
 {
   sensor_msgs::msg::JointState joint_msg;
@@ -498,14 +503,17 @@ void StandardRobotPpRos2Node::publishImuData(ReceiveImuData & imu_data)
   joint_state_pub_->publish(joint_msg);
 }
 
+// 发布机器人状态信息
 void StandardRobotPpRos2Node::publishRobotInfo(ReceiveRobotInfoData & robot_info)
 {
   pb_rm_interfaces::msg::RobotStateInfo msg;
 
-  msg.header.stamp.sec = robot_info.time_stamp / 1000;
-  msg.header.stamp.nanosec = (robot_info.time_stamp % 1000) * 1e6;
+  // 设置时间戳：秒和纳秒
+  msg.header.stamp.sec = robot_info.time_stamp / 1000; // 毫秒转换为秒
+  msg.header.stamp.nanosec = (robot_info.time_stamp % 1000) * 1e6; // 毫秒转换为纳秒
   msg.header.frame_id = "odom";
 
+  // 从预定义的robot_models_映射中查找对应的型号名称
   msg.models.chassis = robot_models_.chassis.at(robot_info.data.type.chassis);
   msg.models.gimbal = robot_models_.gimbal.at(robot_info.data.type.gimbal);
   msg.models.shoot = robot_models_.shoot.at(robot_info.data.type.shoot);
@@ -520,6 +528,7 @@ void StandardRobotPpRos2Node::publishEventData(ReceiveEventData & event_data)
 {
   pb_rm_interfaces::msg::EventData msg;
 
+  // 直接复制下位机传来的各个事件标志位
   msg.non_overlapping_supply_zone = event_data.data.non_overlapping_supply_zone;
   msg.overlapping_supply_zone = event_data.data.overlapping_supply_zone;
   msg.supply_zone = event_data.data.supply_zone;
@@ -535,38 +544,42 @@ void StandardRobotPpRos2Node::publishEventData(ReceiveEventData & event_data)
   event_data_pub_->publish(msg);
 }
 
+//发布基地和前哨站血量
 void StandardRobotPpRos2Node::publishAllRobotHp(ReceiveAllRobotHpData & all_robot_hp)
 {
   pb_rm_interfaces::msg::GameRobotHP msg;
 
+  // 红队基地和前哨站的HP
   msg.red_outpost_hp = all_robot_hp.data.red_outpost_hp;
   msg.red_base_hp = all_robot_hp.data.red_base_hp;
 
-
+  // 蓝队基地和前哨站的HP
   msg.blue_outpost_hp = all_robot_hp.data.blue_outpost_hp;
   msg.blue_base_hp = all_robot_hp.data.blue_base_hp;
 
   all_robot_hp_pub_->publish(msg);
 }
 
+// 发布比赛状态
 void StandardRobotPpRos2Node::publishGameStatus(ReceiveGameStatusData & game_status)
 {
   pb_rm_interfaces::msg::GameStatus msg;
-  msg.game_progress = game_status.data.game_progress;
-  msg.stage_remain_time = game_status.data.stage_remain_time;
+  msg.game_progress = game_status.data.game_progress; // 比赛阶段
+  msg.stage_remain_time = game_status.data.stage_remain_time;  // 阶段剩余时间
   game_status_pub_->publish(msg);
 
+  // 如果启用了rosbag录制，根据比赛状态自动控制rosbag录制
   if (record_rosbag_ && game_status.data.game_progress != previous_game_progress_) {
-    previous_game_progress_ = game_status.data.game_progress;
+    previous_game_progress_ = game_status.data.game_progress; // 更新上一个比赛状态
     RCLCPP_INFO(get_logger(), "Game progress: %d", game_status.data.game_progress);
 
     std::string service_name;
     switch (game_status.data.game_progress) {
       case pb_rm_interfaces::msg::GameStatus::COUNT_DOWN:
-        service_name = "start_recording";
+        service_name = "start_recording"; // 开始录制
         break;
       case pb_rm_interfaces::msg::GameStatus::GAME_OVER:
-        service_name = "stop_recording";
+        service_name = "stop_recording"; // 停止录制
         break;
       default:
         return;
@@ -578,17 +591,19 @@ void StandardRobotPpRos2Node::publishGameStatus(ReceiveGameStatusData & game_sta
   }
 }
 
+// 发布机器人运动信息 
 void StandardRobotPpRos2Node::publishRobotMotion(ReceiveRobotMotionData & robot_motion)
 {
-  geometry_msgs::msg::Twist msg;
+  geometry_msgs::msg::Twist msg;  // Twist消息表示线速度和角速度
 
-  msg.linear.x = robot_motion.data.speed_vector.vx;
+  msg.linear.x = robot_motion.data.speed_vector.vx; 
   msg.linear.y = robot_motion.data.speed_vector.vy;
   msg.angular.z = robot_motion.data.speed_vector.wz;
 
   robot_motion_pub_->publish(msg);
 }
 
+// 发布地面机器人位置
 void StandardRobotPpRos2Node::publishGroundRobotPosition(
   ReceiveGroundRobotPosition & ground_robot_position)
 {
@@ -609,6 +624,7 @@ void StandardRobotPpRos2Node::publishGroundRobotPosition(
   ground_robot_position_pub_->publish(msg);
 }
 
+// 发布RFID状态
 void StandardRobotPpRos2Node::publishRfidStatus(ReceiveRfidStatus & rfid_status)
 {
   pb_rm_interfaces::msg::RfidStatus msg;
@@ -647,33 +663,46 @@ void StandardRobotPpRos2Node::publishRfidStatus(ReceiveRfidStatus & rfid_status)
   rfid_status_pub_->publish(msg);
 }
 
+// 发布机器人状态
 void StandardRobotPpRos2Node::publishRobotStatus(ReceiveRobotStatus & robot_status)
 {
   pb_rm_interfaces::msg::RobotStatus msg;
 
-  msg.robot_id = robot_status.data.robot_id;
-  msg.robot_level = robot_status.data.robot_level;
-  msg.current_hp = robot_status.data.current_up;
-  msg.maximum_hp = robot_status.data.maximum_hp;
-  msg.shooter_barrel_cooling_value = robot_status.data.shooter_barrel_cooling_value;
-  msg.shooter_barrel_heat_limit = robot_status.data.shooter_barrel_heat_limit;
-  msg.shooter_17mm_1_barrel_heat = robot_status.data.shooter_17mm_1_barrel_heat;
+  //基本信息
+  msg.robot_id = robot_status.data.robot_id; //机器人id
+  msg.robot_level = robot_status.data.robot_level; //机器人等级
+  msg.current_hp = robot_status.data.current_up; //当前血量
+  msg.maximum_hp = robot_status.data.maximum_hp; //最大血量
+
+  //枪管热量相关
+  msg.shooter_barrel_cooling_value = robot_status.data.shooter_barrel_cooling_value; //枪管冷却值
+  msg.shooter_barrel_heat_limit = robot_status.data.shooter_barrel_heat_limit; //枪管热量上限
+  msg.shooter_17mm_1_barrel_heat = robot_status.data.shooter_17mm_1_barrel_heat; //当前热量
+
+  //机器人位置和朝向
   msg.robot_pos.position.x = robot_status.data.robot_pos_x;
   msg.robot_pos.position.y = robot_status.data.robot_pos_y;
+  // 使用四元数表示方向（绕Z轴旋转）
   msg.robot_pos.orientation =
     tf2::toMsg(tf2::Quaternion(tf2::Vector3(0, 0, 1), robot_status.data.robot_pos_angle));
-  msg.armor_id = robot_status.data.armor_id;
-  msg.hp_deduction_reason = robot_status.data.hp_deduction_reason;
-  msg.projectile_allowance_17mm = robot_status.data.projectile_allowance_17mm;
-  msg.remaining_gold_coin = robot_status.data.remaining_gold_coin;
 
+  // 伤害信息  
+  msg.armor_id = robot_status.data.armor_id; //被击中的装甲id
+  msg.hp_deduction_reason = robot_status.data.hp_deduction_reason; //血量减少原因
+
+  //弹药和金币
+  msg.projectile_allowance_17mm = robot_status.data.projectile_allowance_17mm; //17mm弹药数量
+  msg.remaining_gold_coin = robot_status.data.remaining_gold_coin; //剩余的金币数量
+
+  // 检测是否被扣血（当前血量 < 上次血量）
   if (last_hp_ - msg.current_hp > 0) {
     msg.is_hp_deduced = true;
   }
-  last_hp_ = robot_status.data.current_up;
+  last_hp_ = robot_status.data.current_up; //保存本次血量
 
   robot_status_pub_->publish(msg);
 
+  // 自动设置目标检测器的颜色
   if (set_detector_color_) {
     uint8_t detect_color;
     if (getDetectColor(robot_status.data.robot_id, detect_color)) {
@@ -686,21 +715,23 @@ void StandardRobotPpRos2Node::publishRobotStatus(ReceiveRobotStatus & robot_stat
   }
 }
 
+// 保存云台的俯仰和偏航角度，供publishImuData使用
 void StandardRobotPpRos2Node::publishJointState(ReceiveJointState & packet)
 {
   last_gimbal_pitch_odom_joint_ = packet.data.pitch;
   last_gimbal_yaw_odom_joint_ = packet.data.yaw;
 }
 
+// 发布增益状态
 void StandardRobotPpRos2Node::publishBuff(ReceiveBuff & buff)
 {
   pb_rm_interfaces::msg::Buff msg;
-  msg.recovery_buff = buff.data.recovery_buff;
-  msg.cooling_buff = buff.data.cooling_buff;
-  msg.defence_buff = buff.data.defence_buff;
-  msg.vulnerability_buff = buff.data.vulnerability_buff;
-  msg.attack_buff = buff.data.attack_buff;
-  msg.remaining_energy = buff.data.remaining_energy;
+  msg.recovery_buff = buff.data.recovery_buff;              // 恢复增益
+  msg.cooling_buff = buff.data.cooling_buff;                // 冷却增益
+  msg.defence_buff = buff.data.defence_buff;                // 防御增益
+  msg.vulnerability_buff = buff.data.vulnerability_buff;    // 易伤增益
+  msg.attack_buff = buff.data.attack_buff;                  // 攻击增益
+  msg.remaining_energy = buff.data.remaining_energy;        // 剩余能量值
   buff_pub_->publish(msg);
 }
 
@@ -711,37 +742,41 @@ void StandardRobotPpRos2Node::sendData()
 {
   RCLCPP_INFO(get_logger(), "Start sendData!");
 
-  send_robot_cmd_data_.frame_header.sof = SOF_SEND;
-  send_robot_cmd_data_.frame_header.id = ID_ROBOT_CMD;
-  send_robot_cmd_data_.frame_header.len = sizeof(SendRobotCmdData) - 6;
+  // 初始化发送数据包
+  send_robot_cmd_data_.frame_header.sof = SOF_SEND;        // 帧头起始字节
+  send_robot_cmd_data_.frame_header.id = ID_ROBOT_CMD;     // 数据包ID
+  send_robot_cmd_data_.frame_header.len = sizeof(SendRobotCmdData) - 6;  // 数据长度
+
+  // 初始化速度为0
   send_robot_cmd_data_.data.speed_vector.vx = 0;
   send_robot_cmd_data_.data.speed_vector.vy = 0;
   send_robot_cmd_data_.data.speed_vector.wz = 0;
-  // 添加帧头crc8校验
+
+  // 计算帧头CRC8校验
   crc8::append_CRC8_check_sum(
     reinterpret_cast<uint8_t *>(&send_robot_cmd_data_), sizeof(HeaderFrame));
 
   int retry_count = 0;
 
-  while (rclcpp::ok()) {
+  while (rclcpp::ok()) {  // 持续运行直到ROS2关闭
     if (!is_usb_ok_) {
+      // USB（串口）连接不正常，等待并重试
       RCLCPP_WARN(get_logger(), "send: usb is not ok! Retry count: %d", retry_count++);
       std::this_thread::sleep_for(std::chrono::milliseconds(USB_NOT_OK_SLEEP_TIME));
       continue;
     }
 
     //RCLCPP_ERROR(get_logger(), "Error ");
-
-
+    
     try {
-      // 整包数据校验
-      // 添加数据段crc16校验
+      // 添加数据段CRC16校验（覆盖所有数据）
       crc16::append_CRC16_check_sum(
         reinterpret_cast<uint8_t *>(&send_robot_cmd_data_), sizeof(SendRobotCmdData));
 
-      // 发送数据
+      // 将C++结构体转换为字节向量
       std::vector<uint8_t> send_data = toVector(send_robot_cmd_data_);
 
+      // 通过串口发送数据
       serial_driver_->port()->send(send_data);
 
     //  RCLCPP_ERROR(get_logger(), "Sending data: vx=%.2f, vy=%.2f, wz=%.2f", 
@@ -753,19 +788,24 @@ void StandardRobotPpRos2Node::sendData()
       RCLCPP_ERROR(get_logger(), "Error sending data: %s", ex.what());
       is_usb_ok_ = false;
     }
+    
+    // 发送频率约200Hz (5ms间隔)
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
   }
 }
 
+//底盘速度回调
 void StandardRobotPpRos2Node::cmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg)
 {
+  // 接收NAV2的路径规划输出（cmd_vel_nav2_result话题）
   send_robot_cmd_data_.data.speed_vector.vx = msg->linear.x;
   send_robot_cmd_data_.data.speed_vector.vy = msg->linear.y;
   send_robot_cmd_data_.data.speed_vector.wz = msg->angular.z;
 
-  std::cout<<msg->linear.x<< " "<<msg->linear.y<<std::endl;
+  std::cout<<msg->linear.x<< " "<<msg->linear.y<<std::endl;  // 控制台输出
 }
 
+//云台关节回调
 void StandardRobotPpRos2Node::cmdGimbalJointCallback(
   const sensor_msgs::msg::JointState::SharedPtr msg)
 {
@@ -784,11 +824,14 @@ void StandardRobotPpRos2Node::cmdGimbalJointCallback(
   }
 }
 
+//视觉目标回调
 void StandardRobotPpRos2Node::visionTargetCallback(
   const auto_aim_interfaces::msg::Target::SharedPtr msg)
 {
   send_robot_cmd_data_.data.tracking.tracking = msg->tracking;
 }
+
+//射击回调
 void StandardRobotPpRos2Node::cmdShootCallback(const example_interfaces::msg::UInt8::SharedPtr msg)
 {
   send_robot_cmd_data_.data.shoot.fire = msg->data;
@@ -799,6 +842,7 @@ void StandardRobotPpRos2Node::cmdShootCallback(const example_interfaces::msg::UI
 //   send_robot_cmd_data_.data.shoot.fire = msg->data;
 // }
 
+//参数设置函数（视觉探测相关）
 void StandardRobotPpRos2Node::setParam(const rclcpp::Parameter & param)
 {
   if (!initial_set_param_) {
@@ -851,22 +895,29 @@ void StandardRobotPpRos2Node::setParam(const rclcpp::Parameter & param)
   }
 }
 
+// 根据机器人ID获取检测颜色
 bool StandardRobotPpRos2Node::getDetectColor(uint8_t robot_id, uint8_t & color)
 {
+  // 机器人ID判断规则：
+  // - 红队：1-11号
+  // - 蓝队：101-111号
   if (robot_id == 0 || (robot_id > 11 && robot_id < 101)) {
     RCLCPP_WARN_THROTTLE(
       get_logger(), *this->get_clock(), 1000, "Invalid robot ID: %d. Color not set.", robot_id);
     return false;
   }
-  color = (robot_id >= 100) ? 0 : 1;
+  color = (robot_id >= 100) ? 0 : 1; // 0:红色, 1:蓝色
   return true;
 }
 
+// 调用Trigger服务（用于rosbag录制控制）
 bool StandardRobotPpRos2Node::callTriggerService(const std::string & service_name)
 {
+  // 创建服务客户端
   auto client = this->create_client<std_srvs::srv::Trigger>(service_name);
   auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
-
+ 
+  // 等待服务可用（最多等待5秒）
   auto start_time = std::chrono::steady_clock::now();
   while (!client->wait_for_service(0.1s)) {
     if (!rclcpp::ok()) {
@@ -883,6 +934,7 @@ bool StandardRobotPpRos2Node::callTriggerService(const std::string & service_nam
     RCLCPP_INFO(get_logger(), "Service %s not available, waiting again...", service_name.c_str());
   }
 
+  // 异步调用服务
   auto result = client->async_send_request(request);
   if (
     rclcpp::spin_until_future_complete(this->shared_from_this(), result) ==

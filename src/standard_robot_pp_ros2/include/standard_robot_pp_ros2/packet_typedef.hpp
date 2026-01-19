@@ -57,7 +57,7 @@ struct HeaderFrame
 /* Receive data                                         */
 /********************************************************/
 
-// 串口调试数据包
+// 串口调试数据包，包含帧头，时间戳，10个调试数据项，每个调试数据项包含名称、类型和数据值
 struct ReceiveDebugData
 {
   HeaderFrame frame_header; // 数据帧头，4个字节
