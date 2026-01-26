@@ -299,8 +299,8 @@ struct ReceiveRobotStatus
   {
     uint8_t robot_id; // 机器人id
     uint8_t robot_level; // 机器人等级
-    uint16_t current_up; // 当前能量
-    uint16_t maximum_hp; // 最大能量
+    uint16_t current_hp; // 当前血量
+    uint16_t maximum_hp; // 最大血量
     uint16_t shooter_barrel_cooling_value; // 射手冷却值
     uint16_t shooter_barrel_heat_limit; // 射手热量上限
 

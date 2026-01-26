@@ -671,7 +671,7 @@ void StandardRobotPpRos2Node::publishRobotStatus(ReceiveRobotStatus & robot_stat
   //基本信息
   msg.robot_id = robot_status.data.robot_id; //机器人id
   msg.robot_level = robot_status.data.robot_level; //机器人等级
-  msg.current_hp = robot_status.data.current_up; //当前血量
+  msg.current_hp = robot_status.data.current_hp; //当前血量
   msg.maximum_hp = robot_status.data.maximum_hp; //最大血量
 
   //枪管热量相关
@@ -698,7 +698,7 @@ void StandardRobotPpRos2Node::publishRobotStatus(ReceiveRobotStatus & robot_stat
   if (last_hp_ - msg.current_hp > 0) {
     msg.is_hp_deduced = true;
   }
-  last_hp_ = robot_status.data.current_up; //保存本次血量
+  last_hp_ = robot_status.data.current_hp; //保存本次血量
 
   robot_status_pub_->publish(msg);
 
