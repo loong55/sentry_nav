@@ -9,14 +9,14 @@ standard_robot_pp_ros2:
     record_rosbag: false           # 是否记录rosbag
     debug: false                   # 是否开启调试信息输出
 
-joint_state_publisher:
+joint_state_publisher:             # 云台关节状态发布器（pitch, yaw, pitch_odom, yaw_odom）
   ros__parameters:
     use_sim_time: false
-    rate: 200            # 发布频率   
+    rate: 200            # 发布频率，发布 /joint_states (标准话题)  
     source_list: ["serial/gimbal_joint_state"]
     offset_timestamp: 0.0
 
-robot_state_publisher:
+robot_state_publisher:  # 机器人状态发布器，读取/joint_states话题和URDF并发布TF
   ros__parameters:
     use_sim_time: false
     publish_frequency: 200.0  # 发布频率
