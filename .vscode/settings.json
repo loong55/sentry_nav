@@ -1,4 +1,5 @@
 {
     "Codegeex.RepoIndex": true,
-    "cmake.sourceDirectory": "/home/rmnuc2/sentry_ws/src/BehaviorTree.ROS2/btcpp_ros2_samples"
+    "cmake.sourceDirectory": "/home/rmnuc2/sentry_ws/src/BehaviorTree.ROS2/btcpp_ros2_samples",
+    "C_Cpp.default.compilerPath": "/usr/bin/g++"
 }

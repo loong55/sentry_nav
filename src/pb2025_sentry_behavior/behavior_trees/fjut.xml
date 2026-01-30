@@ -1,4 +1,4 @@
-  <?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
   <root BTCPP_format="4">
     <BehaviorTree ID="check_energy">
       <Fallback>
@@ -127,4 +127,4 @@
               <input_port name="topic_name" type="std::string" default="__default__placeholder__">Topic name</input_port>
           </Action>
       </TreeNodesModel>
-  </root>
+</root>
