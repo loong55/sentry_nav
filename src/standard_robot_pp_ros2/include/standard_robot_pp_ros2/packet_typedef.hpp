@@ -21,23 +21,23 @@
 
 namespace standard_robot_pp_ros2
 {
-const uint8_t SOF_RECEIVE = 0x5A; // 起始标志（Start Of Frame）
-const uint8_t SOF_SEND = 0x5A;
+const uint8_t SOF_RECEIVE = 0x5A; // 起始标志（Start Of Frame），接收数据
+const uint8_t SOF_SEND = 0x5A;    // 起始标志（Start Of Frame），发送数据
 
 // Receive 接收数据包ID映射表
-const uint8_t ID_DEBUG = 0x01;
-const uint8_t ID_IMU = 0x02;
-const uint8_t ID_ROBOT_STATE_INFO = 0x03;
-const uint8_t ID_EVENT_DATA = 0x04;
-const uint8_t ID_PID_DEBUG = 0x05;
-const uint8_t ID_ALL_ROBOT_HP = 0x06;
-const uint8_t ID_GAME_STATUS = 0x07;
-const uint8_t ID_ROBOT_MOTION = 0x08;
-const uint8_t ID_GROUND_ROBOT_POSITION = 0x09;
-const uint8_t ID_RFID_STATUS = 0x0A;
-const uint8_t ID_ROBOT_STATUS = 0x0B;
-const uint8_t ID_JOINT_STATE = 0x0C;
-const uint8_t ID_BUFF = 0x0D;
+const uint8_t ID_DEBUG = 0x01;       // 调试信息    
+const uint8_t ID_IMU = 0x02;        // IMU数据
+const uint8_t ID_ROBOT_STATE_INFO = 0x03; // 机器人信息
+const uint8_t ID_EVENT_DATA = 0x04; // 事件数据
+const uint8_t ID_PID_DEBUG = 0x05;  // PID调试数据
+const uint8_t ID_ALL_ROBOT_HP = 0x06; // 所有机器人血量
+const uint8_t ID_GAME_STATUS = 0x07;  // 游戏状态
+const uint8_t ID_ROBOT_MOTION = 0x08; // 机器人运动状态
+const uint8_t ID_GROUND_ROBOT_POSITION = 0x09;  // 地面机器人位置
+const uint8_t ID_RFID_STATUS = 0x0A;  // RFID状态
+const uint8_t ID_ROBOT_STATUS = 0x0B; // 机器人状态
+const uint8_t ID_JOINT_STATE = 0x0C;  // 关节状态
+const uint8_t ID_BUFF = 0x0D;        // Buff状态
 // Send 发送数据包ID映射表
 const uint8_t ID_ROBOT_CMD = 0x01; // 机器人控制指令
 
