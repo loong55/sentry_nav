@@ -29,13 +29,18 @@ mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release && make -j
 sudo make install
 ```
-#### 2.创建工作空间并编译
+#### 2.创建工作空间并编译(限制编译线程数量，防止编译失败)
 ```bash
 mkdir -p ~/sentry_ws
 cd ~/sentry_ws
 ```
 ```bash
 git clone --recursive https://github.com/loong55/sentry_nav.git
+```
+```bash
+cd ~/sentry_ws
+rosdep install -r --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
+colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --executor parallel --parallel-workers 2
 ```
 
 
