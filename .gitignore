@@ -8,13 +8,14 @@ install/
 log/
 
 # 排除src/pb2025_sentry_nav/point_lio/PCD目录下的所有文件
-src/pb2025_sentry_nav/point_lio/PCD/*
+src/pb2025_sentry_nav/point_lio/PCD/*.pcd
 
 # 排除src/pb2025_sentry_nav/pb2025_nav_bringup/map/reality目录下的所有文件
-src/pb2025_sentry_nav/pb2025_nav_bringup/map/reality/*
+src/pb2025_sentry_nav/pb2025_nav_bringup/map/reality/*.pgm
+src/pb2025_sentry_nav/pb2025_nav_bringup/map/reality/*.yaml
 
 # 排除src/pb2025_sentry_nav/pb2025_nav_bringup/pcd/reality目录下的所有文件
-src/pb2025_sentry_nav/pb2025_nav_bringup/pcd/reality/*
+src/pb2025_sentry_nav/pb2025_nav_bringup/pcd/reality/*.pcd
 
 # 排除src/pb2025_sentry_nav/pb2025_nav_bringup/pcd/simulation目录下以.pcd结尾的文件
 src/pb2025_sentry_nav/pb2025_nav_bringup/pcd/simulation/*.pcd
