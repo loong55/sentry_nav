@@ -351,7 +351,7 @@ controller_server:
       yaw_goal_tolerance: 6.28
     FollowPath:
       plugin: "pb_omni_pid_pursuit_controller::OmniPidPursuitController"
-      translation_kp: 1.5
+      translation_kp: 10.0
       translation_ki: 0.1
       translation_kd: 0.3
       enable_rotation: false
