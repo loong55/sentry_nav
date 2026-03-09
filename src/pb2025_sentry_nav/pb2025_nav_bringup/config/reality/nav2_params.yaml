@@ -99,7 +99,7 @@ sensor_scan_generation:
     use_sim_time: false
     lidar_frame: "front_mid360"
     base_frame: "base_footprint"
-    robot_base_frame: "gimbal_yaw"
+    robot_base_frame: "gimbal_yaw_fake" #gimbal_yaw
 
 terrain_analysis:
   ros__parameters:
@@ -427,7 +427,7 @@ local_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0        # 稍降：配合更大的 robot_radius，避免代价场过于拥挤
-        inflation_radius: 0.25          # 底盘半径 0.35m 外留 0.25m 安全间距，共 0.6m 安全半径
+        inflation_radius: 0.40          # 需大于内切半径(0.353)，设为0.40避免碰撞警告
       always_send_full_costmap: False
 
 global_costmap:
@@ -474,7 +474,7 @@ global_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-        inflation_radius: 0.25
+        inflation_radius: 0.40          # 需大于内切半径(0.353)，设为0.40避免碰撞警告
       always_send_full_costmap: False
 
 # The yaml_filename does not need to be specified since it going to be set by defaults in launch.

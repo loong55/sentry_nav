@@ -5,16 +5,20 @@
     <Repeat num_cycles="-1">
       <Sequence>
         <!-- 第一个目标点，等待导航完成 -->
-        <!-- <PubNav2Goal goal="0;0;0" topic_name="goal_pose"/>
-        <Sleep msec="5000"/> -->
+        <PubNav2Goal goal="3;0;0" topic_name="goal_pose"/>
+        <Sleep msec="3000"/>
         
         <!-- 第二个目标点，等待导航完成 -->
-        <PubNav2Goal goal="1;0;0" topic_name="goal_pose"/>
-        <Sleep msec="5000"/>
+        <PubNav2Goal goal="0;0;0" topic_name="goal_pose"/>
+        <Sleep msec="3000"/>
         
         <!-- 第三个目标点，等待导航完成 -->
-        <!-- <PubNav2Goal goal="0;1;0" topic_name="goal_pose"/>
-        <Sleep msec="5000"/> -->
+        <PubNav2Goal goal="0;3;0" topic_name="goal_pose"/>
+        <Sleep msec="3000"/>
+
+        <!-- 第四个目标点，等待导航完成 -->
+        <PubNav2Goal goal="0;0;0" topic_name="goal_pose"/>
+        <Sleep msec="3000"/>
       </Sequence>
     </Repeat>
   </BehaviorTree>
