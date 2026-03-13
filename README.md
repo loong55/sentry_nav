@@ -19,6 +19,7 @@
 ### src/standard_robot_pp_ros2/src/standard_robot_pp_ros2.cpp
 
 ### 7、添加姿态切换功能
+串口修改
 
 ### 编译
 #### 1.工作空间外安装 small_gicp
