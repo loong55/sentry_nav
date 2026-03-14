@@ -32,6 +32,7 @@
 #include "pb_rm_interfaces/msg/game_robot_hp.hpp"
 #include "pb_rm_interfaces/msg/game_status.hpp"
 #include "pb_rm_interfaces/msg/ground_robot_position.hpp"
+#include "pb_rm_interfaces/msg/posture_cmd.hpp"
 #include "pb_rm_interfaces/msg/rfid_status.hpp"
 #include "pb_rm_interfaces/msg/robot_state_info.hpp"
 #include "pb_rm_interfaces/msg/robot_status.hpp"
@@ -98,6 +99,7 @@ private:
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr cmd_gimbal_joint_sub_;
   rclcpp::Subscription<example_interfaces::msg::UInt8>::SharedPtr cmd_shoot_sub_;
+  rclcpp::Subscription<pb_rm_interfaces::msg::PostureCmd>::SharedPtr cmd_posture_sub_;
   rclcpp::Subscription<auto_aim_interfaces::msg::Target>::SharedPtr cmd_tracking_sub_;
 
   RobotModels robot_models_;
@@ -130,6 +132,7 @@ private:
   void cmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg);
   void cmdGimbalJointCallback(const sensor_msgs::msg::JointState::SharedPtr msg);
   void cmdShootCallback(const example_interfaces::msg::UInt8::SharedPtr msg);
+  void cmdPostureCallback(const pb_rm_interfaces::msg::PostureCmd::SharedPtr msg);
   void visionTargetCallback(const auto_aim_interfaces::msg::Target::SharedPtr msg);
 
   void setParam(const rclcpp::Parameter & param);
@@ -145,6 +148,7 @@ private:
   std::string detector_node_name_;
 
   uint8_t previous_game_progress_ = 0;
+  uint8_t latest_robot_id_ = 0;
 
   float last_hp_;
   float last_gimbal_pitch_odom_joint_, last_gimbal_yaw_odom_joint_;

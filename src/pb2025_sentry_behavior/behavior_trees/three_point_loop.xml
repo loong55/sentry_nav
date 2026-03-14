@@ -1,20 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4">
+  <BehaviorTree ID="posture_switch">
+    <Fallback>
+      <Sequence>
+        <IsHpDeduced key_port="{@referee_robotStatus}"/>
+        <PublishPostureCmd topic_name="cmd_posture" posture="2" reason="3" force_switch="true"/>
+      </Sequence>
+      <Sequence>
+        <IsShootLocked key_port="{@referee_robotStatus}"/>
+        <PublishPostureCmd topic_name="cmd_posture" posture="1" reason="2" force_switch="true"/>
+      </Sequence>
+      <Sequence>
+        <IsOutOfCombat key_port="{@referee_robotStatus}"/>
+        <PublishPostureCmd topic_name="cmd_posture" posture="3" reason="1" force_switch="false"/>
+      </Sequence>
+      <PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="false"/>
+    </Fallback>
+  </BehaviorTree>
+
   <!-- 三点循环运动行为树 -->
   <BehaviorTree ID="three_point_loop">
     <Repeat num_cycles="-1">
       <Sequence>
+        <SubTree ID="posture_switch"/>
+
         <!-- 第一个目标点，等待导航完成 -->
         <PubNav2Goal goal="3;0;0" topic_name="goal_pose"/>
         <Sleep msec="3000"/>
-        
+
+        <SubTree ID="posture_switch"/>
+
         <!-- 第二个目标点，等待导航完成 -->
         <PubNav2Goal goal="0;0;0" topic_name="goal_pose"/>
         <Sleep msec="3000"/>
-        
+
+        <SubTree ID="posture_switch"/>
+
         <!-- 第三个目标点，等待导航完成 -->
         <PubNav2Goal goal="0;3;0" topic_name="goal_pose"/>
         <Sleep msec="3000"/>
+
+        <SubTree ID="posture_switch"/>
 
         <!-- 第四个目标点，等待导航完成 -->
         <PubNav2Goal goal="0;0;0" topic_name="goal_pose"/>

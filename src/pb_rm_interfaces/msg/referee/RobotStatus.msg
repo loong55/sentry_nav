@@ -29,4 +29,10 @@ uint8 hp_deduction_reason               # 血量变化类型
 uint16 projectile_allowance_17mm        # 17mm 弹丸剩余发射次数
 uint16 remaining_gold_coin              # 剩余金币数量
 
+uint8 out_of_combat_status              # 哨兵脱战状态，1=是，0=否
+uint16 fire_rem_17mm                    # 队伍17mm允许发弹量的剩余可兑换数
+uint8 current_posture                   # 当前姿态（1=进攻 2=防御 3=移动）
+uint8 energy_mechanism_activable        # 己方能量机关是否可激活，1=是
+uint8 shoot_state                       # 自瞄状态，1=是
+
 bool is_hp_deduced                      # 血量是否下降（上位机二次处理）

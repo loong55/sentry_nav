@@ -57,6 +57,15 @@ list(APPEND plugin_libs is_detect_enemy)
 ament_auto_add_library(is_atk_op SHARED plugins/condition/is_atk_op.cpp)
 list(APPEND plugin_libs is_atk_op)
 
+ament_auto_add_library(is_out_of_combat SHARED plugins/condition/is_out_of_combat.cpp)
+list(APPEND plugin_libs is_out_of_combat)
+
+ament_auto_add_library(is_shoot_locked SHARED plugins/condition/is_shoot_locked.cpp)
+list(APPEND plugin_libs is_shoot_locked)
+
+ament_auto_add_library(is_hp_deduced SHARED plugins/condition/is_hp_deduced.cpp)
+list(APPEND plugin_libs is_hp_deduced)
+
 ####### Actions #######
 ament_auto_add_library(send_nav2_goal SHARED plugins/action/send_nav2_goal.cpp)
 list(APPEND plugin_libs send_nav2_goal)
@@ -66,6 +75,9 @@ list(APPEND plugin_libs pub_nav2_goal)
 
 ament_auto_add_library(pub_spin_speed SHARED plugins/action/pub_spin_speed.cpp)
 list(APPEND plugin_libs pub_spin_speed)
+
+ament_auto_add_library(pub_posture_cmd SHARED plugins/action/pub_posture_cmd.cpp)
+list(APPEND plugin_libs pub_posture_cmd)
 
 ament_auto_add_library(pub_twist SHARED plugins/action/pub_twist.cpp)
 list(APPEND plugin_libs pub_twist)

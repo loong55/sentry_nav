@@ -143,17 +143,19 @@ struct ReceiveEventData
     uint8_t overlapping_supply_zone : 1; //占领重叠补给区？
     uint8_t supply_zone : 1; //占领补给区？
 
-    uint8_t small_energy : 1;  // 小能量机关触发？
-    uint8_t big_energy : 1;  // 大能量机关触发？
-
-    uint8_t central_highland : 2; // 中央高地占领状态
+    uint8_t small_energy : 2;  // 小能量机关状态
+    uint8_t big_energy : 2;  // 大能量机关状态
     uint8_t reserved1 : 1;  // 保留1位
 
+    uint8_t central_highland : 2; // 中央高地占领状态
     uint8_t trapezoidal_highland : 2; //梯形高地占领状态
+    uint8_t reserved2 : 4; // 保留4位
 
     uint8_t center_gain_zone : 2;// 中心增益区占领状态
-
-    uint8_t reserved2 : 4; // 保留4位
+    uint8_t fortress_gain_zone : 2; // 堡垒增益点占领状态
+    uint8_t outpost_gain_zone : 2; // 前哨站增益点占领状态
+    uint8_t base_gain_zone : 1; // 基地增益点占领状态
+    uint8_t reserved3 : 1; // 保留1位
   } __attribute__((packed)) data;
   uint16_t crc;
 } __attribute__((packed));
@@ -181,13 +183,15 @@ struct ReceiveAllRobotHpData
 
   struct
   {
+    uint16_t ally_outpost_hp;  //己方前哨站血量
+    uint16_t ally_base_hp;     //己方基地血量
 
-    uint16_t red_outpost_hp; // 红方前哨站血量
-    uint16_t red_base_hp; // 红方基地血量
+    // uint16_t red_outpost_hp; // 红方前哨站血量
+    // uint16_t red_base_hp; // 红方基地血量
 
 
-    uint16_t blue_outpost_hp; // 蓝方前哨站血量
-    uint16_t blue_base_hp; // 蓝方基地血量
+    // uint16_t blue_outpost_hp; // 蓝方前哨站血量
+    // uint16_t blue_base_hp; // 蓝方基地血量
   } __attribute__((packed)) data;
 
   uint16_t crc;
@@ -310,11 +314,20 @@ struct ReceiveRobotStatus
     float robot_pos_y; // 机器人位置y
     float robot_pos_angle; // 机器人角度
 
-    uint8_t armor_id : 4; // 装甲id
-    uint8_t hp_deduction_reason : 4; // 伤害扣除原因
+    uint8_t armor_id : 4; // 当扣血原因为装甲模块被弹丸攻击、受撞击或离线时，该4 bit组
+                          //成的数值为装甲模块或测速模块的ID编号；当其他原因导致扣血时，该数值为0
+    uint8_t hp_deduction_reason : 4; // 伤害扣除原因；0：装甲模块被弹丸攻击导致扣血；1：装甲模块或超级电容管理模块离线导致扣血；5：装甲模块受到撞击导致扣血
 
     uint16_t projectile_allowance_17mm; // 17mm弹丸余量
     uint16_t remaining_gold_coin; // 剩余金币
+
+    uint16_t out_of_combat_status :1;    //哨兵是否处于脱战状态，1为是，0为否，即连续6秒未发射弹丸且未被扣血
+		uint16_t fire_rem_17mm :11;     //队伍 17mm 允许发弹量的剩余可兑换数
+		uint16_t current_posture :2;   //当前姿态（进攻1 防御2 移动3）
+		uint16_t energy_mechanism_activable :1;   //己方能量机关是否能够进入正在激活状态
+		uint16_t shoot_state :1;    //自瞄状态
+		uint16_t reserved :1;
+
   } __attribute__((packed)) data;
   uint16_t crc;
 } __attribute__((packed));
@@ -343,7 +356,7 @@ struct ReceiveBuff
   struct
   {
     uint8_t recovery_buff; // 恢复增益
-    uint8_t cooling_buff; // 冷却增益
+    uint16_t cooling_buff; // 冷却增益
     uint8_t defence_buff; // 防御增益
     uint8_t vulnerability_buff; // 易伤增益
     uint16_t attack_buff; // 攻击增益
@@ -393,8 +406,8 @@ struct SendRobotCmdData
 
     struct
     {
-      bool tracking; // 跟踪命令
-    } __attribute__((packed)) tracking;
+      uint8_t posture; // 姿态切换命令， 1=进攻 2=防御 3=移动
+    } __attribute__((packed)) posture;
   } __attribute__((packed)) data;
 
   uint16_t checksum;

@@ -18,3 +18,7 @@ uint8 trapezoidal_highland          # 己方梯形高地的占领状态，1 为�
 
 uint8 center_gain_zone              # 中心增益点的占领情况，
                                     # 0 为未被占领，1 为被己方占领，2 为被对方占领，3 为被双方占领（仅 RMUL 适用）
+
+uint8 fortress_gain_zone            # 己方堡垒增益点的占领状态，0为未被占领，1为被己方占领，2为被对方占领，3为被双方占领
+uint8 outpost_gain_zone             # 己方前哨站增益点的占领状态，0 为未被占领，1 为被己方占领，2 为被对方占领
+uint8 base_gain_zone                # 己方基地增益点占领状态（0/1），1 为已占领

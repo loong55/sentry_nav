@@ -22,10 +22,10 @@ BT::NodeStatus IsATKOPCondition::checkHPStatus()
 
   getInput("op_hp", op_hp);
   RCLCPP_DEBUG(
-    logger_, "Checking: red_outpost_hp(%d)",
-    static_cast<int>(msg->red_outpost_hp));
+    logger_, "Checking: ally_outpost_hp(%d)",
+    static_cast<int>(msg->ally_outpost_hp));
 
-  const bool op_down = (msg->red_outpost_hp <= op_hp);
+  const bool op_down = (msg->ally_outpost_hp <= op_hp);
   return (op_down) ? BT::NodeStatus::FAILURE: BT::NodeStatus::SUCCESS;
 
 }

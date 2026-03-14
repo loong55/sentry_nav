@@ -14,6 +14,7 @@
 
 #include "standard_robot_pp_ros2/standard_robot_pp_ros2.hpp"
 
+#include <algorithm>
 #include <memory>
 
 #include "standard_robot_pp_ros2/crc8_crc16.hpp"
@@ -126,6 +127,9 @@ void StandardRobotPpRos2Node::createSubscription()
   cmd_shoot_sub_ = this->create_subscription<example_interfaces::msg::UInt8>(
     "cmd_spin", 10,
     std::bind(&StandardRobotPpRos2Node::cmdShootCallback, this, std::placeholders::_1));
+  cmd_posture_sub_ = this->create_subscription<pb_rm_interfaces::msg::PostureCmd>(
+    "cmd_posture", 10,
+    std::bind(&StandardRobotPpRos2Node::cmdPostureCallback, this, std::placeholders::_1));
   cmd_tracking_sub_ = this->create_subscription<auto_aim_interfaces::msg::Target>(
     "tracker/target", 10,
     std::bind(&StandardRobotPpRos2Node::visionTargetCallback, this, std::placeholders::_1));
@@ -540,6 +544,9 @@ void StandardRobotPpRos2Node::publishEventData(ReceiveEventData & event_data)
   msg.trapezoidal_highland = event_data.data.trapezoidal_highland;
 
   msg.center_gain_zone = event_data.data.center_gain_zone;
+  msg.fortress_gain_zone = event_data.data.fortress_gain_zone;
+  msg.outpost_gain_zone = event_data.data.outpost_gain_zone;
+  msg.base_gain_zone = event_data.data.base_gain_zone;
 
   event_data_pub_->publish(msg);
 }
@@ -549,13 +556,11 @@ void StandardRobotPpRos2Node::publishAllRobotHp(ReceiveAllRobotHpData & all_robo
 {
   pb_rm_interfaces::msg::GameRobotHP msg;
 
-  // 红队基地和前哨站的HP
-  msg.red_outpost_hp = all_robot_hp.data.red_outpost_hp;
-  msg.red_base_hp = all_robot_hp.data.red_base_hp;
+  msg.ally_outpost_hp = 1;
+  msg.ally_base_hp = 1;
 
-  // 蓝队基地和前哨站的HP
-  msg.blue_outpost_hp = all_robot_hp.data.blue_outpost_hp;
-  msg.blue_base_hp = all_robot_hp.data.blue_base_hp;
+  msg.ally_outpost_hp = all_robot_hp.data.ally_outpost_hp;
+  msg.ally_base_hp = all_robot_hp.data.ally_base_hp;
 
   all_robot_hp_pub_->publish(msg);
 }
@@ -668,6 +673,8 @@ void StandardRobotPpRos2Node::publishRobotStatus(ReceiveRobotStatus & robot_stat
 {
   pb_rm_interfaces::msg::RobotStatus msg;
 
+  latest_robot_id_ = robot_status.data.robot_id;
+
   //基本信息
   msg.robot_id = robot_status.data.robot_id; //机器人id
   msg.robot_level = robot_status.data.robot_level; //机器人等级
@@ -693,6 +700,11 @@ void StandardRobotPpRos2Node::publishRobotStatus(ReceiveRobotStatus & robot_stat
   //弹药和金币
   msg.projectile_allowance_17mm = robot_status.data.projectile_allowance_17mm; //17mm弹药数量
   msg.remaining_gold_coin = robot_status.data.remaining_gold_coin; //剩余的金币数量
+  msg.out_of_combat_status = robot_status.data.out_of_combat_status; //哨兵是否处于脱战状态，1为是，0为否
+  msg.fire_rem_17mm = robot_status.data.fire_rem_17mm; //队伍 17mm 允许发弹量的剩余可兑换数
+  msg.current_posture = robot_status.data.current_posture; //当前姿态（进攻1 防御2 移动3）
+  msg.energy_mechanism_activable = robot_status.data.energy_mechanism_activable; //己方能量机关是否能够进入正在激活状态
+  msg.shoot_state = robot_status.data.shoot_state; //自瞄状态
 
   // 检测是否被扣血（当前血量 < 上次血量）
   if (last_hp_ - msg.current_hp > 0) {
@@ -747,10 +759,13 @@ void StandardRobotPpRos2Node::sendData()
   send_robot_cmd_data_.frame_header.id = ID_ROBOT_CMD;     // 数据包ID
   send_robot_cmd_data_.frame_header.len = sizeof(SendRobotCmdData) - 6;  // 数据长度
 
-  // 初始化速度为0
+  // 初始化速度为0，姿态为移动3，射击和摩擦轮状态为关闭
   send_robot_cmd_data_.data.speed_vector.vx = 0;
   send_robot_cmd_data_.data.speed_vector.vy = 0;
   send_robot_cmd_data_.data.speed_vector.wz = 0;
+  send_robot_cmd_data_.data.shoot.fire = 0;
+  send_robot_cmd_data_.data.shoot.fric_on = 0;
+  send_robot_cmd_data_.data.posture.posture = 3;
 
   // 计算帧头CRC8校验
   crc8::append_CRC8_check_sum(
@@ -769,6 +784,9 @@ void StandardRobotPpRos2Node::sendData()
     //RCLCPP_ERROR(get_logger(), "Error ");
     
     try {
+      send_robot_cmd_data_.time_stamp =
+        static_cast<uint32_t>(this->get_clock()->now().nanoseconds() / 1000000ULL);
+
       // 添加数据段CRC16校验（覆盖所有数据）
       crc16::append_CRC16_check_sum(
         reinterpret_cast<uint8_t *>(&send_robot_cmd_data_), sizeof(SendRobotCmdData));
@@ -828,13 +846,28 @@ void StandardRobotPpRos2Node::cmdGimbalJointCallback(
 void StandardRobotPpRos2Node::visionTargetCallback(
   const auto_aim_interfaces::msg::Target::SharedPtr msg)
 {
-  send_robot_cmd_data_.data.tracking.tracking = msg->tracking;
+  //send_robot_cmd_data_.data.tracking.tracking = msg->tracking;
 }
 
 //射击回调
 void StandardRobotPpRos2Node::cmdShootCallback(const example_interfaces::msg::UInt8::SharedPtr msg)
 {
   send_robot_cmd_data_.data.shoot.fire = msg->data;
+}
+
+//机器人姿态回调
+void StandardRobotPpRos2Node::cmdPostureCallback(
+  const pb_rm_interfaces::msg::PostureCmd::SharedPtr msg)
+{
+  if (msg->posture < pb_rm_interfaces::msg::PostureCmd::ATTACK ||
+    msg->posture > pb_rm_interfaces::msg::PostureCmd::MOVE)
+  {
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *this->get_clock(), 1000,
+      "Invalid posture command: %u (valid range: 1~3)", msg->posture);
+    return;
+  }
+  send_robot_cmd_data_.data.posture.posture = msg->posture;
 }
 // void StandardRobotPpRos2Node::cmdShootCallback(const example_interfaces::msg::UInt8::SharedPtr msg)
 // {
