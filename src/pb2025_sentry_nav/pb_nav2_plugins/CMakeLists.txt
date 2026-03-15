@@ -35,4 +35,6 @@ endif()
 pluginlib_export_plugin_description_file(nav2_core behavior_plugin.xml)
 pluginlib_export_plugin_description_file(nav2_costmap_2d costmap_plugins.xml)
 
-ament_auto_package()
+ament_auto_package(
+  USE_SCOPED_HEADER_INSTALL_DIR
+)
