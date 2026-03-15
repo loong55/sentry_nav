@@ -99,7 +99,7 @@ sensor_scan_generation:
     use_sim_time: false
     lidar_frame: "front_mid360"
     base_frame: "base_footprint"
-    robot_base_frame: "gimbal_yaw_fake" #gimbal_yaw
+    robot_base_frame: "gimbal_yaw_fake" #gimbal_yaw  gimbal_yaw_fake
 
 terrain_analysis:
   ros__parameters:
