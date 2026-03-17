@@ -91,7 +91,7 @@ private:
   rclcpp::Publisher<pb_rm_interfaces::msg::GroundRobotPosition>::SharedPtr
     ground_robot_position_pub_;
   rclcpp::Publisher<pb_rm_interfaces::msg::RfidStatus>::SharedPtr rfid_status_pub_;
-  rclcpp::Publisher<pb_rm_interfaces::msg::RobotStatus>::SharedPtr robot_status_pub_;
+  rclcpp::Publisher<pb_rm_interfaces::msg::RobotStatus>::SharedPtr robot_status_pub_; // 机器人状态信息发布者
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
   rclcpp::Publisher<pb_rm_interfaces::msg::Buff>::SharedPtr buff_pub_;
 
@@ -125,7 +125,7 @@ private:
   void publishRobotMotion(ReceiveRobotMotionData & data);
   void publishGroundRobotPosition(ReceiveGroundRobotPosition & data);
   void publishRfidStatus(ReceiveRfidStatus & data);
-  void publishRobotStatus(ReceiveRobotStatus & data);
+  void publishRobotStatus(ReceiveRobotStatus & data);   // 发布机器人状态数据
   void publishJointState(ReceiveJointState & data);
   void publishBuff(ReceiveBuff & data);
 

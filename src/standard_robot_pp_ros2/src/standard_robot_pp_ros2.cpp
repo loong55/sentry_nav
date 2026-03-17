@@ -318,7 +318,7 @@ void StandardRobotPpRos2Node::receiveData()
 
       if (sof[0] != SOF_RECEIVE) { // SOF_RECEIVE = 0x5A
         sof_count++; // 帧头计数
-        RCLCPP_INFO(get_logger(), "Find sof, cnt=%d", sof_count);
+        RCLCPP_INFO(get_logger(), "The byte is not sof, cnt=%d", sof_count);
         continue; //如果不是帧头，跳出循环，进入下一次 while (rclcpp::ok())循环继续读取
       }
 

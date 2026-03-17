@@ -26,18 +26,18 @@ const uint8_t SOF_SEND = 0x5A;    // 起始标志（Start Of Frame），发送�
 
 // Receive 接收数据包ID映射表
 const uint8_t ID_DEBUG = 0x01;       // 调试信息    
-const uint8_t ID_IMU = 0x02;        // IMU数据
-const uint8_t ID_ROBOT_STATE_INFO = 0x03; // 机器人信息
+const uint8_t ID_IMU = 0x02;        // IMU数据 
+const uint8_t ID_ROBOT_STATE_INFO = 0x03; // 机器人信息 5A 07 03 4F 00 00 00 00 4B 00 07 3D C6 
 const uint8_t ID_EVENT_DATA = 0x04; // 事件数据
 const uint8_t ID_PID_DEBUG = 0x05;  // PID调试数据
-const uint8_t ID_ALL_ROBOT_HP = 0x06; // 所有机器人血量
-const uint8_t ID_GAME_STATUS = 0x07;  // 游戏状态
-const uint8_t ID_ROBOT_MOTION = 0x08; // 机器人运动状态
-const uint8_t ID_GROUND_ROBOT_POSITION = 0x09;  // 地面机器人位置
-const uint8_t ID_RFID_STATUS = 0x0A;  // RFID状态
-const uint8_t ID_ROBOT_STATUS = 0x0B; // 机器人状态
-const uint8_t ID_JOINT_STATE = 0x0C;  // 关节状态
-const uint8_t ID_BUFF = 0x0D;        // Buff状态
+const uint8_t ID_ALL_ROBOT_HP = 0x06; // 所有机器人血量  5A 08 06 68 00 00 00 00 00 00 00 00 26 EF
+const uint8_t ID_GAME_STATUS = 0x07;  // 游戏状态       5A 07 07 2E 00 00 00 00 00 00 00 09 F0 
+const uint8_t ID_ROBOT_MOTION = 0x08; // 机器人运动状态  5A 10 08 ED 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 2C BC 
+const uint8_t ID_GROUND_ROBOT_POSITION = 0x09;  // 地面机器人位置  5A 2C 09 D3 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 B4 47 
+const uint8_t ID_RFID_STATUS = 0x0A;  // RFID状态      5A 08 0A CB 00 00 00 00 00 00 00 00 7A D3 
+const uint8_t ID_ROBOT_STATUS = 0x0B; // 机器人状态     5A 23 0B 77 00 00 00 00 07 01 C4 07 D0 07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 AC 8F 06 43 10 00 00 00 00 00 00 97 C0    
+const uint8_t ID_JOINT_STATE = 0x0C;  // 关节状态       5A 0C 0C 2D 00 00 00 00 00 00 00 00 00 00 00 00 E9 CD 
+const uint8_t ID_BUFF = 0x0D;        // Buff状态       5A 0C 0D 73 00 00 00 00 00 00 00 00 00 00 00 00 04 BA 
 // Send 发送数据包ID映射表
 const uint8_t ID_ROBOT_CMD = 0x01; // 机器人控制指令
 
@@ -295,9 +295,9 @@ struct ReceiveRfidStatus
 // 机器人状态数据包
 struct ReceiveRobotStatus
 {
-  HeaderFrame frame_header;
+  HeaderFrame frame_header; // 数据帧头 4字节
 
-  uint32_t time_stamp;
+  uint32_t time_stamp; // 时间戳 4字节
 
   struct
   {
@@ -310,7 +310,7 @@ struct ReceiveRobotStatus
 
     uint16_t shooter_17mm_1_barrel_heat; // 17mm 1号枪管热量
 
-    float robot_pos_x; // 机器人位置x
+    float robot_pos_x; // 机器人位置x 四个字节表示一个浮点数
     float robot_pos_y; // 机器人位置y
     float robot_pos_angle; // 机器人角度
 
@@ -326,7 +326,6 @@ struct ReceiveRobotStatus
 		uint16_t current_posture :2;   //当前姿态（进攻1 防御2 移动3）
 		uint16_t energy_mechanism_activable :1;   //己方能量机关是否能够进入正在激活状态
 		uint16_t shoot_state :1;    //自瞄状态
-		uint16_t reserved :1;
 
   } __attribute__((packed)) data;
   uint16_t crc;
