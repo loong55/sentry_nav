@@ -15,7 +15,9 @@
 #include "standard_robot_pp_ros2/standard_robot_pp_ros2.hpp"
 
 #include <algorithm>
+#include <iomanip>
 #include <memory>
+#include <sstream>
 
 #include "standard_robot_pp_ros2/crc8_crc16.hpp"
 #include "standard_robot_pp_ros2/packet_typedef.hpp"
@@ -300,8 +302,41 @@ void StandardRobotPpRos2Node::receiveData()
 {
   RCLCPP_INFO(get_logger(), "Start receiveData!"); //线程启动时，打印日志信息
 
+  constexpr size_t kMaxPayloadLen =
+    sizeof(ReceiveDebugData) - sizeof(HeaderFrame) - sizeof(uint16_t);
+
   std::vector<uint8_t> sof(1); //储存单字节帧头
-  std::vector<uint8_t> receive_data; //储存接收数据
+  std::vector<uint8_t> pending_bytes;
+
+  auto read_exact = [this, &pending_bytes](std::vector<uint8_t> & buffer, size_t total_len) -> bool {
+      buffer.clear();
+      buffer.reserve(total_len);
+
+      if (!pending_bytes.empty()) {
+        const size_t reuse_len = std::min(total_len, pending_bytes.size());
+        buffer.insert(buffer.end(), pending_bytes.begin(), pending_bytes.begin() + reuse_len);
+        pending_bytes.erase(pending_bytes.begin(), pending_bytes.begin() + reuse_len);
+      }
+
+      while (buffer.size() < total_len) {
+        std::vector<uint8_t> temp(total_len - buffer.size());
+        int received_len = serial_driver_->port()->receive(temp);
+        if (received_len <= 0) {
+          return false;
+        }
+
+        const size_t copy_len =
+          std::min(static_cast<size_t>(received_len), temp.size());
+        buffer.insert(buffer.end(), temp.begin(), temp.begin() + copy_len);
+      }
+
+      if (buffer.size() > total_len) {
+        pending_bytes.insert(pending_bytes.end(), buffer.begin() + total_len, buffer.end());
+        buffer.resize(total_len);
+      }
+
+      return true;
+    };
 
   int sof_count = 0; //帧头计数
   int retry_count = 0; // 串口异常重试计数
@@ -314,11 +349,14 @@ void StandardRobotPpRos2Node::receiveData()
     }
 
     try {
-      serial_driver_->port()->receive(sof); // 阻塞式读取1字节
+      if (!read_exact(sof, 1)) {
+        RCLCPP_WARN(get_logger(), "Read SOF failed");
+        continue;
+      }
 
       if (sof[0] != SOF_RECEIVE) { // SOF_RECEIVE = 0x5A
         sof_count++; // 帧头计数
-        RCLCPP_INFO(get_logger(), "The byte is not sof, cnt=%d", sof_count);
+        RCLCPP_INFO(get_logger(), "Not sof, cnt=%d", sof_count);
         continue; //如果不是帧头，跳出循环，进入下一次 while (rclcpp::ok())循环继续读取
       }
 
@@ -326,9 +364,11 @@ void StandardRobotPpRos2Node::receiveData()
       sof_count = 0;
 
       // sof[0] == SOF_RECEIVE 后读取剩余 header_frame 内容
-      std::vector<uint8_t> header_frame_buf(3);  // sof 在读取完数据后添加
-
-      serial_driver_->port()->receive(header_frame_buf);  // 读取除 sof 外剩下的数据
+      std::vector<uint8_t> header_frame_buf;
+      if (!read_exact(header_frame_buf, 3)) {
+        RCLCPP_WARN(get_logger(), "Read header frame failed");
+        continue;
+      }
       header_frame_buf.insert(header_frame_buf.begin(), sof[0]);  // 添加 sof
       HeaderFrame header_frame = fromVector<HeaderFrame>(header_frame_buf); // 将串口字节流转化为 HeaderFrame 结构体
 
@@ -341,20 +381,20 @@ void StandardRobotPpRos2Node::receiveData()
         continue; //帧头crc8校验失败，跳出循环，进入下一次 while (rclcpp::ok())循环继续读取
       }
 
+      if (header_frame.len == 0 || header_frame.len > kMaxPayloadLen) {
+        RCLCPP_ERROR(
+          get_logger(),
+          "Invalid payload length: %u (max=%zu), drop and resync",
+          header_frame.len, kMaxPayloadLen);
+        continue;
+      }
+
       // crc8_ok 校验正确后读取数据段
       // 根据数据段长度读取数据
-      std::vector<uint8_t> data_buf(header_frame.len + 2);  // 初始化动态数组data_buf，包含len个数据 + 2字节CRC的长度
-      int received_len = serial_driver_->port()->receive(data_buf);
-      int received_len_sum = received_len;
-      // 考虑到一次性读取数据可能存在数据量过大，读取不完整的情况。需要检测是否读取完整
-      // 计算剩余未读取的数据长度
-      int remain_len = header_frame.len + 2 - received_len;
-      while (remain_len > 0) {  // 读取剩余未读取的数据
-        std::vector<uint8_t> remain_buf(remain_len);
-        received_len = serial_driver_->port()->receive(remain_buf);
-        data_buf.insert(data_buf.begin() + received_len_sum, remain_buf.begin(), remain_buf.end());
-        received_len_sum += received_len;
-        remain_len -= received_len;
+      std::vector<uint8_t> data_buf;
+      if (!read_exact(data_buf, static_cast<size_t>(header_frame.len) + 2U)) {
+        RCLCPP_WARN(get_logger(), "Read data segment failed, len=%u", header_frame.len);
+        continue;
       }
 
       // 数据段读取完成后添加 header_frame_buf 到 data_buf，得到完整数据包;之前的data_buf初始化数据长度数据段+CRC16，这里会自动扩容
@@ -368,12 +408,38 @@ void StandardRobotPpRos2Node::receiveData()
         continue;
       }
 
-      // 整包数据校验
+      // 整包crc16数据校验
       bool crc16_ok = crc16::verify_CRC16_check_sum(data_buf);
       if (!crc16_ok) {
-        RCLCPP_ERROR(get_logger(), "Data segment CRC16 error!");
+        std::ostringstream hex_stream;
+        hex_stream << std::hex << std::setfill('0');
+        for (size_t index = 0; index < data_buf.size(); ++index) {
+          hex_stream << std::setw(2) << static_cast<int>(data_buf[index]);
+          if (index + 1 < data_buf.size()) {
+            hex_stream << ' ';
+          }
+        }
+        RCLCPP_ERROR(
+          get_logger(),
+          "Data segment CRC16 error! frame_len=%zu payload_len=%u frame_hex=[%s]",
+          data_buf.size(), header_frame.len, hex_stream.str().c_str());
+
+        auto next_sof_it = std::find(data_buf.begin() + 1, data_buf.end(), SOF_RECEIVE);
+        if (next_sof_it != data_buf.end()) {
+          pending_bytes.assign(next_sof_it, data_buf.end());
+          RCLCPP_WARN(
+            get_logger(),
+            "CRC16 resync: recovered %zu bytes starting from next SOF",
+            pending_bytes.size());
+        }
         continue;
       }
+
+      // crc16_ok 校验正确给出提示
+      RCLCPP_INFO_THROTTLE(
+        get_logger(), *this->get_clock(), 1000,
+        "CRC16 verify passed: frame_len=%zu payload_len=%u id=0x%02x",
+        data_buf.size(), header_frame.len, header_frame.id);
 
       // crc16_ok 校验正确后根据 header_frame.id 解析数据
       switch (header_frame.id) {

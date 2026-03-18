@@ -17,6 +17,7 @@
 #define STANDARD_ROBOT_PP_ROS2__STANDARD_ROBOT_PP_ROS2_HPP_
 
 /* 必要的头文件包含 */
+#include <atomic>
 #include <memory> // std::shared_ptr
 #include <string> // std::string
 #include <unordered_map> // 引入字典容器
@@ -58,7 +59,7 @@ public:
 
 private:
   /* USB设备状态标志 */
-  bool is_usb_ok_;
+  std::atomic_bool is_usb_ok_{false};
   /* 调试模式标志 */
   bool debug_;
   /* IO上下文所有权 */
