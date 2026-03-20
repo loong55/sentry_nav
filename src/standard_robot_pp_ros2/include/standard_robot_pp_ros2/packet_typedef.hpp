@@ -198,6 +198,10 @@ struct ReceiveAllRobotHpData
 } __attribute__((packed));
 
 // 比赛信息数据包
+/**
+ * @note game_progress 比赛进程：0-未开始，1-准备阶段，2-自检阶段，3-5秒倒计时，4-比赛中，5-比赛解算中
+ * @note stage_remain_time 阶段剩余时间，单位为秒
+ */
 struct ReceiveGameStatusData
 {
   HeaderFrame frame_header;

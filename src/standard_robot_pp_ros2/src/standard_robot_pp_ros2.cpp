@@ -468,7 +468,15 @@ void StandardRobotPpRos2Node::receiveData()
         } break;
         case ID_GAME_STATUS: {
           ReceiveGameStatusData game_status_data = fromVector<ReceiveGameStatusData>(data_buf);
-          publishGameStatus(game_status_data);
+
+          //比赛状态解码调试信息
+          RCLCPP_INFO_THROTTLE(
+            get_logger(), *this->get_clock(), 1000,
+            "[ReceiveGameStatusData DECODE OK] game_progress=%u stage_remain_time=%u",
+            game_status_data.data.game_progress,
+            game_status_data.data.stage_remain_time);
+          
+            publishGameStatus(game_status_data);
         } break;
         case ID_ROBOT_MOTION: {
           ReceiveRobotMotionData robot_motion_data = fromVector<ReceiveRobotMotionData>(data_buf);
@@ -486,8 +494,9 @@ void StandardRobotPpRos2Node::receiveData()
         case ID_ROBOT_STATUS: {
           ReceiveRobotStatus robot_status_data = fromVector<ReceiveRobotStatus>(data_buf);
 
-          //机器人状态解码调试信息
-          const bool hp_deduced = (last_hp_ - robot_status_data.data.current_hp) > 0;
+          // 机器人状态解码调试信息
+          const bool hp_deduced =
+            (last_hp_ >= 0.0f) && (static_cast<float>(robot_status_data.data.current_hp) < last_hp_);
           RCLCPP_INFO_THROTTLE(
             get_logger(), *this->get_clock(), 1000,
             "[0x0B DECODE OK] hp=%u angle=%.3f is_hp_deduced=%s",
@@ -649,6 +658,13 @@ void StandardRobotPpRos2Node::publishGameStatus(ReceiveGameStatusData & game_sta
   msg.stage_remain_time = game_status.data.stage_remain_time;  // 阶段剩余时间
   game_status_pub_->publish(msg);
 
+  // 比赛状态解码后写入消息接口，调试信息
+  RCLCPP_INFO_THROTTLE(
+    get_logger(), *this->get_clock(), 1000,
+    "[ReceiveGameStatusData PUB OK] topic=/referee/game_status game_progress=%u stage_remain_time=%u",
+    msg.game_progress,
+    msg.stage_remain_time);
+
   // 如果启用了rosbag录制，根据比赛状态自动控制rosbag录制
   if (record_rosbag_ && game_status.data.game_progress != previous_game_progress_) {
     previous_game_progress_ = game_status.data.game_progress; // 更新上一个比赛状态
@@ -782,10 +798,19 @@ void StandardRobotPpRos2Node::publishRobotStatus(ReceiveRobotStatus & robot_stat
   msg.energy_mechanism_activable = robot_status.data.energy_mechanism_activable; //己方能量机关是否能够进入正在激活状态
   msg.shoot_state = robot_status.data.shoot_state; //自瞄状态
 
-  // 检测是否被扣血（当前血量 < 上次血量）
-  if (last_hp_ - msg.current_hp > 0) {
-    msg.is_hp_deduced = true;
+  // 检测是否被扣血（当前血量 < 上次血量），首帧(last_hp_ < 0)不判定
+  msg.is_hp_deduced =
+    (last_hp_ >= 0.0f) && (static_cast<float>(msg.current_hp) < last_hp_);
+
+  if (msg.is_hp_deduced) {
+    RCLCPP_WARN(
+      get_logger(),
+      "[0x0B HP DROP EVENT] hp %u -> %u, delta=%d",
+      static_cast<unsigned int>(last_hp_),
+      msg.current_hp,
+      static_cast<int>(last_hp_) - static_cast<int>(msg.current_hp));
   }
+
   last_hp_ = robot_status.data.current_hp; //保存本次血量
 
   robot_status_pub_->publish(msg);

@@ -151,7 +151,7 @@ private:
   uint8_t previous_game_progress_ = 0;
   uint8_t latest_robot_id_ = 0;
 
-  float last_hp_;
+  float last_hp_ = -1.0f;
   float last_gimbal_pitch_odom_joint_, last_gimbal_yaw_odom_joint_;
 };
 }  // namespace standard_robot_pp_ros2
