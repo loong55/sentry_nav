@@ -26,7 +26,7 @@ IsRfidDetectedCondition::IsRfidDetectedCondition(
 BT::NodeStatus IsRfidDetectedCondition::checkRfidStatus()
 {
   bool friendly_fortress_gain_point, friendly_supply_zone_non_exchange,
-    friendly_supply_zone_exchange, enemy_central_highland_gain_point;
+    friendly_supply_zone_exchange, enemy_central_highland_gain_point, center_gain_point;
   auto msg = getInput<pb_rm_interfaces::msg::RfidStatus>("key_port");
   if (!msg) {
     return BT::NodeStatus::FAILURE;
@@ -37,13 +37,15 @@ BT::NodeStatus IsRfidDetectedCondition::checkRfidStatus()
   getInput("friendly_supply_zone_non_exchange", friendly_supply_zone_non_exchange);
   getInput("friendly_supply_zone_exchange", friendly_supply_zone_exchange);
   getInput("enemy_central_highland_gain_point", enemy_central_highland_gain_point);
+  getInput("center_gain_point", center_gain_point);
 
   if (
     (friendly_fortress_gain_point && msg->friendly_fortress_gain_point == msg->DETECTED) ||
     (friendly_supply_zone_non_exchange &&
      msg->friendly_supply_zone_non_exchange == msg->DETECTED) ||
     (friendly_supply_zone_exchange && msg->friendly_supply_zone_exchange == msg->DETECTED) ||
-    (enemy_central_highland_gain_point && msg->enemy_central_highland_gain_point == msg->DETECTED)) {
+    (enemy_central_highland_gain_point && msg->enemy_central_highland_gain_point == msg->DETECTED) ||
+    (center_gain_point && msg->center_gain_point == msg->DETECTED)) {
     return BT::NodeStatus::SUCCESS;
   } else {
     return BT::NodeStatus::FAILURE;
@@ -60,6 +62,7 @@ BT::PortsList IsRfidDetectedCondition::providedPorts()
       "friendly_supply_zone_non_exchange", false, "己方与兑换区不重叠的补给区 / RMUL 补给区"),
     BT::InputPort<bool>("friendly_supply_zone_exchange", false, "己方与兑换区重叠的补给区"),
     BT::InputPort<bool>("enemy_central_highland_gain_point", false, "对方中央高地增益点"),
+    BT::InputPort<bool>("center_gain_point", false, "中心增益点（仅 RMUL 适用）"),
   };
 }
 }  // namespace pb2025_sentry_behavior

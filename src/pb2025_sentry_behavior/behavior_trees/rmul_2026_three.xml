@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+	<BehaviorTree ID="check_game_started">
+		<Fallback>
+			<IsGameStatus
+				expected_game_progress="4"
+				key_port="{@referee_gameStatus}"/>
+			<ForceFailure>
+				<Sleep msec="200"/>
+			</ForceFailure>
+		</Fallback>
+	</BehaviorTree>
+
+
+	<BehaviorTree ID="attack_to_a_then_attack_posture">
+		<Sequence>
+			<PubNav2Goal goal="0;-4.76;0" topic_name="goal_pose"/>
+			<Sleep msec="3000"/>
+
+			<PubNav2Goal goal="4.785;-4.76;0" topic_name="goal_pose"/>
+			<Sleep msec="3000"/>
+
+			<!-- 保守中心点 -->
+			<PubNav2Goal goal="4.785;-3.01;0" topic_name="goal_pose"/>
+
+			<!-- 激进中心点 -->
+			<!-- <PubNav2Goal goal="4.785;-1.51;0" topic_name="goal_pose"/> -->
+
+			<!-- 3秒延时期间每100ms检测一次中心增益点；检测到即刻发布攻击姿态 -->
+			<Repeat num_cycles="30">
+				<Sequence>
+					<ForceSuccess>
+						<Sequence>
+							<IsRfidDetected
+								center_gain_point="true"
+								key_port="{@referee_rfidStatus}"/>
+							<PublishPostureCmd topic_name="cmd_posture" posture="1" reason="0" force_switch="true"/>
+						</Sequence>
+					</ForceSuccess>
+					<Sleep msec="100"/>
+				</Sequence>
+			</Repeat>
+			<!-- 第一次到达攻击点后的延时完成后再发布一次攻击姿态，防止未检测到rfid无法发布攻击姿态 -->
+			<PublishPostureCmd topic_name="cmd_posture" posture="1" reason="0" force_switch="true"/>
+		</Sequence>
+	</BehaviorTree>
+
+
+	<BehaviorTree ID="low_hp_recover">
+		<Sequence> <!-- 如果有一个子节点返回 FAILURE，则停止执行并返回 FAILURE-->
+			<Inverter>
+				<IsStatusOK
+					hp_min="150"
+					key_port="{@referee_robotStatus}"/>
+			</Inverter>
+
+			<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+
+			<PubNav2Goal goal="4.785;-4.76;0" topic_name="goal_pose"/>
+			<Sleep msec="3000"/>			
+
+			<PubNav2Goal goal="0;-4.76;0" topic_name="goal_pose"/>
+			<Sleep msec="3000"/>
+
+			<PubNav2Goal goal="0;0;0" topic_name="goal_pose"/>
+			<!-- 12秒检测窗口：每100ms检测一次，血量>380时立即切换攻击子树 -->
+			<ForceSuccess>
+				<RetryUntilSuccessful num_attempts="120">
+					<Fallback>
+						<Sequence>
+							<IsStatusOK
+								hp_min="381"
+								key_port="{@referee_robotStatus}"/>
+							<SubTree ID="attack_to_a_then_attack_posture"/>
+						</Sequence>
+						<ForceFailure>
+							<Sleep msec="100"/>
+						</ForceFailure>
+					</Fallback>
+				</RetryUntilSuccessful>
+			</ForceSuccess>
+
+		</Sequence>
+	</BehaviorTree>
+
+
+	<BehaviorTree ID="rmul_2026">
+		<Repeat num_cycles="-1"> <!-- 无限循环 -->
+			<ReactiveSequence> <!-- ReactiveSequence: 第一个子节点失败，中断后续任务，返回失败。若SUCCESS，则继续执行后续子节点。 -->
+				<SubTree ID="check_game_started"/>
+				<ReactiveFallback> <!-- ReactiveFallback: 第一个子节点失败，继续执行后续子节点。若SUCCESS，则中断后续任务，返回成功。 -->
+					<SubTree ID="low_hp_recover"/>	<!-- 高优先级：检查血量并回血 -->						
+					<SubTree ID="attack_to_a_then_attack_posture"/>	<!-- 低优先级：进攻 -->		
+				</ReactiveFallback>
+			</ReactiveSequence>
+		</Repeat>
+	</BehaviorTree>
+</root>
