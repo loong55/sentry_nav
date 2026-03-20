@@ -489,6 +489,10 @@ void StandardRobotPpRos2Node::receiveData()
         } break;
         case ID_RFID_STATUS: {
           ReceiveRfidStatus rfid_status_data = fromVector<ReceiveRfidStatus>(data_buf);
+          RCLCPP_INFO_THROTTLE(
+            get_logger(), *this->get_clock(), 1000,
+            "[ID_RFID_STATUS DECODE OK] center_gain_point=%s",
+            rfid_status_data.data.center_gain_point ? "true" : "false");
           publishRfidStatus(rfid_status_data);
         } break;
         case ID_ROBOT_STATUS: {
@@ -758,6 +762,11 @@ void StandardRobotPpRos2Node::publishRfidStatus(ReceiveRfidStatus & rfid_status)
   msg.center_gain_point = rfid_status.data.center_gain_point;
 
   rfid_status_pub_->publish(msg);
+
+  RCLCPP_INFO_THROTTLE(
+    get_logger(), *this->get_clock(), 1000,
+    "[ID_RFID_STATUS PUB OK] topic=/referee/rfid_status center_gain_point=%s",
+    msg.center_gain_point ? "true" : "false");
 }
 
 // 发布机器人状态
