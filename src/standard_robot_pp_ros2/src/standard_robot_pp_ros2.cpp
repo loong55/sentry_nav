@@ -485,6 +485,16 @@ void StandardRobotPpRos2Node::receiveData()
         } break;
         case ID_ROBOT_STATUS: {
           ReceiveRobotStatus robot_status_data = fromVector<ReceiveRobotStatus>(data_buf);
+
+          //机器人状态解码调试信息
+          const bool hp_deduced = (last_hp_ - robot_status_data.data.current_hp) > 0;
+          RCLCPP_INFO_THROTTLE(
+            get_logger(), *this->get_clock(), 1000,
+            "[0x0B DECODE OK] hp=%u angle=%.3f is_hp_deduced=%s",
+            robot_status_data.data.current_hp,
+            robot_status_data.data.robot_pos_angle,
+            hp_deduced ? "true" : "false");
+
           publishRobotStatus(robot_status_data);
         } break;
         case ID_JOINT_STATE: {
@@ -779,6 +789,14 @@ void StandardRobotPpRos2Node::publishRobotStatus(ReceiveRobotStatus & robot_stat
   last_hp_ = robot_status.data.current_hp; //保存本次血量
 
   robot_status_pub_->publish(msg);
+
+  //机器人状态解码后，写入消息接口的调试信息
+  RCLCPP_INFO_THROTTLE(
+    get_logger(), *this->get_clock(), 1000,
+    "[0x0B PUB OK] topic=/referee/robot_status hp=%u angle=%.3f is_hp_deduced=%s",
+    msg.current_hp,
+    robot_status.data.robot_pos_angle,
+    msg.is_hp_deduced ? "true" : "false");
 
   // 自动设置目标检测器的颜色
   if (set_detector_color_) {
