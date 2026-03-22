@@ -23,4 +23,4 @@ pb2025_sentry_behavior_server:
 pb2025_sentry_behavior_client:
   ros__parameters:
     use_sim_time: true
-    target_tree: rmul2026_32                # 要执行的行为树名称 rmul_2026_one  three_point_loop
+    target_tree: rmul2026                # 要执行的行为树名称 rmul_2026_one  three_point_loop

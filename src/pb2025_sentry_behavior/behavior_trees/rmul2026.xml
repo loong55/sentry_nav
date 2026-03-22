@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+	<BehaviorTree ID="rmul2026">
+		<Repeat num_cycles="-1"> <!-- 无限循环 -->
+			<Sequence> <!-- Sequence: 顺序执行，有一个子节点失败，中断后续任务。 -->
+				<!-- 检测开赛 -->
+				<Fallback>
+					<IsGameStatus
+						expected_game_progress="4"
+						key_port="{@referee_gameStatus}"/>
+					<ForceFailure>
+						<Sleep msec="50"/>
+					</ForceFailure>
+				</Fallback>
+
+				<!--  开往进攻点 -->	
+				<PubNav2Goal goal="2.5;-2.7;0" topic_name="goal_pose"/> 
+				
+				<!-- 每50ms检查一次，直到 hp < 150 -->
+				<Fallback>
+					<Inverter>
+						<IsStatusOK
+							hp_min="150"
+							key_port="{@referee_robotStatus}"/>
+					</Inverter>
+					<ForceFailure>
+						<Sleep msec="50"/>
+					</ForceFailure>
+				</Fallback>
+
+				<!--  开往起点 -->
+				<PubNav2Goal goal="0;0;0" topic_name="goal_pose"/>
+
+				<!-- 检测血量，直到血量>380 -->
+				<Fallback>
+					<!-- 满足 hp >= 381 时直接成功 -->
+					<IsStatusOK
+						hp_min="381"
+						key_port="{@referee_robotStatus}"/>
+
+					<!-- 未满足就等待后重试 -->
+					<ForceFailure>
+						<Sleep msec="50"/>
+					</ForceFailure>
+				</Fallback>
+
+			</Sequence>
+		</Repeat>
+	</BehaviorTree>
+</root>
