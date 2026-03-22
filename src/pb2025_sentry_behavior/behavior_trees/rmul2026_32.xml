@@ -14,6 +14,8 @@
 
 	<BehaviorTree ID="attack_to_a_then_attack_posture">
 		<Sequence>
+			<!-- 0.发布移动姿态 -->
+			<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
 			<!-- 1.发布进攻点 -->
 			<!-- 保守进攻点 -->
 			<!-- <PubNav2Goal goal="4.785;-3.01;0" topic_name="goal_pose"/> -->
@@ -21,7 +23,13 @@
 			<!-- 激进进攻点 -->
 			<!-- <PubNav2Goal goal="4.785;-1.51;0" topic_name="goal_pose"/> -->
 
-			<PubNav2Goal goal="1;0;0" topic_name="goal_pose"/>
+			<PubNav2Goal goal="4.7;0;0" topic_name="goal_pose"/>
+			<Sleep msec="4000"/>
+
+			<PubNav2Goal goal="4.7;-2.7;0" topic_name="goal_pose"/>
+			<Sleep msec="3000"/>
+
+			<PubNav2Goal goal="2.7;-2.7;0" topic_name="goal_pose"/> <!-- 第一次-测量值，为x坐标 -->
 			<!-- 2. 3秒窗口内并发检测是否装甲板弹丸扣血(ARMOR_HIT=0)，检测到则立即发布进攻姿态 -->
 			<Parallel name="wait_and_monitor_armor_hit" threshold="1">
 				<Sleep msec="3000"/>
@@ -49,10 +57,12 @@
 			</Inverter>
 			<!-- 检测血量低于150，发布移动姿态-->
 			<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+
 			<!-- 返回起点-->
-			<PubNav2Goal goal="1;0;0" topic_name="goal_pose"/>
+			<PubNav2Goal goal="4.7;-2.7;0" topic_name="goal_pose"/>
 			<Sleep msec="3000"/>
-			<PubNav2Goal goal="0;0;0" topic_name="goal_pose"/>
+			<PubNav2Goal goal="4.7;0;0" topic_name="goal_pose"/>
+			<Sleep msec="4000"/>
 			<!-- 检测血量，血量>380时，返回success -->
 			<RetryUntilSuccessful num_attempts="-1">
 				<Sequence>
@@ -65,7 +75,7 @@
 		</Sequence>
 	</BehaviorTree>
 
-	<BehaviorTree ID="rmul_2026_32">
+	<BehaviorTree ID="rmul2026_32">
 		<Repeat num_cycles="-1"> <!-- 无限循环 -->
 			<Sequence> <!-- Sequence: 顺序执行，有一个子节点失败，中断后续任务。 -->
 				<!-- 检测开赛 -->
