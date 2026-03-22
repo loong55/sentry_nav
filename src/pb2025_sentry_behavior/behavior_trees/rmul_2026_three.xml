@@ -6,7 +6,7 @@
 				expected_game_progress="4"
 				key_port="{@referee_gameStatus}"/>
 			<ForceFailure>
-				<Sleep msec="200"/>
+				<Sleep msec="100"/>
 			</ForceFailure>
 		</Fallback>
 	</BehaviorTree>
@@ -84,7 +84,7 @@
 	</BehaviorTree>
 
 
-	<BehaviorTree ID="rmul_2026">
+	<BehaviorTree ID="rmul_2026_three">
 		<Repeat num_cycles="-1"> <!-- 无限循环 -->
 			<ReactiveSequence> <!-- ReactiveSequence: 第一个子节点失败，中断后续任务，返回失败。若SUCCESS，则继续执行后续子节点。 -->
 				<SubTree ID="check_game_started"/>

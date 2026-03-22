@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4">
-  <BehaviorTree ID="posture_switch">
+  <!-- <BehaviorTree ID="posture_switch">
     <Fallback>
       <Sequence>
         <IsHpDeduced key_port="{@referee_robotStatus}"/>
@@ -16,35 +16,62 @@
       </Sequence>
       <PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="false"/>
     </Fallback>
-  </BehaviorTree>
+  </BehaviorTree> -->
 
   <!-- 三点循环运动行为树 -->
   <BehaviorTree ID="three_point_loop">
     <Repeat num_cycles="-1">
       <Sequence>
-        <SubTree ID="posture_switch"/>
+        
+        <PubNav2Goal goal="0;0;0" topic_name="goal_pose"/>
+        <Fallback>
+			    <IsGameStatus
+            expected_game_progress="4"
+            key_port="{@referee_gameStatus}"/>
+          <ForceFailure>
+            <Sleep msec="200"/>
+          </ForceFailure>
+		    </Fallback>
 
         <!-- 第一个目标点，等待导航完成 -->
         <PubNav2Goal goal="3;0;0" topic_name="goal_pose"/>
         <Sleep msec="3000"/>
 
-        <SubTree ID="posture_switch"/>
-
         <!-- 第二个目标点，等待导航完成 -->
+        <PubNav2Goal goal="3;3;0" topic_name="goal_pose"/>
+        <Sleep msec="3000"/>
+
+        <!-- 第一次到达攻击点后的延时完成后再发布一次攻击姿态，防止未检测到rfid无法发布攻击姿态 -->
+        <PublishPostureCmd topic_name="cmd_posture" posture="1" reason="0" force_switch="true"/>
+
+
+        <Inverter>
+          <IsStatusOK
+            hp_min="150"
+            key_port="{@referee_robotStatus}"/>
+        </Inverter>
+
+        <PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+        <PubNav2Goal goal="3;0;0" topic_name="goal_pose"/>
+        <Sleep msec="3000"/>
         <PubNav2Goal goal="0;0;0" topic_name="goal_pose"/>
-        <Sleep msec="3000"/>
+        <!-- 12秒检测窗口：每100ms检测一次，血量>380时立即切换攻击子树 -->
+        <ForceSuccess>
+          <RetryUntilSuccessful num_attempts="120">
+            <Fallback>
+              <Sequence>
+                <IsStatusOK
+                  hp_min="381"
+                  key_port="{@referee_robotStatus}"/>
+                <SubTree ID="attack_to_a_then_attack_posture"/>
+              </Sequence>
+              <ForceFailure>
+                <Sleep msec="100"/>
+              </ForceFailure>
+            </Fallback>
+          </RetryUntilSuccessful>
+        </ForceSuccess>
 
-        <SubTree ID="posture_switch"/>
-
-        <!-- 第三个目标点，等待导航完成 -->
-        <PubNav2Goal goal="0;3;0" topic_name="goal_pose"/>
-        <Sleep msec="3000"/>
-
-        <SubTree ID="posture_switch"/>
-
-        <!-- 第四个目标点，等待导航完成 -->
-        <PubNav2Goal goal="0;0;0" topic_name="goal_pose"/>
-        <Sleep msec="3000"/>
       </Sequence>
     </Repeat>
   </BehaviorTree>

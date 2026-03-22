@@ -32,6 +32,43 @@ using namespace std::chrono_literals;
 namespace standard_robot_pp_ros2
 {
 
+namespace
+{
+const char * postureToString(uint8_t posture)
+{
+  switch (posture) {
+    case pb_rm_interfaces::msg::PostureCmd::ATTACK:
+      return "ATTACK(进攻)";
+    case pb_rm_interfaces::msg::PostureCmd::DEFENSE:
+      return "DEFENSE(防御)";
+    case pb_rm_interfaces::msg::PostureCmd::MOVE:
+      return "MOVE(移动)";
+    default:
+      return "UNKNOWN(未知)";
+  }
+}
+
+const char * hpDeductionReasonToString(uint8_t reason)
+{
+  switch (reason) {
+    case pb_rm_interfaces::msg::RobotStatus::ARMOR_HIT:
+      return "ARMOR_HIT(弹丸命中装甲)";
+    case pb_rm_interfaces::msg::RobotStatus::SYSTEM_OFFLINE:
+      return "SYSTEM_OFFLINE(裁判系统离线)";
+    case pb_rm_interfaces::msg::RobotStatus::OVER_SHOOT_SPEED:
+      return "OVER_SHOOT_SPEED(射速超限)";
+    case pb_rm_interfaces::msg::RobotStatus::OVER_HEAT:
+      return "OVER_HEAT(热量超限)";
+    case pb_rm_interfaces::msg::RobotStatus::OVER_POWER:
+      return "OVER_POWER(功率超限)";
+    case pb_rm_interfaces::msg::RobotStatus::ARMOR_COLLISION:
+      return "ARMOR_COLLISION(装甲碰撞)";
+    default:
+      return "UNKNOWN_REASON(未知原因)";
+  }
+}
+}  // namespace
+
 // 构造函数实现
 StandardRobotPpRos2Node::StandardRobotPpRos2Node(const rclcpp::NodeOptions & options)
 : Node("StandardRobotPpRos2Node", options),
@@ -435,11 +472,11 @@ void StandardRobotPpRos2Node::receiveData()
         continue;
       }
 
-      // crc16_ok 校验正确给出提示
-      RCLCPP_INFO_THROTTLE(
-        get_logger(), *this->get_clock(), 1000,
-        "CRC16 verify passed: frame_len=%zu payload_len=%u id=0x%02x",
-        data_buf.size(), header_frame.len, header_frame.id);
+      // // crc16_ok 校验正确给出提示
+      // RCLCPP_INFO_THROTTLE(
+      //   get_logger(), *this->get_clock(), 1000,
+      //   "CRC16 verify passed: frame_len=%zu payload_len=%u id=0x%02x",
+      //   data_buf.size(), header_frame.len, header_frame.id);
 
       // crc16_ok 校验正确后根据 header_frame.id 解析数据
       switch (header_frame.id) {
@@ -469,12 +506,12 @@ void StandardRobotPpRos2Node::receiveData()
         case ID_GAME_STATUS: {
           ReceiveGameStatusData game_status_data = fromVector<ReceiveGameStatusData>(data_buf);
 
-          //比赛状态解码调试信息
-          RCLCPP_INFO_THROTTLE(
-            get_logger(), *this->get_clock(), 1000,
-            "[ReceiveGameStatusData DECODE OK] game_progress=%u stage_remain_time=%u",
-            game_status_data.data.game_progress,
-            game_status_data.data.stage_remain_time);
+          // //比赛状态解码调试信息
+          // RCLCPP_INFO_THROTTLE(
+          //   get_logger(), *this->get_clock(), 1000,
+          //   "[ReceiveGameStatusData DECODE OK] game_progress=%u stage_remain_time=%u",
+          //   game_status_data.data.game_progress,
+          //   game_status_data.data.stage_remain_time);
           
             publishGameStatus(game_status_data);
         } break;
@@ -489,24 +526,26 @@ void StandardRobotPpRos2Node::receiveData()
         } break;
         case ID_RFID_STATUS: {
           ReceiveRfidStatus rfid_status_data = fromVector<ReceiveRfidStatus>(data_buf);
-          RCLCPP_INFO_THROTTLE(
-            get_logger(), *this->get_clock(), 1000,
-            "[ID_RFID_STATUS DECODE OK] center_gain_point=%s",
-            rfid_status_data.data.center_gain_point ? "true" : "false");
+
+          // //中心点rfid解码
+          // RCLCPP_INFO_THROTTLE(
+          //   get_logger(), *this->get_clock(), 1000,
+          //   "[ID_RFID_STATUS DECODE OK] center_gain_point=%s",
+          //   rfid_status_data.data.center_gain_point ? "true" : "false");
           publishRfidStatus(rfid_status_data);
         } break;
         case ID_ROBOT_STATUS: {
           ReceiveRobotStatus robot_status_data = fromVector<ReceiveRobotStatus>(data_buf);
 
-          // 机器人状态解码调试信息
-          const bool hp_deduced =
-            (last_hp_ >= 0.0f) && (static_cast<float>(robot_status_data.data.current_hp) < last_hp_);
-          RCLCPP_INFO_THROTTLE(
-            get_logger(), *this->get_clock(), 1000,
-            "[0x0B DECODE OK] hp=%u angle=%.3f is_hp_deduced=%s",
-            robot_status_data.data.current_hp,
-            robot_status_data.data.robot_pos_angle,
-            hp_deduced ? "true" : "false");
+          // // 机器人状态解码调试信息
+          // const bool hp_deduced =
+          //   (last_hp_ >= 0.0f) && (static_cast<float>(robot_status_data.data.current_hp) < last_hp_);
+          // RCLCPP_INFO_THROTTLE(
+          //   get_logger(), *this->get_clock(), 1000,
+          //   "[0x0B DECODE OK] hp=%u angle=%.3f is_hp_deduced=%s",
+          //   robot_status_data.data.current_hp,
+          //   robot_status_data.data.robot_pos_angle,
+          //   hp_deduced ? "true" : "false");
 
           publishRobotStatus(robot_status_data);
         } break;
@@ -763,10 +802,10 @@ void StandardRobotPpRos2Node::publishRfidStatus(ReceiveRfidStatus & rfid_status)
 
   rfid_status_pub_->publish(msg);
 
-  RCLCPP_INFO_THROTTLE(
-    get_logger(), *this->get_clock(), 1000,
-    "[ID_RFID_STATUS PUB OK] topic=/referee/rfid_status center_gain_point=%s",
-    msg.center_gain_point ? "true" : "false");
+  // RCLCPP_INFO_THROTTLE(
+  //   get_logger(), *this->get_clock(), 1000,
+  //   "[ID_RFID_STATUS PUB OK] topic=/referee/rfid_status center_gain_point=%s",
+  //   msg.center_gain_point ? "true" : "false");
 }
 
 // 发布机器人状态
@@ -814,10 +853,13 @@ void StandardRobotPpRos2Node::publishRobotStatus(ReceiveRobotStatus & robot_stat
   if (msg.is_hp_deduced) {
     RCLCPP_WARN(
       get_logger(),
-      "[0x0B HP DROP EVENT] hp %u -> %u, delta=%d",
+      "[0x0B HP DROP EVENT] hp %u -> %u, delta=%d, reason=%u(%s), armor_id=%u",
       static_cast<unsigned int>(last_hp_),
       msg.current_hp,
-      static_cast<int>(last_hp_) - static_cast<int>(msg.current_hp));
+      static_cast<int>(last_hp_) - static_cast<int>(msg.current_hp),
+      msg.hp_deduction_reason,
+      hpDeductionReasonToString(msg.hp_deduction_reason),
+      msg.armor_id);
   }
 
   last_hp_ = robot_status.data.current_hp; //保存本次血量
@@ -890,6 +932,7 @@ void StandardRobotPpRos2Node::sendData()
     reinterpret_cast<uint8_t *>(&send_robot_cmd_data_), sizeof(HeaderFrame));
 
   int retry_count = 0;
+  uint8_t last_logged_posture = 0;
 
   while (rclcpp::ok()) {  // 持续运行直到ROS2关闭
     if (!is_usb_ok_) {
@@ -904,6 +947,14 @@ void StandardRobotPpRos2Node::sendData()
     try {
       send_robot_cmd_data_.time_stamp =
         static_cast<uint32_t>(this->get_clock()->now().nanoseconds() / 1000000ULL);
+
+      const uint8_t current_posture = send_robot_cmd_data_.data.posture.posture;
+      if (current_posture != last_logged_posture) {
+        RCLCPP_WARN(
+          get_logger(), "Publishing posture: %s (%u)", postureToString(current_posture),
+          current_posture);
+        last_logged_posture = current_posture;
+      }
 
       // 添加数据段CRC16校验（覆盖所有数据）
       crc16::append_CRC16_check_sum(
@@ -986,6 +1037,9 @@ void StandardRobotPpRos2Node::cmdPostureCallback(
     return;
   }
   send_robot_cmd_data_.data.posture.posture = msg->posture;
+  // RCLCPP_INFO(
+  //   get_logger(), "Posture command received: %s (%u)", postureToString(msg->posture),
+  //   msg->posture);
 }
 // void StandardRobotPpRos2Node::cmdShootCallback(const example_interfaces::msg::UInt8::SharedPtr msg)
 // {
