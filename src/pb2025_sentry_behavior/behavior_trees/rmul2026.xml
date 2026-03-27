@@ -1,49 +1,52 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4">
 	<BehaviorTree ID="rmul2026">
-		<Repeat num_cycles="-1"> <!-- 无限循环 -->
-			<Sequence> <!-- Sequence: 顺序执行，有一个子节点失败，中断后续任务。 -->
-				<!-- 检测开赛 -->
-				<Fallback>
+		<Repeat num_cycles="-1">
+			<Sequence>
+				<!-- 开赛判断：检测到则立即通过；否则0.1秒/次，3分钟强制开赛 -->
+				<ForceSuccess>
+					<RetryUntilSuccessful num_attempts="1800">
+						<Fallback>
+							<IsGameStatus
+								expected_game_progress="4"
+								key_port="{@referee_gameStatus}"/>
+							<!-- 被扣血开赛 -->
+							<IsHpDeduced
+								key_port="{@referee_robotStatus}"/>
+							<ForceFailure>
+								<Sleep msec="100"/>
+							</ForceFailure>
+						</Fallback>
+					</RetryUntilSuccessful>
+				</ForceSuccess>
+
+				<!-- 检测比赛结束 -->
+				<Inverter>
 					<IsGameStatus
-						expected_game_progress="4"
+						expected_game_progress="5"
 						key_port="{@referee_gameStatus}"/>
-					<ForceFailure>
-						<Sleep msec="50"/>
-					</ForceFailure>
-				</Fallback>
+				</Inverter>
 
-				<!--  开往进攻点 -->	
-				<PubNav2Goal goal="2.5;-2.7;0" topic_name="goal_pose"/> 
-				
-				<!-- 每50ms检查一次，直到 hp < 150 -->
+				<!-- if(hp >= 380) 发布点A；else if(hp <= 150) 发布起点 -->
 				<Fallback>
-					<Inverter>
-						<IsStatusOK
-							hp_min="150"
-							key_port="{@referee_robotStatus}"/>
-					</Inverter>
-					<ForceFailure>
-						<Sleep msec="50"/>
-					</ForceFailure>
+					<Sequence>
+						<IsStatusOK hp_min="380" key_port="{@referee_robotStatus}"/>
+						<PubNav2Goal goal="4.8;-2.3;0" topic_name="goal_pose"/>
+						<!-- <PubNav2Goal goal="2.5;0;0" topic_name="goal_pose"/> -->
+						<Sleep msec="6000"/>
+					</Sequence>
+
+					<Sequence>
+						<Inverter>
+							<IsStatusOK hp_min="151" key_port="{@referee_robotStatus}"/>
+						</Inverter>
+						<PubNav2Goal goal="0;0;0" topic_name="goal_pose"/>
+						<Sleep msec="6000"/>
+					</Sequence>
+
+					<!-- 150~379区间不切换目标，避免忙等 -->
+					<Sleep msec="100"/>
 				</Fallback>
-
-				<!--  开往起点 -->
-				<PubNav2Goal goal="0;0;0" topic_name="goal_pose"/>
-
-				<!-- 检测血量，直到血量>380 -->
-				<Fallback>
-					<!-- 满足 hp >= 381 时直接成功 -->
-					<IsStatusOK
-						hp_min="381"
-						key_port="{@referee_robotStatus}"/>
-
-					<!-- 未满足就等待后重试 -->
-					<ForceFailure>
-						<Sleep msec="50"/>
-					</ForceFailure>
-				</Fallback>
-
 			</Sequence>
 		</Repeat>
 	</BehaviorTree>
