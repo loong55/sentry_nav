@@ -371,7 +371,7 @@ controller_server:
       min_approach_linear_velocity: 0.3
       approach_velocity_scaling_dist: 1.0
       v_linear_min: -5.0
-      v_linear_max: 5.0
+      v_linear_max: 2.5
       v_angular_min: -2.5
       v_angular_max: 2.5
       curvature_min: 0.4                                # 低曲率阈值，低于此值不减速。former:0.4
