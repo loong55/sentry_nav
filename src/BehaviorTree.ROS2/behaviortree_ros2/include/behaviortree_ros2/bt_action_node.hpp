@@ -12,6 +12,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+// 509行，修复了onHalt()函数的调用，现在它会在节点状态变为NodeStatus::RUNNING时被调用
 
 #pragma once
 
@@ -505,13 +506,23 @@ inline NodeStatus RosActionNode<T>::tick()
   return NodeStatus::RUNNING;
 }
 
+// 修复了onHalt()函数的调用，现在它会在节点状态变为NodeStatus::RUNNING时被调用
 template <class T>
 inline void RosActionNode<T>::halt()
 {
+  // if(status() == BT::NodeStatus::RUNNING)
+  // {
+  //   cancelGoal();
+  //   onHalt();
+  // }
+
   if(status() == BT::NodeStatus::RUNNING)
   {
     cancelGoal();
     onHalt();
+    result_.code = rclcpp_action::ResultCode::SUCCEEDED;
+    onResultReceived(result_);
+    goal_handle_.reset();
   }
 }
 
