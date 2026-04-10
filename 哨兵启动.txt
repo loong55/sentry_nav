@@ -50,3 +50,5 @@ ros2 launch pb2025_nav_bringup rm_sentry_reality_launch.py \
 world:=<YOUR_WORLD_NAME> \
 slam:=False \
 use_robot_state_pub:=True
+
+back
