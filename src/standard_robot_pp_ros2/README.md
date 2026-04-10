@@ -353,7 +353,7 @@ CRC8和CRC16查找表
 作用：配置串口设备权限
 
 创建 udev 规则文件
-将 RoboMaster C 型开发板固定为 ttyACM0
+将 RoboMaster C 型开发板固定为 ttyACM1
 设置串口权限为 0777
 将当前用户添加到 dialout 组
 
