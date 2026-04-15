@@ -1,0 +1,22 @@
+{
+    "python.autoComplete.extraPaths": [
+        "/home/adminpc/NUDT_navigation/install/vikit_py/lib/python3.10/site-packages",
+        "/home/adminpc/NUDT_navigation/install/teb_msgs/local/lib/python3.10/dist-packages",
+        "/home/adminpc/NUDT_navigation/install/faster_lio/local/lib/python3.10/dist-packages",
+        "/home/adminpc/NUDT_navigation/install/fast_lio/local/lib/python3.10/dist-packages",
+        "/home/adminpc/NUDT_navigation/install/livox_ros_driver2/local/lib/python3.10/dist-packages",
+        "/home/adminpc/NUDT_navigation/install/costmap_converter_msgs/local/lib/python3.10/dist-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/adminpc/NUDT_navigation/install/vikit_py/lib/python3.10/site-packages",
+        "/home/adminpc/NUDT_navigation/install/teb_msgs/local/lib/python3.10/dist-packages",
+        "/home/adminpc/NUDT_navigation/install/faster_lio/local/lib/python3.10/dist-packages",
+        "/home/adminpc/NUDT_navigation/install/fast_lio/local/lib/python3.10/dist-packages",
+        "/home/adminpc/NUDT_navigation/install/livox_ros_driver2/local/lib/python3.10/dist-packages",
+        "/home/adminpc/NUDT_navigation/install/costmap_converter_msgs/local/lib/python3.10/dist-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ]
+}

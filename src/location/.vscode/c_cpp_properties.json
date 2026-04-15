@@ -1,0 +1,36 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/adminpc/NUDT_navigation/install/teb_local_planner/include/**",
+        "/home/adminpc/NUDT_navigation/install/teb_msgs/include/**",
+        "/home/adminpc/NUDT_navigation/install/small_gicp_relocalization/include/**",
+        "/home/adminpc/NUDT_navigation/install/pointcloud_to_laserscan/include/**",
+        "/home/adminpc/NUDT_navigation/install/oradar_lidar/include/**",
+        "/home/adminpc/NUDT_navigation/install/icp_registration/include/**",
+        "/home/adminpc/NUDT_navigation/install/faster_lio/include/**",
+        "/home/adminpc/NUDT_navigation/install/fast_lio/include/**",
+        "/home/adminpc/NUDT_navigation/install/livox_ros_driver2/include/**",
+        "/home/adminpc/NUDT_navigation/install/linefit_ground_segmentation/include/**",
+        "/home/adminpc/NUDT_navigation/install/jl_nav2_bringup/include/**",
+        "/home/adminpc/NUDT_navigation/install/imu_complementary_filter/include/**",
+        "/home/adminpc/NUDT_navigation/install/fake_vel_transform/include/**",
+        "/home/adminpc/NUDT_navigation/install/costmap_converter/include/**",
+        "/home/adminpc/NUDT_navigation/install/costmap_converter_msgs/include/**",
+        "/home/adminpc/NUDT_navigation/install/2d_slam/include/**",
+        "/opt/ros/humble/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "coilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

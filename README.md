@@ -17,9 +17,9 @@
 ### src/standard_robot_pp_ros2/include/standard_robot_pp_ros2/packet_typedef.hpp
 ### src/standard_robot_pp_ros2/launch/standard_robot_pp_ros2.launch.py
 ### src/standard_robot_pp_ros2/src/standard_robot_pp_ros2.cpp
-
-### 7、添加姿态切换功能
-串口修改
+### 7、添加姿态切换功能：消息接口src/pb_rm_interfaces/msg/PostureCmd.msg,串口通信包中添加姿态切换功能，行为树中添加姿态切换节点
+### 8、修复行为树halt()函数无法正常停止问题，详细见：src/BehaviorTree.ROS2/behaviortree_ros2/include/behaviortree_ros2/bt_action_node.hpp
+### 9、加入军临战队2025赛季开发的地图坐标查看文件，用于查看pgm地图中的坐标点，方便写行为树
 
 ### 编译
 #### 1.工作空间外安装 small_gicp
@@ -52,13 +52,8 @@ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --executo
 1.1.1 代码位置：sentry_nav_fjut/src/sentry_nav_fjut/sentry_nav
 1.1.2 代码功能：实车导航代码，包括地图构建、路径规划、路径跟踪、避障等功能
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Build and Test](https://github.com/SMBU-PolarBear-Robotics-Team/pb2025_sentry_nav/actions/workflows/ci.yml/badge.svg)](https://github.com/SMBU-PolarBear-Robotics-Team/pb2025_sentry_nav/actions/workflows/ci.yml)
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 
 深圳北理莫斯科大学 北极熊战队 2025 赛季哨兵导航仿真/实车包
-
-![PolarBear Logo](https://raw.githubusercontent.com/SMBU-PolarBear-Robotics-Team/.github/main/.docs/image/polarbear_logo_text.png)
 
 [BiliBili: 谁说在家不能调车！？更适合新手宝宝的 RM 导航仿真](https://www.bilibili.com/video/BV12qcXeHETR)
 
