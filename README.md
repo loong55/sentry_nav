@@ -57,9 +57,6 @@ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --executo
 
 [BiliBili: 谁说在家不能调车！？更适合新手宝宝的 RM 导航仿真](https://www.bilibili.com/video/BV12qcXeHETR)
 
-https://github.com/user-attachments/assets/d9e778e0-fa43-40c2-96c2-e71eaf7737d4
-
-https://github.com/user-attachments/assets/ae4c19a0-4c73-46a0-95bd-909734da2a42
 
 ## 1. Overview
 
