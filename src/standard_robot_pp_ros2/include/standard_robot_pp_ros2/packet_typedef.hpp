@@ -409,7 +409,7 @@ struct SendRobotCmdData
 
     struct
     {
-      uint8_t posture; // 姿态切换命令， 1=进攻 2=防御 3=移动
+      uint8_t posture; // 姿态切换命令， 1=进攻 2=防御 3=移动 4=开小陀螺
     } __attribute__((packed)) posture;
   } __attribute__((packed)) data;
 

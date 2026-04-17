@@ -131,15 +131,15 @@ void StandardRobotPpRos2Node::createPublisher()
   event_data_pub_ =
     this->create_publisher<pb_rm_interfaces::msg::EventData>("referee/event_data", 10);
   all_robot_hp_pub_ =
-    this->create_publisher<pb_rm_interfaces::msg::GameRobotHP>("referee/all_robot_hp", 10);
+    this->create_publisher<pb_rm_interfaces::msg::GameRobotHP>("referee/all_robot_hp", 10);         //包含基地血量
   game_status_pub_ =
-    this->create_publisher<pb_rm_interfaces::msg::GameStatus>("referee/game_status", 10);
+    this->create_publisher<pb_rm_interfaces::msg::GameStatus>("referee/game_status", 10);           //比赛状态和剩余时间
   ground_robot_position_pub_ = this->create_publisher<pb_rm_interfaces::msg::GroundRobotPosition>(
     "referee/ground_robot_position", 10);
   rfid_status_pub_ =
     this->create_publisher<pb_rm_interfaces::msg::RfidStatus>("referee/rfid_status", 10);
   robot_status_pub_ =
-    this->create_publisher<pb_rm_interfaces::msg::RobotStatus>("referee/robot_status", 10);
+    this->create_publisher<pb_rm_interfaces::msg::RobotStatus>("referee/robot_status", 10);         //包含血量和允许发弹量
   buff_pub_ = this->create_publisher<pb_rm_interfaces::msg::Buff>("referee/buff", 10);
 }
 
@@ -691,6 +691,13 @@ void StandardRobotPpRos2Node::publishAllRobotHp(ReceiveAllRobotHpData & all_robo
   msg.ally_base_hp = all_robot_hp.data.ally_base_hp;
 
   all_robot_hp_pub_->publish(msg);
+
+  // 基地和前哨站血量解码后写入消息接口，调试信息
+  RCLCPP_INFO_THROTTLE(
+    get_logger(), *this->get_clock(), 1000,
+    "referee/all_robot_hp ally_outpost_hp=%u ally_base_hp=%u",
+    msg.ally_outpost_hp,
+    msg.ally_base_hp);
 }
 
 // 发布比赛状态
@@ -704,7 +711,7 @@ void StandardRobotPpRos2Node::publishGameStatus(ReceiveGameStatusData & game_sta
   // 比赛状态解码后写入消息接口，调试信息
   RCLCPP_INFO_THROTTLE(
     get_logger(), *this->get_clock(), 1000,
-    "[ReceiveGameStatusData PUB OK] topic=/referee/game_status game_progress=%u stage_remain_time=%u",
+    "referee/game_status game_progress=%u stage_remain_time=%u",
     msg.game_progress,
     msg.stage_remain_time);
 
@@ -850,17 +857,17 @@ void StandardRobotPpRos2Node::publishRobotStatus(ReceiveRobotStatus & robot_stat
   msg.is_hp_deduced =
     (last_hp_ >= 0.0f) && (static_cast<float>(msg.current_hp) < last_hp_);
 
-  if (msg.is_hp_deduced) {
-    RCLCPP_WARN(
-      get_logger(),
-      "[0x0B HP DROP EVENT] hp %u -> %u, delta=%d, reason=%u(%s), armor_id=%u",
-      static_cast<unsigned int>(last_hp_),
-      msg.current_hp,
-      static_cast<int>(last_hp_) - static_cast<int>(msg.current_hp),
-      msg.hp_deduction_reason,
-      hpDeductionReasonToString(msg.hp_deduction_reason),
-      msg.armor_id);
-  }
+  // if (msg.is_hp_deduced) {
+  //   RCLCPP_WARN(
+  //     get_logger(),
+  //     "[0x0B HP DROP EVENT] hp %u -> %u, delta=%d, reason=%u(%s), armor_id=%u",
+  //     static_cast<unsigned int>(last_hp_),
+  //     msg.current_hp,
+  //     static_cast<int>(last_hp_) - static_cast<int>(msg.current_hp),
+  //     msg.hp_deduction_reason,
+  //     hpDeductionReasonToString(msg.hp_deduction_reason),
+  //     msg.armor_id);
+  // }
 
   last_hp_ = robot_status.data.current_hp; //保存本次血量
 
@@ -869,8 +876,9 @@ void StandardRobotPpRos2Node::publishRobotStatus(ReceiveRobotStatus & robot_stat
   //机器人状态解码后，写入消息接口的调试信息
   RCLCPP_INFO_THROTTLE(
     get_logger(), *this->get_clock(), 1000,
-    "[0x0B PUB OK] topic=/referee/robot_status hp=%u angle=%.3f is_hp_deduced=%s",
+    "referee/robot_status hp=%u angle=%.3f bullets_remaining=%u is_hp_deduced=%s",
     msg.current_hp,
+    msg.projectile_allowance_17mm,
     robot_status.data.robot_pos_angle,
     msg.is_hp_deduced ? "true" : "false");
 
@@ -971,6 +979,16 @@ void StandardRobotPpRos2Node::sendData()
     //         send_robot_cmd_data_.data.speed_vector.vy,
     //         send_robot_cmd_data_.data.speed_vector.wz);
 
+    //发布速度和姿态调试信息
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), *this->get_clock(), 1000,
+      "Sending data: vx=%.2f, vy=%.2f, wz=%.2f, posture=%u(%s)",
+        send_robot_cmd_data_.data.speed_vector.vx,
+        send_robot_cmd_data_.data.speed_vector.vy,
+        send_robot_cmd_data_.data.speed_vector.wz,
+        send_robot_cmd_data_.data.posture.posture,
+        postureToString(send_robot_cmd_data_.data.posture.posture));
+
     } catch (const std::exception & ex) {
       RCLCPP_ERROR(get_logger(), "Error sending data: %s", ex.what());
       is_usb_ok_ = false;
@@ -989,7 +1007,7 @@ void StandardRobotPpRos2Node::cmdVelCallback(const geometry_msgs::msg::Twist::Sh
   send_robot_cmd_data_.data.speed_vector.vy = msg->linear.y;
   send_robot_cmd_data_.data.speed_vector.wz = msg->angular.z;
 
-  std::cout<<msg->linear.x<< " "<<msg->linear.y<<std::endl;  // 控制台输出
+  // std::cout<<msg->linear.x<< " "<<msg->linear.y<<std::endl;  // 控制台输出
 }
 
 //云台关节回调
@@ -1033,7 +1051,7 @@ void StandardRobotPpRos2Node::cmdPostureCallback(
   {
     RCLCPP_WARN_THROTTLE(
       get_logger(), *this->get_clock(), 1000,
-      "Invalid posture command: %u (valid range: 1~3)", msg->posture);
+      "Invalid posture command: %u (valid range: 1~4)", msg->posture);
     return;
   }
   send_robot_cmd_data_.data.posture.posture = msg->posture;
