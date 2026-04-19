@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# 这个脚本用于清理ROS 2环境，解决节点第二次启动失败的问题
-
+# 首先关闭行为树，再关闭其他ros节点
 set -euo pipefail
 
 PROCESS_NAMES=(
@@ -30,8 +29,6 @@ for name in "${PROCESS_NAMES[@]}"; do
     echo "[OK] 已关闭 -> $name"
   fi
 done
-
-# 这个脚本用于清理ROS 2环境，解决节点第二次启动失败的问题
 
 echo "--- ROS 2 Environment Reset Script ---"
 

@@ -38,7 +38,7 @@ point_lio:
       lidar_type: 2                                     # 1 for Livox serials LiDAR, 2 for Velodyne LiDAR, 3 for ouster LiDAR
       scan_line: 32
       timestamp_unit: 2                                 # the unit of time/t field in the PointCloud2 rostopic: 0-second, 1-milisecond, 2-microsecond, 3-nanosecond.
-      blind: 0.5
+      blind: 0.6                                        #3d点云滤波半径
 
     mapping:
       imu_en: True
@@ -119,7 +119,7 @@ terrain_analysis:
     noDataObstacle: False               # treat no data as obstacle
     noDataBlockSkipNum: 0
     minBlockPointNum: 10
-    vehicleHeight: 0.5                  # 小于车辆高度的点才会进行处理
+    vehicleHeight: 0.6                  # 小于车辆高度的点才会进行处理
     voxelPointUpdateThre: 100
     voxelTimeUpdateThre: 1.0
     minRelZ: -1.5                       # min_rel_z 以及 max_rel_z 限制了有效点云点的Z值范围，用于对天花板和地板进行处理
@@ -155,7 +155,7 @@ fake_vel_transform:
     input_cmd_vel_topic: "cmd_vel_nav2_result"
     output_cmd_vel_topic: "cmd_vel"
     cmd_spin_topic: "cmd_spin"
-    init_spin_speed: 0.0
+    init_spin_speed: 3.14
 
 small_gicp_relocalization:
   ros__parameters:
@@ -185,7 +185,7 @@ pointcloud_to_laserscan:
     angle_max: 3.1415926                    # M_PI/2
     angle_increment: 0.00872665             # M_PI/360.0
     scan_time: 0.05
-    range_min: 0.35
+    range_min: 0.6                          # 点云半径 点云投影成激光雷达扫描时的最小范围，单位：米
     range_max: 10.0
     use_inf: true
 
@@ -343,7 +343,7 @@ controller_server:
     general_goal_checker:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.15
+      xy_goal_tolerance: 0.10
       yaw_goal_tolerance: 6.28
     FollowPath:
       plugin: "pb_omni_pid_pursuit_controller::OmniPidPursuitController"
@@ -364,14 +364,14 @@ controller_server:
       use_interpolation: false
       use_rotate_to_heading: false
       use_rotate_to_heading_treshold: 0.1
-      min_approach_linear_velocity: 0.5
+      min_approach_linear_velocity: 0.3
       approach_velocity_scaling_dist: 1.0
-      v_linear_min: -2.5
+      v_linear_min: -5.0
       v_linear_max: 2.5
-      v_angular_min: -3.0
-      v_angular_max: 3.0
-      curvature_min: 0.4                                # 低曲率阈值，低于此值不减速。
-      curvature_max: 0.7                                # 高曲率阈值，高于此值大幅减速。
+      v_angular_min: -2.5
+      v_angular_max: 2.5
+      curvature_min: 0.4                                # 低曲率阈值，低于此值不减速。former:0.4
+      curvature_max: 0.7                                # 高曲率阈值，高于此值大幅减速。former:0.7
       reduction_ratio_at_high_curvature: 0.5            # 高曲率时的速度降低比例。 0.5 (即减速 50%)
       curvature_forward_dist: 0.7                       # 前向距离，用于曲率计算
       curvature_backward_dist: 0.3                      # 后向距离，用于曲率计算
@@ -390,7 +390,7 @@ local_costmap:
       width: 5
       height: 5
       resolution: 0.05
-      robot_radius: 0.2
+      robot_radius: 0.40               # 底盘直径 80cm，半径 0.45m
       plugins: ["static_layer", "intensity_voxel_layer", "inflation_layer"]
       intensity_voxel_layer:
         plugin: pb_nav2_costmap_2d::IntensityVoxelLayer
@@ -423,8 +423,8 @@ local_costmap:
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 4.0
-        inflation_radius: 0.7
+        cost_scaling_factor: 3.0        # 稍降：配合更大的 robot_radius，避免代价场过于拥挤
+        inflation_radius: 0.50          # 局部代价地图，当前检测的小地图，可以检测到机器人，需大于内切半径(0.353)，设为0.40避免碰撞警告
       always_send_full_costmap: False
 
 global_costmap:
@@ -435,8 +435,9 @@ global_costmap:
       publish_frequency: 2.0
       global_frame: map
       robot_base_frame: gimbal_yaw_fake
-      robot_radius: 0.2
+      robot_radius: 0.40               # 底盘直径 80cm，半径 0.45m
       resolution: 0.05
+      track_unknown_space: false       # 这个参数对于全局代价地图非常重要，开启后未知空间会被标记为障碍物，避免机器人试图穿越未知区域
       plugins: ["static_layer", "intensity_voxel_layer", "inflation_layer"]
       intensity_voxel_layer:
         plugin: pb_nav2_costmap_2d::IntensityVoxelLayer
@@ -469,8 +470,8 @@ global_costmap:
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 4.0
-        inflation_radius: 0.7
+        cost_scaling_factor: 3.0
+        inflation_radius: 0.50          # 需大于内切半径(0.353)，设为0.40避免碰撞警告
       always_send_full_costmap: False
 
 # The yaml_filename does not need to be specified since it going to be set by defaults in launch.
