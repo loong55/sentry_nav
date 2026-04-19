@@ -2,5 +2,11 @@
     "Codegeex.RepoIndex": true,
     "cmake.sourceDirectory": "/home/rmnuc2/sentry_ws/src/BehaviorTree.ROS2/btcpp_ros2_samples",
     "C_Cpp.default.compilerPath": "/usr/bin/g++",
-    "cmake.ignoreCMakeListsMissing": true
+    "cmake.ignoreCMakeListsMissing": true,
+    "python.defaultInterpreterPath": "/usr/bin/python3",
+    "python.analysis.extraPaths": [
+        "/opt/ros/humble/local/lib/python3.10/dist-packages",
+        "/home/nuc/2026_nav/install/referee_sim/lib/python3.10/site-packages",
+        "/home/nuc/2026_nav/install/pb_rm_interfaces/local/lib/python3.10/dist-packages"
+    ]
 }

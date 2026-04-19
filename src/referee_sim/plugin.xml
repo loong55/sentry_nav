@@ -1,0 +1,14 @@
+<library path="referee_sim">
+  <class
+    name="Referee Simulator"
+    type="referee_sim.referee_sim_plugin.RefereeSimPlugin"
+    base_class_type="rqt_gui_py::Plugin">
+    <description>Referee data simulator with sliders, numeric inputs and game start button.</description>
+    <qtgui>
+      <group>Referee</group>
+      <label>Referee Simulator</label>
+      <icon type="theme">applications-system</icon>
+      <statustip>Simulate referee topics in ROS2</statustip>
+    </qtgui>
+  </class>
+</library>

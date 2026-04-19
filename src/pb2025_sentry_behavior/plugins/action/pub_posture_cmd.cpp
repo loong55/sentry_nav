@@ -50,7 +50,7 @@ bool PublishPostureCmdAction::setMessage(pb_rm_interfaces::msg::PostureCmd & msg
 
   if (
     msg.posture < pb_rm_interfaces::msg::PostureCmd::ATTACK ||
-    msg.posture > pb_rm_interfaces::msg::PostureCmd::MOVE)
+    msg.posture > pb_rm_interfaces::msg::PostureCmd::SPIN)
   {
     msg.posture = pb_rm_interfaces::msg::PostureCmd::MOVE;
     msg.reason = pb_rm_interfaces::msg::PostureCmd::REASON_DEFAULT;

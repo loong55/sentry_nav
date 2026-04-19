@@ -20,6 +20,10 @@
 ### 7、添加姿态切换功能：消息接口src/pb_rm_interfaces/msg/PostureCmd.msg,串口通信包中添加姿态切换功能，行为树中添加姿态切换节点
 ### 8、修复行为树halt()函数无法正常停止问题，详细见：src/BehaviorTree.ROS2/behaviortree_ros2/include/behaviortree_ros2/bt_action_node.hpp
 ### 9、加入军临战队2025赛季开发的地图坐标查看文件，用于查看pgm地图中的坐标点，方便写行为树
+### 10、添加功能包referee_sim，用于仿真裁判系统,启动后点击refresh：
+```bash
+./referee_sim.sh
+```
 
 ### 编译
 #### 1.工作空间外安装 small_gicp

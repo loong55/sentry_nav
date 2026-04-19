@@ -43,6 +43,8 @@ const char * postureToString(uint8_t posture)
       return "DEFENSE(防御)";
     case pb_rm_interfaces::msg::PostureCmd::MOVE:
       return "MOVE(移动)";
+    case pb_rm_interfaces::msg::PostureCmd::SPIN:
+      return "SPIN(小陀螺)";
     default:
       return "UNKNOWN(未知)";
   }
@@ -1047,7 +1049,7 @@ void StandardRobotPpRos2Node::cmdPostureCallback(
   const pb_rm_interfaces::msg::PostureCmd::SharedPtr msg)
 {
   if (msg->posture < pb_rm_interfaces::msg::PostureCmd::ATTACK ||
-    msg->posture > pb_rm_interfaces::msg::PostureCmd::MOVE)
+    msg->posture > pb_rm_interfaces::msg::PostureCmd::SPIN)
   {
     RCLCPP_WARN_THROTTLE(
       get_logger(), *this->get_clock(), 1000,
