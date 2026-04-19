@@ -48,7 +48,7 @@ const char * postureToString(uint8_t posture)
   }
 }
 
-const char * hpDeductionReasonToString(uint8_t reason)
+[[maybe_unused]] const char * hpDeductionReasonToString(uint8_t reason)
 {
   switch (reason) {
     case pb_rm_interfaces::msg::RobotStatus::ARMOR_HIT:
@@ -876,7 +876,7 @@ void StandardRobotPpRos2Node::publishRobotStatus(ReceiveRobotStatus & robot_stat
   //机器人状态解码后，写入消息接口的调试信息
   RCLCPP_INFO_THROTTLE(
     get_logger(), *this->get_clock(), 1000,
-    "referee/robot_status hp=%u angle=%.3f bullets_remaining=%u is_hp_deduced=%s",
+    "referee/robot_status hp=%u bullets_remaining=%u angle=%.3f  is_hp_deduced=%s",
     msg.current_hp,
     msg.projectile_allowance_17mm,
     robot_status.data.robot_pos_angle,

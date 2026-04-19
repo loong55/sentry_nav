@@ -6,8 +6,16 @@
       <Sequence>
         
         <!-- 第一个目标点，等待导航完成 -->
-        <PubNav2Goal goal="4.8;-2.3;0" topic_name="goal_pose"/>
+        <PubNav2Goal goal="-0.2;0;0" topic_name="goal_pose"/>
         <Sleep msec="3000"/>
+
+        <!-- 第二个目标点，等待导航完成 -->
+        <!-- <PubNav2Goal goal="4.0;-3.0;0" topic_name="goal_pose"/> -->
+        <!-- <Sleep msec="3000"/> -->
+
+        <!-- 第一个目标点，等待导航完成 -->
+        <!-- <PubNav2Goal goal="-0.5;0;0" topic_name="goal_pose"/> -->
+        <!-- <Sleep msec="3000"/> -->
 
         <!-- 第二个目标点，等待导航完成 -->
         <PubNav2Goal goal="0;0;0" topic_name="goal_pose"/>

@@ -1,6 +1,6 @@
 standard_robot_pp_ros2:
   ros__parameters:
-    device_name: /dev/ttyNAV        # 串口设备名（推荐稳定别名） /dev/ttyNAV
+    device_name: /dev/ttyACM0        # 串口设备名（推荐稳定别名） /dev/ttyNAV
     baud_rate: 115200              # 波特率
     flow_control: none             # 流控制
     parity: none                   # 奇偶校验

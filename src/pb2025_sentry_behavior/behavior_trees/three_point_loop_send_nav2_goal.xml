@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+  <!-- 三点循环运动行为树（使用 SendNav2Goal，不使用延时） -->
+  <BehaviorTree ID="three_point_loop_send_nav2_goal">
+    <Repeat num_cycles="-1">
+      <Sequence>
+
+        <!-- 第一个目标点 -->
+        <SendNav2Goal goal="4.0;0;0"/>
+
+        <!-- 第二个目标点 -->
+        <SendNav2Goal goal="4.0;-3.0;0"/>
+
+        <!-- 回到第一个目标点 -->
+        <SendNav2Goal goal="4.0;0;0"/>
+
+        <!-- 回到原点 -->
+        <SendNav2Goal goal="0;0;0"/>
+
+      </Sequence>
+    </Repeat>
+  </BehaviorTree>
+</root>
