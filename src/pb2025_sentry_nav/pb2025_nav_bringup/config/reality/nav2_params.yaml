@@ -18,8 +18,8 @@ point_lio:
     init_map_size: 10
     point_filter_num: 8                                 # Options: 4, 3
     space_down_sample: True
-    filter_size_surf: 0.1                               # Options: 0.5, 0.3, 0.2, 0.15, 0.1
-    filter_size_map: 0.1                                # Options: 0.5, 0.3, 0.15, 0.1
+    filter_size_surf: 0.2                               # Options: 0.5, 0.3, 0.2, 0.15, 0.1
+    filter_size_map: 0.2                                # Options: 0.5, 0.3, 0.15, 0.1
     ivox_nearby_type: 18                                # Options: 0, 6, 18, 26
     runtime_pos_log_enable: False                       # Option: True
 
@@ -64,8 +64,8 @@ point_lio:
       plane_thr: 0.1                                    # 0.05, the threshold for plane criteria, the smaller, the flatter a plane
       match_s: 81.0
       ivox_grid_resolution: 0.5
-      gravity: [-0.06, -8.66, -4.97]                         # gravity to be aligned
-      gravity_init: [-0.06, -8.66, -4.97]                    # preknown gravity in the first IMU body frame, use when imu_en is False or start from a non-stationary state
+      gravity: [-0.0051723454216828, -0.5010458249710765, -0.8555782980903242]
+      gravity_init: [-0.0051723454216828, -0.5010458249710765, -0.8555782980903242]
       extrinsic_T: [ 0.0, 0.0, 0.0 ]
       extrinsic_R: [ 1.0, 0.0, 0.0,
                      0.0, 1.0, 0.0,
@@ -109,9 +109,9 @@ terrain_analysis:
     clearingDis: 0.0                    # 该距离外的点会被清除
     useSorting: False                   # 关闭坡度兼容：改用最低点作为地面参考，坡面上所有点的disZ均>=0，全部视为障碍物
     quantileZ: 0.2                      # useful if use_sorting is enabled. formal:0.2
-    considerDrop: True                  # 开启：对disZ取绝对值，低于地面的点（凹坑等）也视为障碍物
-    limitGroundLift: True               # 开启：限制地面高度抬升，防止坡面被误判为地面
-    maxGroundLift: 0.0                  # 设为0：禁止地面高度抬升，确保所有高于最低点的物体均为障碍物
+    considerDrop: False                  # 开启：对disZ取绝对值，低于地面的点（凹坑等）也视为障碍物
+    limitGroundLift: False               # 开启：限制地面高度抬升，防止坡面被误判为地面
+    maxGroundLift: 0.3                  # 设为0：禁止地面高度抬升，确保所有高于最低点的物体均为障碍物
     clearDyObs: True                    # 清除动态物体的话，有动态物体走过的地方就走不了了
     minDyObsDis: 0.3                    # 以下参数都是在 clear_dy_obs 的情况下才有用的
     minDyObsAngle: 0.0
@@ -123,7 +123,7 @@ terrain_analysis:
     noDataObstacle: False               # treat no data as obstacle
     noDataBlockSkipNum: 0
     minBlockPointNum: 10
-    vehicleHeight: 0.7                  # 小于车辆高度的点才会进行处理
+    vehicleHeight: 0.6                  # 小于车辆高度的点才会进行处理
     voxelPointUpdateThre: 100
     voxelTimeUpdateThre: 1.0
     minRelZ: -1.5                       # min_rel_z 以及 max_rel_z 限制了有效点云点的Z值范围，用于对天花板和地板进行处理
@@ -136,9 +136,9 @@ terrain_analysis_ext:
     decayTime: 0.2
     noDecayDis: 0.0
     clearingDis: 20.0
-    useSorting: false                   # 关闭坡度兼容：改用最低点作为地面参考，所有高于最低点的物体均视为障碍物
+    useSorting: true                   # 关闭坡度兼容：改用最低点作为地面参考，所有高于最低点的物体均视为障碍物
     quantileZ: 0.2
-    vehicleHeight: 1.0
+    vehicleHeight: 0.6  
     voxelPointUpdateThre: 100
     voxelTimeUpdateThre: 2.0
     lowerBoundZ: -1.5
@@ -159,7 +159,7 @@ fake_vel_transform:
     input_cmd_vel_topic: "cmd_vel_nav2_result"
     output_cmd_vel_topic: "cmd_vel"
     cmd_spin_topic: "cmd_spin"
-    init_spin_speed: 3.14
+    init_spin_speed: 0.0
 
 small_gicp_relocalization:
   ros__parameters:
@@ -183,8 +183,8 @@ pointcloud_to_laserscan:
     target_frame: base_footprint
     min_height: -0.5
     max_height: 6.0
-    min_intensity: 0.0
-    max_intensity: 255.0
+    min_intensity: 0.0                      # 点云强度阈值，低于该值的点将被忽略，默认0.1
+    max_intensity: 20.0                    # 点云强度阈值，高于该值的点将被忽略，默认2.0 
     angle_min: -3.1415926                   # -M_PI/2
     angle_max: 3.1415926                    # M_PI/2
     angle_increment: 0.00872665             # M_PI/360.0
@@ -332,7 +332,7 @@ controller_server:
   ros__parameters:
     use_sim_time: false
     odom_topic: odometry
-    controller_frequency: 20.0
+    controller_frequency: 20.0          # 南邮100.0
     min_x_velocity_threshold: 0.001
     min_y_velocity_threshold: 0.5
     min_theta_velocity_threshold: 0.001
@@ -347,7 +347,7 @@ controller_server:
     general_goal_checker:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.10
+      xy_goal_tolerance: 0.15
       yaw_goal_tolerance: 6.28
     FollowPath:
       plugin: "pb_omni_pid_pursuit_controller::OmniPidPursuitController"
@@ -368,12 +368,12 @@ controller_server:
       use_interpolation: false
       use_rotate_to_heading: false
       use_rotate_to_heading_treshold: 0.1
-      min_approach_linear_velocity: 0.3
+      min_approach_linear_velocity: 0.5
       approach_velocity_scaling_dist: 1.0
-      v_linear_min: -5.0
-      v_linear_max: 2.5
-      v_angular_min: -2.5
-      v_angular_max: 2.5
+      v_linear_min: -3.0
+      v_linear_max: 3.0
+      v_angular_min: -3.0
+      v_angular_max: 3.0
       curvature_min: 0.4                                # 低曲率阈值，低于此值不减速。former:0.4
       curvature_max: 0.7                                # 高曲率阈值，高于此值大幅减速。former:0.7
       reduction_ratio_at_high_curvature: 0.5            # 高曲率时的速度降低比例。 0.5 (即减速 50%)
@@ -386,7 +386,7 @@ local_costmap:
     ros__parameters:
       use_sim_time: false
       update_frequency: 10.0
-      publish_frequency: 5.0
+      publish_frequency: 10.0
       global_frame: odom
       robot_base_frame: gimbal_yaw_fake
       rolling_window: true

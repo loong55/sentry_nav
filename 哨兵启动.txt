@@ -8,6 +8,7 @@ source ./install/setup.bash
 ros2 launch livox_ros_driver2 rviz_MID360_launch.py
 
 单纯发雷达数据
+source ./install/setup.bash
 ros2 launch livox_ros_driver2 msg_MID360_launch.py
 
 新终端，查看雷达imu数据
