@@ -18,5 +18,5 @@ ros2 launch referee_sim referee_sim.launch.py
 ```bash
 rqt --force-discover
 ```
-在插件列表中找到 “Referee Simulator”
-在插件内调节数值、点击“比赛开始”，观察话题和终端日志变化。
+在插件列表中找到 “plugins--->dynamic_config”
+在插件内调节数值，观察话题和终端日志变化。

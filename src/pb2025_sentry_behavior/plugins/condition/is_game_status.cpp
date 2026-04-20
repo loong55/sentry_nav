@@ -25,10 +25,14 @@ IsGameStatusCondition::IsGameStatusCondition(
 
 BT::NodeStatus IsGameStatusCondition::checkGameStart()
 {
-  int expected_game_progress, min_remain_time, max_remain_time;
+  int expected_game_progress = 4;
+  int min_remain_time = 0;
+  int max_remain_time = 420;
   auto msg = getInput<pb_rm_interfaces::msg::GameStatus>("key_port");
   if (!msg) {
-    RCLCPP_ERROR(logger_, "GameStatus message is not available");
+    static rclcpp::Clock steady_clock(RCL_STEADY_TIME);
+    RCLCPP_WARN_THROTTLE(
+      logger_, steady_clock, 3000, "GameStatus message is not available");
     return BT::NodeStatus::FAILURE;
   }
 

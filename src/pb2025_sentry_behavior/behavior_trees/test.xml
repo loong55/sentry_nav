@@ -20,10 +20,10 @@
   <!-- 状态异常时返回补给区 -->
   <BehaviorTree ID="return_to_supply_on_bad_status">
     <Fallback>
-      <IsStatusOK ammo_min="40" heat_max="500" hp_min="200" key_port="{@referee_robotStatus}"/>
+      <IsStatusOK ammo_min="40" hp_min="200" key_port="{@referee_robotStatus}"/>
       <Sequence>
           <PubNav2Goal goal="-1;-5.35;0" topic_name="goal_pose"/>  <!-- 补给区坐标 -->
-          <IsStatusOK ammo_min="20" heat_max="500" hp_min="399" key_port="{@referee_robotStatus}"/>
+          <IsStatusOK ammo_min="20" hp_min="399" key_port="{@referee_robotStatus}"/>
       </Sequence>
     </Fallback>
   </BehaviorTree>
@@ -58,7 +58,7 @@
     <Sequence>
       <IsGameStatus min_remain_time="0" max_remain_time="289" 
                     expected_game_progress="4" key_port="{@referee_gameStatus}"/>
-      <!-- <IsStatusOK ammo_min="120" heat_max="500" hp_min="200" key_port="{@referee_robotStatus}"/> -->
+      <!-- <IsStatusOK ammo_min="120" hp_min="200" key_port="{@referee_robotStatus}"/> -->
       <!-- <PubNav2Goal goal="2.8;-0.2;0" topic_name="goal_pose"/>  堡垒坐标 -->
       <PubNav2Goal goal="3.5;-2;0" topic_name="goal_pose"/>
     </Sequence>
@@ -139,9 +139,6 @@
       <input_port name="ammo_min"
                   default="0"
                   type="int">Lower then minimum ammo will return FAILURE</input_port>
-      <input_port name="heat_max"
-                  default="350"
-                  type="int">Maximum heat. NOTE: Sentry heat limit is 400</input_port>
       <input_port name="hp_min"
                   default="300"
                   type="int">Minimum HP. NOTE: Sentry init/max HP is 400</input_port>

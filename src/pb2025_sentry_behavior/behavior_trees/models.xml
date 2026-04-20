@@ -15,6 +15,10 @@
             <output_port name="gimbal_pitch" type="float" default="{gimbal_pitch}">Move gimbal_pitch (const 0.0) to the direction of the hit armor plate</output_port>
             <input_port name="key_port" type="pb_rm_interfaces::msg::RobotStatus_&lt;std::allocator&lt;void&gt; &gt;" default="{@referee_robotStatus}">RobotStatus port on blackboard</input_port>
         </Condition>
+        <Condition ID="IsBaseHPHealthy">
+            <input_port name="base_hp_min" type="int" default="3000">Minimum ally base HP</input_port>
+            <input_port name="key_port" type="pb_rm_interfaces::msg::GameRobotHP_&lt;std::allocator&lt;void&gt; &gt;" default="{@referee_allRobotHP}">GameRobotHP port on blackboard</input_port>
+        </Condition>
         <Condition ID="IsDetectEnemy">
             <input_port name="armor_id" type="std::vector&lt;int, std::allocator&lt;int&gt; &gt;" default="1;2;3;4;5;7">Expected id of armors. Multiple numbers should be separated by the character `;` in Groot2</input_port>
             <input_port name="max_distance" type="float" default="8.000000">Distance to enemy target</input_port>
@@ -36,6 +40,10 @@
         <Condition ID="IsOutOfCombat">
             <input_port name="key_port" type="pb_rm_interfaces::msg::RobotStatus_&lt;std::allocator&lt;void&gt; &gt;" default="{@referee_robotStatus}">RobotStatus port on blackboard</input_port>
         </Condition>
+        <Condition ID="IsOutpostHPHealthy">
+            <input_port name="outpost_hp_min" type="int" default="500">Minimum ally outpost HP</input_port>
+            <input_port name="key_port" type="pb_rm_interfaces::msg::GameRobotHP_&lt;std::allocator&lt;void&gt; &gt;" default="{@referee_allRobotHP}">GameRobotHP port on blackboard</input_port>
+        </Condition>
         <Condition ID="IsRfidDetected">
             <input_port name="enemy_central_highland_gain_point" type="bool" default="false">对方中央高地增益点</input_port>
             <input_port name="friendly_supply_zone_exchange" type="bool" default="false">己方与兑换区重叠的补给区</input_port>
@@ -49,7 +57,6 @@
         </Condition>
         <Condition ID="IsStatusOK">
             <input_port name="ammo_min" type="int" default="0">Lower then minimum ammo will return FAILURE</input_port>
-            <input_port name="heat_max" type="int" default="350">Maximum heat. NOTE: Sentry heat limit is 400</input_port>
             <input_port name="hp_min" type="int" default="300">Minimum HP. NOTE: Sentry init/max HP is 400</input_port>
             <input_port name="key_port" type="pb_rm_interfaces::msg::RobotStatus_&lt;std::allocator&lt;void&gt; &gt;" default="{@referee_robotStatus}">RobotStatus port on blackboard</input_port>
         </Condition>

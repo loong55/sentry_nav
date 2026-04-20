@@ -2,6 +2,7 @@
 <root BTCPP_format="4" project_name="Project">
     <include path="dev_rm.xml"/>
     <include path="rmul_2025.xml"/>
+    <include path="2026rmuc.xml"/>
     <!-- Description of Node Models (used by Groot) -->
     <TreeNodesModel>
         <Condition ID="CalculateAttackPose">

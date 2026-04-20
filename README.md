@@ -47,7 +47,7 @@ git clone --recursive https://github.com/loong55/sentry_nav.git
 ```bash
 cd ~/sentry_ws
 rosdep install -r --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
-colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --executor parallel --parallel-workers 2
+colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --executor parallel --parallel-workers 1
 ```
 
 

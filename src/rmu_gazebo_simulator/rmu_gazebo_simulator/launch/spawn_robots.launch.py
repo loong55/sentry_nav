@@ -3,14 +3,15 @@ import os
 import yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import ExecuteProcess
+from launch.actions import DeclareLaunchArgument, ExecuteProcess, OpaqueFunction
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from nav2_common.launch import ReplaceString
 from sdformat_tools.urdf_generator import UrdfGenerator
 from xmacro.xmacro4sdf import XMLMacro4sdf
 
 
-def generate_launch_description():
+def _build_spawn_actions(context):
     # Map fully qualified names to relative ones so the node's namespace can be prepended.
     # In case of the transforms (tf), currently, there doesn't seem to be a better alternative
     # https://github.com/ros/geometry2/issues/32
@@ -33,17 +34,23 @@ def generate_launch_description():
     bridge_config = os.path.join(pkg_simulator, "config", "ros_gz_bridge.yaml")
     robot_config = os.path.join(pkg_simulator, "config", "base_params.yaml")
 
-    # Get spawn robot init pose
-    gz_world_path = os.path.join(pkg_simulator, "config", "gz_world.yaml")
+    gz_world_path = LaunchConfiguration("gz_world_path").perform(context)
+    selected_world_arg = LaunchConfiguration("world").perform(context)
+
     with open(gz_world_path) as file:
         config = yaml.safe_load(file)
-        selected_world = config.get("world")
+        selected_world = selected_world_arg or config.get("world")
         robots = config["robots"].get(selected_world)
+
+    if not robots:
+        raise RuntimeError(
+            f"No robots configured for world '{selected_world}' in {gz_world_path}"
+        )
 
     xmacro = XMLMacro4sdf()
     xmacro.set_xml_file(robot_xmacro_path)
 
-    ld = LaunchDescription()
+    actions = []
 
     for robot in robots:
         # Generate SDF from xmacro
@@ -129,10 +136,33 @@ def generate_launch_description():
             output="screen",
         )
 
-        ld.add_action(spawn_robot)
-        ld.add_action(robot_base)
-        ld.add_action(robot_state_publisher)
-        ld.add_action(robot_ign_bridge)
-        ld.add_action(set_performer_service)
+        actions.append(spawn_robot)
+        actions.append(robot_base)
+        actions.append(robot_state_publisher)
+        actions.append(robot_ign_bridge)
+        actions.append(set_performer_service)
+
+    return actions
+
+
+def generate_launch_description():
+    pkg_simulator = get_package_share_directory("rmu_gazebo_simulator")
+
+    declare_world = DeclareLaunchArgument(
+        "world",
+        default_value="",
+        description="World key used to pick robot spawn poses from gz_world.yaml",
+    )
+
+    declare_gz_world_path = DeclareLaunchArgument(
+        "gz_world_path",
+        default_value=os.path.join(pkg_simulator, "config", "gz_world.yaml"),
+        description="Path to gz_world.yaml",
+    )
+
+    ld = LaunchDescription()
+    ld.add_action(declare_world)
+    ld.add_action(declare_gz_world_path)
+    ld.add_action(OpaqueFunction(function=_build_spawn_actions))
 
     return ld

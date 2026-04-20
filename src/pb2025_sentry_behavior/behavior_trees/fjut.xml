@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
   <root BTCPP_format="4">
+
     <BehaviorTree ID="check_energy">
       <Fallback>
         <IsEnergyEnough remaining_energy="20" key_port="{@referee_buff}"/>
@@ -21,14 +22,15 @@
         </ForceFailure>
       </Fallback>
     </BehaviorTree>
+
     <BehaviorTree ID="check_robot_status">
       <Fallback>
-        <IsStatusOK ammo_min="20" heat_max="500" hp_min="200" key_port="{@referee_robotStatus}"/>
+        <IsStatusOK ammo_min="20" hp_min="200" key_port="{@referee_robotStatus}"/>
         <ForceFailure>
           <Sequence>
             <PubNav2Goal goal="0.5;0;0" topic_name="goal_pose"/>
             <IsRfidDetected friendly_supply_zone_non_exchange="true" key_port="{@referee_rfidStatus}"/>
-            <IsStatusOK ammo_min="20" heat_max="500" hp_min="399" key_port="{@referee_robotStatus}"/>
+            <IsStatusOK ammo_min="20" hp_min="399" key_port="{@referee_robotStatus}"/>
             <Fallback>
               <Sequence>
                 <IsGameStatus min_remain_time="0" max_remain_time="239" 
@@ -43,6 +45,7 @@
         </ForceFailure>
       </Fallback>
     </BehaviorTree>
+    
     <BehaviorTree ID="first_3_minutes">
       <Sequence>
         <IsGameStatus min_remain_time="240" max_remain_time="420" 
@@ -106,7 +109,6 @@
           </Condition>
           <Condition ID="IsStatusOK">
               <input_port name="ammo_min" type="int" default="0">Lower then minimum ammo will return FAILURE</input_port>
-              <input_port name="heat_max" type="int" default="350">Maximum heat. NOTE: Sentry heat limit is 400</input_port>
               <input_port name="hp_min" type="int" default="300">Minimum HP. NOTE: Sentry init/max HP is 400</input_port>
               <input_port name="key_port" type="pb_rm_interfaces::msg::RobotStatus_&lt;std::allocator&lt;void&gt; &gt;" default="{@referee_robotStatus}">RobotStatus port on blackboard</input_port>
           </Condition>

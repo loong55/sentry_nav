@@ -66,6 +66,16 @@ list(APPEND plugin_libs is_shoot_locked)
 ament_auto_add_library(is_hp_deduced SHARED plugins/condition/is_hp_deduced.cpp)
 list(APPEND plugin_libs is_hp_deduced)
 
+ament_auto_add_library(
+  is_base_hp_healthy SHARED
+  plugins/condition/is_base_hp_healthy.cpp)
+list(APPEND plugin_libs is_base_hp_healthy)
+
+ament_auto_add_library(
+  is_outpost_hp_healthy SHARED
+  plugins/condition/is_outpost_hp_healthy.cpp)
+list(APPEND plugin_libs is_outpost_hp_healthy)
+
 ####### Actions #######
 ament_auto_add_library(send_nav2_goal SHARED plugins/action/send_nav2_goal.cpp)
 list(APPEND plugin_libs send_nav2_goal)

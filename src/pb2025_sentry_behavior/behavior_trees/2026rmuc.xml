@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+  <!-- ========================= 子行为树 ========================= -->
+  <BehaviorTree ID="check_game_started">
+    <IsGameStatus min_remain_time="0" max_remain_time="420"
+                  expected_game_progress="4" key_port="{@referee_gameStatus}"/>
+  </BehaviorTree>
+
+  <BehaviorTree ID="return_to_supply_on_bad_status">
+    <Sequence>
+      <Inverter>
+        <IsStatusOK ammo_min="20" hp_min="150" key_port="{@referee_robotStatus}"/>
+      </Inverter>
+      <PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+      <PubNav2Goal goal="-0.73;-6.33;0" topic_name="goal_pose"/>
+    </Sequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="return_to_fortress_on_bad_base">
+    <Sequence>
+      <Inverter>
+        <IsBaseHPHealthy base_hp_min="3000" key_port="{@referee_allRobotHP}"/>
+      </Inverter>
+      <PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+      <PubNav2Goal goal="2.8;-0.2;0" topic_name="goal_pose"/>
+    </Sequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="attack_outpost">
+    <Sequence>
+      <PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+      <PubNav2Goal goal="11.75;1.25;0" topic_name="goal_pose"/>
+      <PubNav2Goal goal="12.3;-3.35;0" topic_name="goal_pose"/>
+      <PublishPostureCmd topic_name="cmd_posture" posture="4" reason="0" force_switch="true"/>
+    </Sequence>
+  </BehaviorTree>
+
+  <!-- ========================= 主行为树 ========================= -->
+  <BehaviorTree ID="2026rmuc">
+    <KeepRunningUntilFailure>
+      <ForceSuccess>
+        <ReactiveSequence>
+          <!-- 优先级1：比赛开始后才执行 -->
+          <SubTree ID="check_game_started"/>
+          <!-- 优先级2/3/4：状态异常回补给 > 基地异常回堡垒 > 进攻前哨站 -->
+          <Fallback>
+            <SubTree ID="return_to_supply_on_bad_status"/>
+            <SubTree ID="return_to_fortress_on_bad_base"/>
+            <SubTree ID="attack_outpost"/>
+          </Fallback>
+        </ReactiveSequence>
+      </ForceSuccess>
+    </KeepRunningUntilFailure>
+  </BehaviorTree>
+
+  <TreeNodesModel>
+    <Condition ID="IsGameStatus">
+      <input_port name="max_remain_time" default="420" type="int">Maximum remaining time (s)</input_port>
+      <input_port name="min_remain_time" default="0" type="int">Minimum remaining time (s)</input_port>
+      <input_port name="expected_game_progress" default="4" type="int">Expected game progress stage</input_port>
+      <input_port name="key_port" default="{@referee_gameStatus}" type="pb_rm_interfaces::msg::GameStatus_&lt;std::allocator&lt;void&gt; &gt;">GameStatus port on blackboard</input_port>
+    </Condition>
+
+    <Condition ID="IsStatusOK">
+      <input_port name="ammo_min" default="0" type="int">Lower then minimum ammo will return FAILURE</input_port>
+      <input_port name="hp_min" default="300" type="int">Minimum HP. NOTE: Sentry init/max HP is 400</input_port>
+      <input_port name="key_port" default="{@referee_robotStatus}" type="pb_rm_interfaces::msg::RobotStatus_&lt;std::allocator&lt;void&gt; &gt;">RobotStatus port on blackboard</input_port>
+    </Condition>
+
+    <Condition ID="IsBaseHPHealthy">
+      <input_port name="base_hp_min" default="3000" type="int">Minimum ally base HP</input_port>
+      <input_port name="key_port" default="{@referee_allRobotHP}" type="pb_rm_interfaces::msg::GameRobotHP_&lt;std::allocator&lt;void&gt; &gt;">GameRobotHP port on blackboard</input_port>
+    </Condition>
+
+    <Condition ID="PubNav2Goal">
+      <input_port name="goal" default="0;0;0" type="geometry_msgs::msg::PoseStamped_&lt;std::allocator&lt;void&gt; &gt;">Expected goal pose that send to nav2. Fill with format x;y;yaw</input_port>
+      <input_port name="topic_name" default="__default__placeholder__" type="std::string">Topic name</input_port>
+    </Condition>
+
+    <Action ID="PublishPostureCmd">
+      <input_port name="posture" default="3" type="unsigned int">Posture mode</input_port>
+      <input_port name="reason" default="0" type="unsigned int">Posture switch reason</input_port>
+      <input_port name="force_switch" default="false" type="bool">Force posture switch</input_port>
+      <input_port name="topic_name" default="cmd_posture" type="std::string">Topic name</input_port>
+    </Action>
+  </TreeNodesModel>
+</root>

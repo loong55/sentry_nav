@@ -60,8 +60,8 @@ point_lio:
       plane_thr: 0.1                                    # 0.05, the threshold for plane criteria, the smaller, the flatter a plane
       match_s: 81.0
       ivox_grid_resolution: 0.5
-      gravity: [ 0.0, -4.9, -8.487047153776548 ]        # gravity to be aligned # rpy = [0, pi/6, 0]
-      gravity_init: [ 0.0, -4.9, -8.487047153776548 ]   # preknown gravity in the first IMU body frame, use when imu_en is False or start from a non-stationary state
+      gravity: [ -0.06, -8.66, -4.97 ]        # gravity to be aligned # rpy = [0, pi/6, 0]
+      gravity_init: [ -0.06, -8.66, -4.97]   # preknown gravity in the first IMU body frame, use when imu_en is False or start from a non-stationary state
       extrinsic_T: [ 0.0, 0.0, 0.0 ]
       extrinsic_R: [ 1.0, 0.0, 0.0,
                      0.0, 1.0, 0.0,
@@ -104,7 +104,7 @@ terrain_analysis:
     noDecayDis: 0.0                     # 点云距离阈值 小于该阈值不考虑时间差
     clearingDis: 0.0                    # 该距离外的点会被清除
     useSorting: True                    # 这个参数开起来就能上坡了；如果 use_sorting,那么就以周围点中的分位点作为地面点，否则以最低点作为地面点；周围其余点相对于地面点的高度作为通过代价，所以对于坡面，有的点的代价是正，有的是负，就相互抵消了；不要与 consider_drop 同时开启，计算上会有冲突
-    quantileZ: 0.2                      # useful if use_sorting is enabled.
+    quantileZ: 0.40                     # 进一步提高地面分位点，抑制前向俯视地面被识别为障碍
     considerDrop: False                 # 考虑凹下去的地面,开启则将相对于地面点的高度取绝对值
     limitGroundLift: False
     maxGroundLift: 0.3
@@ -118,8 +118,8 @@ terrain_analysis:
     minDyObsPointNum: 1
     noDataObstacle: False               # treat no data as obstacle
     noDataBlockSkipNum: 0
-    minBlockPointNum: 10
-    vehicleHeight: 0.6                  # 小于车辆高度的点才会进行处理
+    minBlockPointNum: 15
+    vehicleHeight: 0.5                  # 适当收紧障碍高度阈值，减少低矮地面起伏误报
     voxelPointUpdateThre: 100
     voxelTimeUpdateThre: 1.0
     minRelZ: -1.5                       # min_rel_z 以及 max_rel_z 限制了有效点云点的Z值范围，用于对天花板和地板进行处理
@@ -133,7 +133,7 @@ terrain_analysis_ext:
     noDecayDis: 0.0
     clearingDis: 20.0
     useSorting: true
-    quantileZ: 0.2
+    quantileZ: 0.40
     vehicleHeight: 1.0
     voxelPointUpdateThre: 100
     voxelTimeUpdateThre: 2.0
@@ -162,7 +162,7 @@ small_gicp_relocalization:
     use_sim_time: True
     num_threads: 4
     num_neighbors: 20
-    global_leaf_size: 0.15
+    global_leaf_size: 0.1
     registered_leaf_size: 0.05
     max_dist_sq: 3.0
     map_frame: "map"
@@ -185,7 +185,7 @@ pointcloud_to_laserscan:
     angle_max: 3.1415926                    # M_PI/2
     angle_increment: 0.00872665             # M_PI/360.0
     scan_time: 0.05
-    range_min: 0.6                          # 点云半径 点云投影成激光雷达扫描时的最小范围，单位：米
+    range_min: 0.6                          # 点云滤波半径 点云投影成激光雷达扫描时的最小范围，单位：米
     range_max: 10.0
     use_inf: true
 
@@ -219,7 +219,7 @@ slam_toolbox:
     transform_publish_period: 0.0                # if 0 never publishes odometry
     map_update_interval: 0.5
     resolution: 0.05
-    min_laser_range: 0.3                         # for rastering images
+    min_laser_range: 0.6                         # 与投影range_min保持一致，屏蔽近场地面噪声
     max_laser_range: 10.0                         # for rastering images
     minimum_time_interval: 0.2
     transform_timeout: 0.2
@@ -343,7 +343,7 @@ controller_server:
     general_goal_checker:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.10
+      xy_goal_tolerance: 0.15
       yaw_goal_tolerance: 6.28
     FollowPath:
       plugin: "pb_omni_pid_pursuit_controller::OmniPidPursuitController"
@@ -364,12 +364,12 @@ controller_server:
       use_interpolation: false
       use_rotate_to_heading: false
       use_rotate_to_heading_treshold: 0.1
-      min_approach_linear_velocity: 0.3
+      min_approach_linear_velocity: 0.5
       approach_velocity_scaling_dist: 1.0
-      v_linear_min: -5.0
+      v_linear_min: -2.5
       v_linear_max: 2.5
-      v_angular_min: -2.5
-      v_angular_max: 2.5
+      v_angular_min: -3.0
+      v_angular_max: 3.0
       curvature_min: 0.4                                # 低曲率阈值，低于此值不减速。former:0.4
       curvature_max: 0.7                                # 高曲率阈值，高于此值大幅减速。former:0.7
       reduction_ratio_at_high_curvature: 0.5            # 高曲率时的速度降低比例。 0.5 (即减速 50%)
@@ -390,7 +390,7 @@ local_costmap:
       width: 5
       height: 5
       resolution: 0.05
-      robot_radius: 0.40               # 底盘直径 80cm，半径 0.45m
+      robot_radius: 0.20               # 底盘直径 80cm，半径 0.45m
       plugins: ["static_layer", "intensity_voxel_layer", "inflation_layer"]
       intensity_voxel_layer:
         plugin: pb_nav2_costmap_2d::IntensityVoxelLayer
@@ -423,8 +423,8 @@ local_costmap:
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0        # 稍降：配合更大的 robot_radius，避免代价场过于拥挤
-        inflation_radius: 0.50          # 局部代价地图，当前检测的小地图，可以检测到机器人，需大于内切半径(0.353)，设为0.40避免碰撞警告
+        cost_scaling_factor: 4.0        # 稍降：配合更大的 robot_radius，避免代价场过于拥挤
+        inflation_radius: 0.40          # 局部代价地图，当前检测的小地图，可以检测到机器人，需大于内切半径(0.353)，设为0.40避免碰撞警告
       always_send_full_costmap: False
 
 global_costmap:
@@ -435,7 +435,7 @@ global_costmap:
       publish_frequency: 2.0
       global_frame: map
       robot_base_frame: gimbal_yaw_fake
-      robot_radius: 0.40               # 底盘直径 80cm，半径 0.45m
+      robot_radius: 0.20               # 底盘直径 80cm，半径 0.45m
       resolution: 0.05
       track_unknown_space: false       # 这个参数对于全局代价地图非常重要，开启后未知空间会被标记为障碍物，避免机器人试图穿越未知区域
       plugins: ["static_layer", "intensity_voxel_layer", "inflation_layer"]
@@ -471,7 +471,7 @@ global_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-        inflation_radius: 0.50          # 需大于内切半径(0.353)，设为0.40避免碰撞警告
+        inflation_radius: 0.40          # 需大于内切半径(0.353)，设为0.40避免碰撞警告
       always_send_full_costmap: False
 
 # The yaml_filename does not need to be specified since it going to be set by defaults in launch.

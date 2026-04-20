@@ -75,7 +75,6 @@
   <BehaviorTree ID="check_robot_status">
     <Fallback>
       <IsStatusOK ammo_min="0"
-                  heat_max="350"
                   hp_min="200"
                   key_port="{@referee_robotStatus}"/>
       <ForceFailure> 
@@ -143,9 +142,6 @@
       <input_port name="ammo_min"
                   default="0"
                   type="int">Lower then minimum ammo will return FAILURE</input_port>
-      <input_port name="heat_max"
-                  default="350"
-                  type="int">Maximum heat. NOTE: Sentry heat limit is 400</input_port>
       <input_port name="hp_min"
                   default="300"
                   type="int">Minimum HP. NOTE: Sentry init/max HP is 400</input_port>
