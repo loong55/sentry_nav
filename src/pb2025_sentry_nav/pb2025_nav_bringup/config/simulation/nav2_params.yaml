@@ -102,7 +102,7 @@ sensor_scan_generation:
 terrain_analysis:
   ros__parameters:
     scanVoxelSize: 0.05                 # 点云下采样
-    decayTime: 0.5                      # 点云时间差阈值 大于则不会被处理
+    decayTime: 0.18                     # 原0.5 点云时间差阈值 大于则不会被处理，决定旧点能活多久
     noDecayDis: 0.0                     # 点云距离阈值 小于该阈值不考虑时间差
     clearingDis: 0.0                    # 该距离外的点会被清除
     useSorting: True                    # 这个参数开起来就能上坡了，否则最点判定为地面，坡判定为障碍物；如果 use_sorting,那么就以周围点中的分位点作为地面点，否则以最低点作为地面点；周围其余点相对于地面点的高度作为通过代价，所以对于坡面，有的点的代价是正，有的是负，就相互抵消了；不要与 consider_drop 同时开启，计算上会有冲突
@@ -111,19 +111,19 @@ terrain_analysis:
     limitGroundLift: False              # 出现“坡上障碍被吞”，开 limitGroundLift=true，maxGroundLift 先试 0.10 到 0.15
     maxGroundLift: 0.3
     clearDyObs: True                    # 清除动态物体的话，有动态物体走过的地方就走不了了
-    minDyObsDis: 0.3                    # 以下参数都是在 clear_dy_obs 的情况下才有用的，若出现静态坡边被误清，先放宽 minDyObsAngle 或缩窄 VFOV（minDyObsVFOV/maxDyObsVFOV）。
-    minDyObsAngle: 0.0
-    minDyObsRelZ: -0.3
-    absDyObsRelZThre: 0.2
-    minDyObsVFOV: -28.0
-    maxDyObsVFOV: 33.0
+    minDyObsDis: 0.8                    # 原0.8 以下参数都是在 clear_dy_obs 的情况下才有用的，若出现静态坡边被误清，先放宽 minDyObsAngle 或缩窄 VFOV（minDyObsVFOV/maxDyObsVFOV）。
+    minDyObsAngle: 0.0                  # 原0.0；动态物体相对于地面点的最小水平夹角，单位度；过大可能导致残影过多，过小可能导致残影过少；建议设置为机器人在仿真中每个控制周期内的平均水平转角，例如 0.0 度 对应 20Hz 控制频率下平均每次不转弯的情况；如果机器人经常转弯，可以适当增大这个值，例如 10.0 度；如果机器人基本不转弯，可以适当减小这个值，例如 -10.0 度。    
+    minDyObsRelZ: -0.5                  # 原-0.3；动态物体相对于地面点的最小高度，单位米；过大可能导致残影过多，过小可能导致残影过少；建议设置为机器人在仿真中每个控制周期内的平均移动距离，例如 0.5m 对应 20Hz 控制频率下平均每次移动0.6m/s的情况；如果机器人速度较快，可以适当增大这个值，例如 0.7m；如果机器人速度较慢，可以适当减小这个值，例如 0.3m。
+    absDyObsRelZThre: 0.32              # 原0.2；动态物体相对于地面点的绝对高度阈值，单位米；过大可能导致残影过多，过小可能导致残影过少；建议设置为机器人在仿真中每个控制周期内的平均移动距离，例如 0.32m 对应 20Hz 控制频率下平均每次移动0.6m/s的情况；如果机器人速度较快，可以适当增大这个值，例如 0.5m；如果机器人速度较慢，可以适当减小这个值，例如 0.2m。                 
+    minDyObsVFOV: -40.0                 # 原-28.0；动态物体相对于地面点的最小垂直夹角，单位度；过大可能导致残影过多，过小可能导致残影过少；建议设置为机器人在仿真中每个控制周期内的平均垂直转角，例如 -40.0 度 对应 20Hz 控制频率下平均每次向下看40度的情况；如果机器人经常向下看，可以适当增大这个值，例如 -30.0 度；如果机器人基本不向下看，可以适当减小这个值，例如 -50.0 度。 
+    maxDyObsVFOV: 45.0                  # 原33.0；动态物体相对于地面点的最大垂直夹角，单位度；过大可能导致残影过多，过小可能导致残影过少；建议设置为机器人在仿真中每个控制周期内的平均垂直转角，例如 45.0 度 对应 20Hz 控制频率下平均每次向上看45度的情况；如果机器人经常向上看，可以适当增大这个值，例如 60.0 度；如果机器人基本不向上看，可以适当减小这个值，例如 30.0 度。
     minDyObsPointNum: 1                 # 若动态残影多，适当提高 minDyObsPointNum（1 到 2/3）。
     noDataObstacle: False               # treat no data as obstacle
     noDataBlockSkipNum: 0
-    minBlockPointNum: 10                # 原15，地形块最少点数，太小：噪声多，太大：小障碍被吞掉
+    minBlockPointNum: 12                # 原15，地形块最少点数，太小：噪声多，太大：小障碍被吞掉
     vehicleHeight: 0.5                  # 地形障碍参与代价计算的最大相对高度
     voxelPointUpdateThre: 100
-    voxelTimeUpdateThre: 1.0
+    voxelTimeUpdateThre: 0.3            # 原1.0,决定这些 voxel 多久才重新整理一次
     minRelZ: -1.5                       # 地面最低处理高度；太高：地面点被截掉，地面估计发飘。
     maxRelZ: 0.5                        # 地面最高处理高度；坡顶/近车体障碍被截掉。      
     disRatioZ: 0.2                      # Z 值的最大最小范围由这两个值决定，但是并不等于这两个值，是有一个比例关系的，距离机器人越远，限定范围就越大，这其中考虑了坡度
@@ -135,11 +135,11 @@ terrain_analysis_ext:
     decayTime: 0.2
     noDecayDis: 0.0
     clearingDis: 20.0
-    useSorting: true
+    useSorting: True
     quantileZ: 0.2         # 原0.4；越大，地面抬得越高，越“容易上坡”，但也越可能吞掉低矮障碍。useful if use_sorting is enabled.
     vehicleHeight: 1.0
     voxelPointUpdateThre: 100
-    voxelTimeUpdateThre: 2.0
+    voxelTimeUpdateThre: 0.5           # 原2.0,决定这些 voxel 多久才重新整理一次
     lowerBoundZ: -1.5      # 地面最低处理高度；太高：地面点被截掉，地面估计发飘。
     upperBoundZ: 0.5       # 地面最高处理高度；坡顶/近车体障碍被截掉。
     disRatioZ: 0.2         #太小：远处坡面容易被裁掉；太大：会引入过多天花板/杂点。
@@ -147,7 +147,7 @@ terrain_analysis_ext:
     terrainUnderVehicle: -0.75
     terrainConnThre: 0.5
     ceilingFilteringThre: 2.0
-    localTerrainMapRadius: 4.0
+    localTerrainMapRadius: 3.0    # 远场地形地图的半径，过大可能引入过多不相关的地形点，过小可能导致坡面被裁掉；建议设置为机器人在仿真中每个控制周期内的平均移动距离，例如 4.2m 对应 20Hz 控制频率下平均每次移动0.6m/s的情况；如果机器人速度较快，可以适当增大这个值，例如 5.0m；如果机器人速度较慢，可以适当减小这个值，例如 3.0m。
 
 fake_vel_transform:
   ros__parameters:
