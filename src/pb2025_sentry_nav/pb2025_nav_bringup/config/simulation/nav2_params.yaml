@@ -192,6 +192,10 @@ pointcloud_to_laserscan:
     range_min: 0.5     # 原0.6，二维点云滤波半径
     range_max: 10.0
     use_inf: true
+    qos_overrides:
+      /obstacle_scan:
+        publisher:
+          reliability: reliable
 
 slam_toolbox:
   ros__parameters:
@@ -208,7 +212,7 @@ slam_toolbox:
     base_frame: base_footprint
     scan_topic: obstacle_scan
     use_map_saver: true
-    mode: mapping
+    mode: lifelong        # 持续建图：贝叶斯概率更新，障碍物消失后 raytrace 扫过时及时清除为 free
 
     # if you'd like to immediately start continuing a map at a given pose
     # or at the dock, but they are mutually exclusive, if pose is given
@@ -220,22 +224,22 @@ slam_toolbox:
     debug_logging: false
     throttle_scans: 1
     scan_queue_size: 10
-    transform_publish_period: 0.0                # if 0 never publishes odometry
-    map_update_interval: 0.5
+    transform_publish_period: 0.05               # 动态发布 map->odom in SLAM mode
+    map_update_interval: 0.1      # 原0.5，地图更新更快，规划器能更及时看到新区域
     resolution: 0.05
     min_laser_range: 0.5                          # 原0.6，二维点云滤波半径；slam_toolbox 的 laser_scan 里设置的 range_min 是在 slam_toolbox 内部进行滤波的，而 pointcloud_to_laserscan 的 range_min 是在生成 laser_scan 消息时就滤掉了，所以 pointcloud_to_laserscan 的 range_min 可以设置得更小一些，给 slam_toolbox 留更多的点来做匹配，但也要注意不要设置得太小，以免引入过多噪声点。
     max_laser_range: 10.0                         # for rastering images
-    minimum_time_interval: 0.2
+    minimum_time_interval: 0.05    # 原0.2，提高扫描接受频率，建图更连续
     transform_timeout: 0.2
-    tf_buffer_duration: 10.
+    tf_buffer_duration: 10.0
     stack_size_to_use: 40000000                   # program needs a larger stack size to serialize large maps
     enable_interactive_mode: true
 
     # General Parameters
     use_scan_matching: false
     use_scan_barycenter: true
-    minimum_travel_distance: 0.1
-    minimum_travel_heading: 0.1
+    minimum_travel_distance: 0.03 #每次位姿更新的最小移动距离，单位米；过大可能导致地图更新不及时，过小可能引入过多噪声点导致匹配失败；建议设置为机器人在仿真中每个控制周期内的平均移动距离，例如 0.03m 对应 20Hz 控制频率下平均每次移动0.6m/s的情况；如果机器人速度较快，可以适当增大这个值，例如 0.05m；如果机器人速度较慢，可以适当减小这个值，例如 0.02m。
+    minimum_travel_heading: 0.03 #每次位姿更新的最小旋转角度，单位弧度；过大可能导致地图更新不及时，过小可能引入过多噪声点导致匹配失败；建议设置为机器人在仿真中每个控制周期内的平均旋转角度，例如 0.03rad 对应 20Hz 控制频率下平均每次旋转0.6rad/s的情况；如果机器人旋转较快，可以适当增大这个值，例如 0.05rad；如果机器人旋转较慢，可以适当减小这个值，例如 0.02rad。
     scan_buffer_size: 10
     scan_buffer_maximum_scan_distance: 10.0
     link_match_minimum_response_fine: 0.1
@@ -399,7 +403,7 @@ local_costmap:
       intensity_voxel_layer:
         plugin: pb_nav2_costmap_2d::IntensityVoxelLayer
         enabled: true
-        track_unknown_space: true
+        track_unknown_space: false    # 局部地图未知空间视为空地
         footprint_clearing_enabled: true
         publish_voxel_map: false
         combination_method: 1
@@ -426,6 +430,7 @@ local_costmap:
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
+        subscribe_to_updates: True    # 订阅地图更新，建图时地图会不断更新
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 4.0
@@ -436,18 +441,21 @@ global_costmap:
   global_costmap:
     ros__parameters:
       use_sim_time: True
-      update_frequency: 5.0
+      update_frequency: 8.0   # 原5.0，建图更快，规划器能更及时看到新区域；过高可占用 CPU资源
       publish_frequency: 2.0
       global_frame: map
       robot_base_frame: gimbal_yaw_fake
-      robot_radius: 0.2     
+      robot_radius: 0.2
       resolution: 0.05
-      track_unknown_space: false       # 
+      track_unknown_space: false       # false：传感器盲区视为FREE，规划器可直线穿越未扫描区，避免折线
+      rolling_window: true             # 跟随机器人，机器人始终在地图内；避免越界崩溃
+      width: 40                        # 40m 覆盖 RM 赛场 40m 宽
+      height: 40                       # 40m 覆盖 RM 赛场 40m 高
       plugins: ["static_layer", "intensity_voxel_layer", "inflation_layer"]
       intensity_voxel_layer:
         plugin: pb_nav2_costmap_2d::IntensityVoxelLayer
         enabled: true
-        track_unknown_space: true
+        track_unknown_space: false
         footprint_clearing_enabled: true
         publish_voxel_map: false
         combination_method: 1
@@ -474,6 +482,9 @@ global_costmap:
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
+        subscribe_to_updates: True
+        track_unknown_space: false
+        trinary_costmap: true
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 4.0
@@ -501,21 +512,22 @@ planner_server:
     expected_planner_frequency: 10.0
     planner_plugins: ["GridBased"]
     GridBased:
-      plugin: "nav2_theta_star_planner/ThetaStarPlanner" # 原 nav2_smac_planner/SmacPlannerHybrid
-      how_many_corners: 8
-      w_euc_cost: 1.0
-      w_traversal_cost: 10.0
-      w_heuristic_cost: 1.0
+      plugin: "nav2_smac_planner/SmacPlanner2D"
+      tolerance: 0.5                # 目标点容忍半径：目标点被障碍覆盖时，在0.5m内找最近可达点
+      allow_unknown: true           # 允许在未知/障碍区域规划，避免动态障碍导致规划直接abort
+      downsample_costmap: false
+      downsampling_factor: 1
 
+# 路径平滑器，将全局路径折线平滑成曲线
 smoother_server:
   ros__parameters:
     use_sim_time: True
     smoother_plugins: ["simple_smoother"]
     simple_smoother:
       plugin: "nav2_smoother::SimpleSmoother"
-      tolerance: 1.0e-10
-      max_its: 1000
-      do_refinement: True
+      tolerance: 1.0e-6  #原1.0e-10 路径上所有节点的移动量总和 < tolerance，认为已收敛
+      max_its: 500       #原1000 最大迭代次数
+      do_refinement: True #平滑后再做一次细化迭代，结果更优但耗时更长
 
 behavior_server:
   ros__parameters:

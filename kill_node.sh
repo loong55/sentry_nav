@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 首先关闭行为树，再关闭其他ros节点
-set -euo pipefail
+# 注意：不使用 set -e，避免 pkill 找不到进程时脚本提前退出
 
 PROCESS_NAMES=(
   "pb2025_sentry_behavior_client"
@@ -33,24 +33,53 @@ done
 echo "--- ROS 2 Environment Reset Script ---"
 
 # 1. 停止ROS 2守护进程，清理DDS域状态
-echo "[1/3] Stopping ROS 2 daemon..."
-ros2 daemon stop
+echo "[1/4] Stopping ROS 2 daemon..."
+ros2 daemon stop || true
 
-# 2. 强制杀死所有可能残留的ROS 2节点进程
-#    -f 选项意味着匹配整个命令行，非常有效
-echo "[2/3] Killing any remaining ROS 2 node processes..."
-pkill -f "rclpy"      # 杀死Python节点
-pkill -f "rclcpp"     # 杀死C++节点
-# 你也可以加上你的特定节点名，例如：
-# pkill -f "my_robot_node"
+# 2. 强制杀死所有仿真相关进程
+echo "[2/4] Killing simulation and nav2 processes..."
+SIM_PATTERNS=(
+  "ign"
+  "gazebo"
+  "component_container_isolated"
+  "pointlio_mapping"
+  "slam_toolbox"
+  "terrainAnalysis"
+  "loam_interface"
+  "sensor_scan_generation"
+  "fake_vel_transform"
+  "small_gicp"
+  "pointcloud_to_laserscan"
+  "pb2025_nav_bringup"
+  "pb2025_sentry"
+  "rviz2"
+)
+for pattern in "${SIM_PATTERNS[@]}"; do
+  pkill -f "$pattern" || true
+done
 
-# 3. 等待2秒，确保资源释放
-echo "Waiting for 2 seconds..."
-sleep 2
+# 3. 等待进程退出
+echo "Waiting for processes to exit..."
+sleep 3
 
-# 4. 重新启动ROS 2守护进程
-echo "[3/3] Starting ROS 2 daemon..."
-ros2 daemon start
+# 强制清理残留
+for pattern in "${SIM_PATTERNS[@]}"; do
+  pkill -9 -f "$pattern" || true
+done
+
+# 4. 清理DDS共享内存，防止下次启动时参数加载失败
+echo "[3/4] Cleaning up DDS shared memory..."
+# 清理 FastDDS/CycloneDDS 遗留的共享内存段
+rm -f /dev/shm/fastrtps_* 2>/dev/null || true
+rm -f /dev/shm/*ros* 2>/dev/null || true
+# 清理 boost interprocess 共享内存（ign/gazebo 使用）
+find /dev/shm -maxdepth 1 -name "*.bp" -delete 2>/dev/null || true
+find /tmp -maxdepth 1 -name "launch_params_*" -delete 2>/dev/null || true
+
+# 5. 重新启动ROS 2守护进程
+echo "[4/4] Starting ROS 2 daemon..."
+sleep 1
+ros2 daemon start || true
 
 echo "--- Reset Complete! ---"
-echo "You can now source your workspace and run your nodes again."
+echo "You can now run ./simulation_nav.sh"
