@@ -694,12 +694,10 @@ void StandardRobotPpRos2Node::publishAllRobotHp(ReceiveAllRobotHpData & all_robo
 
   all_robot_hp_pub_->publish(msg);
 
-  // 基地和前哨站血量解码后写入消息接口，调试信息
-  RCLCPP_INFO_THROTTLE(
-    get_logger(), *this->get_clock(), 1000,
-    "referee/all_robot_hp ally_outpost_hp=%u ally_base_hp=%u",
-    msg.ally_outpost_hp,
-    msg.ally_base_hp);
+  has_all_robot_hp_debug_ = true;
+  latest_ally_outpost_hp_ = msg.ally_outpost_hp;
+  latest_ally_base_hp_ = msg.ally_base_hp;
+  logCombinedRefereeDebug();
 }
 
 // 发布比赛状态
@@ -710,12 +708,10 @@ void StandardRobotPpRos2Node::publishGameStatus(ReceiveGameStatusData & game_sta
   msg.stage_remain_time = game_status.data.stage_remain_time;  // 阶段剩余时间
   game_status_pub_->publish(msg);
 
-  // 比赛状态解码后写入消息接口，调试信息
-  RCLCPP_INFO_THROTTLE(
-    get_logger(), *this->get_clock(), 1000,
-    "referee/game_status game_progress=%u stage_remain_time=%u",
-    msg.game_progress,
-    msg.stage_remain_time);
+  has_game_status_debug_ = true;
+  latest_game_progress_debug_ = msg.game_progress;
+  latest_stage_remain_time_ = msg.stage_remain_time;
+  logCombinedRefereeDebug();
 
   // 如果启用了rosbag录制，根据比赛状态自动控制rosbag录制
   if (record_rosbag_ && game_status.data.game_progress != previous_game_progress_) {
@@ -875,14 +871,12 @@ void StandardRobotPpRos2Node::publishRobotStatus(ReceiveRobotStatus & robot_stat
 
   robot_status_pub_->publish(msg);
 
-  //机器人状态解码后，写入消息接口的调试信息
-  RCLCPP_INFO_THROTTLE(
-    get_logger(), *this->get_clock(), 1000,
-    "referee/robot_status hp=%u bullets_remaining=%u angle=%.3f  is_hp_deduced=%s",
-    msg.current_hp,
-    msg.projectile_allowance_17mm,
-    robot_status.data.robot_pos_angle,
-    msg.is_hp_deduced ? "true" : "false");
+  has_robot_status_debug_ = true;
+  latest_robot_hp_debug_ = msg.current_hp;
+  latest_bullets_remaining_ = msg.projectile_allowance_17mm;
+  latest_robot_angle_ = robot_status.data.robot_pos_angle;
+  latest_is_hp_deduced_ = msg.is_hp_deduced;
+  logCombinedRefereeDebug();
 
   // 自动设置目标检测器的颜色
   if (set_detector_color_) {
@@ -895,6 +889,25 @@ void StandardRobotPpRos2Node::publishRobotStatus(ReceiveRobotStatus & robot_stat
       }
     }
   }
+}
+
+void StandardRobotPpRos2Node::logCombinedRefereeDebug()
+{
+  // if (!has_all_robot_hp_debug_ || !has_game_status_debug_ || !has_robot_status_debug_) {
+  //   return;
+  // }
+
+  RCLCPP_INFO_THROTTLE(
+    get_logger(), *this->get_clock(), 1000,
+    "referee hp=%u bullets_remaining=%u angle=%.3f game_progress=%u stage_remain_time=%u ally_base_hp=%u\n"
+    "Sending data: vx=%.2f, vy=%.2f, wz=%.2f, posture=%u(%s)",
+    latest_robot_hp_debug_, latest_bullets_remaining_, latest_robot_angle_,
+    latest_game_progress_debug_, latest_stage_remain_time_, latest_ally_base_hp_,
+    send_robot_cmd_data_.data.speed_vector.vx,
+    send_robot_cmd_data_.data.speed_vector.vy,
+    send_robot_cmd_data_.data.speed_vector.wz,
+    send_robot_cmd_data_.data.posture.posture,
+    postureToString(send_robot_cmd_data_.data.posture.posture));
 }
 
 // 保存云台的俯仰和偏航角度，供publishImuData使用
@@ -981,15 +994,7 @@ void StandardRobotPpRos2Node::sendData()
     //         send_robot_cmd_data_.data.speed_vector.vy,
     //         send_robot_cmd_data_.data.speed_vector.wz);
 
-    //发布速度和姿态调试信息
-    RCLCPP_INFO_THROTTLE(
-      get_logger(), *this->get_clock(), 1000,
-      "Sending data: vx=%.2f, vy=%.2f, wz=%.2f, posture=%u(%s)",
-        send_robot_cmd_data_.data.speed_vector.vx,
-        send_robot_cmd_data_.data.speed_vector.vy,
-        send_robot_cmd_data_.data.speed_vector.wz,
-        send_robot_cmd_data_.data.posture.posture,
-        postureToString(send_robot_cmd_data_.data.posture.posture));
+    logCombinedRefereeDebug();
 
     } catch (const std::exception & ex) {
       RCLCPP_ERROR(get_logger(), "Error sending data: %s", ex.what());

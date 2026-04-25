@@ -129,6 +129,7 @@ private:
   void publishRobotStatus(ReceiveRobotStatus & data);   // 发布机器人状态数据
   void publishJointState(ReceiveJointState & data);
   void publishBuff(ReceiveBuff & data);
+  void logCombinedRefereeDebug();
 
   void cmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg);
   void cmdGimbalJointCallback(const sensor_msgs::msg::JointState::SharedPtr msg);
@@ -150,6 +151,18 @@ private:
 
   uint8_t previous_game_progress_ = 0;
   uint8_t latest_robot_id_ = 0;
+
+  bool has_all_robot_hp_debug_ = false;
+  bool has_game_status_debug_ = false;
+  bool has_robot_status_debug_ = false;
+  uint16_t latest_ally_outpost_hp_ = 0;
+  uint16_t latest_ally_base_hp_ = 0;
+  uint8_t latest_game_progress_debug_ = 0;
+  uint16_t latest_stage_remain_time_ = 0;
+  uint16_t latest_robot_hp_debug_ = 0;
+  uint16_t latest_bullets_remaining_ = 0;
+  float latest_robot_angle_ = 0.0f;
+  bool latest_is_hp_deduced_ = false;
 
   float last_hp_ = -1.0f;
   float last_gimbal_pitch_odom_joint_, last_gimbal_yaw_odom_joint_;
