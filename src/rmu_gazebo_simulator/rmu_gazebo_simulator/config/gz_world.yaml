@@ -66,7 +66,22 @@ robots:
     - name: "red_standard_robot1"
       color: "red"
       x_pose: "3.4"
-      y_pose: "9.5"
+      y_pose: "9.55"
+      z_pose: "0.25"
+      yaw: "0.0"
+
+    - name: "blue_standard_robot1"
+      color: "blue"
+      x_pose: "23.6"
+      y_pose: "8.45"
+      z_pose: "0.25"
+      yaw: "3.14"
+
+  rmuc_2026fix:
+    - name: "red_standard_robot1"
+      color: "red"
+      x_pose: "3.4"
+      y_pose: "9.55"
       z_pose: "0.25"
       yaw: "0.0"
 
