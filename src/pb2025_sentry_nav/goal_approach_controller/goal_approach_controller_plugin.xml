@@ -1,0 +1,10 @@
+<library path="goal_approach_controller">
+  <class name="goal_approach_controller::GoalApproachController"
+         type="goal_approach_controller::GoalApproachController"
+         base_class_type="nav2_core::Controller">
+    <description>
+      Nav2 controller wrapper that limits translational speed near the goal and switches to a
+      direct approach mode for the last segment.
+    </description>
+  </class>
+</library>
