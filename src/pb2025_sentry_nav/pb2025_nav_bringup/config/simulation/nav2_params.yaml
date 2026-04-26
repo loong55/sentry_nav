@@ -95,37 +95,37 @@ sensor_scan_generation:
     use_sim_time: True
     lidar_frame: "front_mid360"
     base_frame: "base_footprint"
-    robot_base_frame: "gimbal_yaw"
+    robot_base_frame: "gimbal_yaw"  #？？？？
 
 # 最大坡度20度，最高坡高0.2m，雷达高度0.41m，雷达向下倾角30度，平地上有0.07m高减速带
 #近场地形节点
 terrain_analysis:
   ros__parameters:
     scanVoxelSize: 0.05                 # 点云下采样
-    decayTime: 0.5                     # 原0.5 点云时间差阈值 大于则不会被处理，决定旧点能活多久
+    decayTime: 0.5                      # 原0.5 点云时间差阈值 大于则不会被处理，决定旧点能活多久
     noDecayDis: 0.0                     # 点云距离阈值 小于该阈值不考虑时间差
     clearingDis: 0.0                    # 该距离外的点会被清除
     useSorting: True                    # 这个参数开起来就能上坡了，否则最点判定为地面，坡判定为障碍物；如果 use_sorting,那么就以周围点中的分位点作为地面点，否则以最低点作为地面点；周围其余点相对于地面点的高度作为通过代价，所以对于坡面，有的点的代价是正，有的是负，就相互抵消了；不要与 consider_drop 同时开启，计算上会有冲突
-    quantileZ: 0.2                      # 0.4改；在0.15-0.25微调；越大，地面抬得越高，越“容易上坡”，但也越可能吞掉低矮障碍。useful if use_sorting is enabled.
+    quantileZ: 0.45                      # 0.4改；在0.15-0.25微调；越大，地面抬得越高，越“容易上坡”，但也越可能吞掉低矮障碍。useful if use_sorting is enabled.
     considerDrop: False                 # 考虑上坡时，不建议开启；考虑凹下去的地面,开启则将相对于地面点的高度取绝对值,因为有的点在地面点下面，取绝对值后就变成了正的了，就相当于不考虑凹下去的地面了
     limitGroundLift: False              # 出现“坡上障碍被吞”，开 limitGroundLift=true，maxGroundLift 先试 0.10 到 0.15
-    maxGroundLift: 0.3
+    maxGroundLift: 0.5
     clearDyObs: True                    # 清除动态物体的话，有动态物体走过的地方就走不了了
     minDyObsDis: 0.3                    # 原0.8 以下参数都是在 clear_dy_obs 的情况下才有用的，若出现静态坡边被误清，先放宽 minDyObsAngle 或缩窄 VFOV（minDyObsVFOV/maxDyObsVFOV）。
-    minDyObsAngle: 0.0                  # 原0.0；动态物体相对于地面点的最小水平夹角，单位度；过大可能导致残影过多，过小可能导致残影过少；建议设置为机器人在仿真中每个控制周期内的平均水平转角，例如 0.0 度 对应 20Hz 控制频率下平均每次不转弯的情况；如果机器人经常转弯，可以适当增大这个值，例如 10.0 度；如果机器人基本不转弯，可以适当减小这个值，例如 -10.0 度。    
+    minDyObsAngle: 0.0                  # 原0.0；动态物体相对于地面点的最小水平夹角，单位度；过大可能导致残影过多，过小可能导致残影过少；建议设置为机器人在仿真中每个控制周期内的平均水平转角，例如 0.0 度 对应 20Hz 控制频率下平均每次不转弯的情况；如果机器人经常转弯，可以适当增大这个值，例如 10.0 度；如果机器人基本不转弯，可以适当减小这个值，例如 -10.0 度。
     minDyObsRelZ: -0.3                  # 原-0.3；动态物体相对于地面点的最小高度，单位米；过大可能导致残影过多，过小可能导致残影过少；建议设置为机器人在仿真中每个控制周期内的平均移动距离，例如 0.5m 对应 20Hz 控制频率下平均每次移动0.6m/s的情况；如果机器人速度较快，可以适当增大这个值，例如 0.7m；如果机器人速度较慢，可以适当减小这个值，例如 0.3m。
-    absDyObsRelZThre: 0.2              # 原0.2；动态物体相对于地面点的绝对高度阈值，单位米；过大可能导致残影过多，过小可能导致残影过少；建议设置为机器人在仿真中每个控制周期内的平均移动距离，例如 0.32m 对应 20Hz 控制频率下平均每次移动0.6m/s的情况；如果机器人速度较快，可以适当增大这个值，例如 0.5m；如果机器人速度较慢，可以适当减小这个值，例如 0.2m。                 
+    absDyObsRelZThre: 0.2              # 原0.2；动态物体相对于地面点的绝对高度阈值，单位米；过大可能导致残影过多，过小可能导致残影过少；建议设置为机器人在仿真中每个控制周期内的平均移动距离，例如 0.32m 对应 20Hz 控制频率下平均每次移动0.6m/s的情况；如果机器人速度较快，可以适当增大这个值，例如 0.5m；如果机器人速度较慢，可以适当减小这个值，例如 0.2m。
     minDyObsVFOV: -28.0                 # 原-28.0；动态物体相对于地面点的最小垂直夹角，单位度；过大可能导致残影过多，过小可能导致残影过少；建议设置为机器人在仿真中每个控制周期内的平均垂直转角，例如 -40.0 度 对应 20Hz 控制频率下平均每次向下看40度的情况；如果机器人经常向下看，可以适当增大这个值，例如 -30.0 度；如果机器人基本不向下看，可以适当减小这个值，例如 -50.0 度。 
     maxDyObsVFOV: 33.0                  # 原33.0；动态物体相对于地面点的最大垂直夹角，单位度；过大可能导致残影过多，过小可能导致残影过少；建议设置为机器人在仿真中每个控制周期内的平均垂直转角，例如 45.0 度 对应 20Hz 控制频率下平均每次向上看45度的情况；如果机器人经常向上看，可以适当增大这个值，例如 60.0 度；如果机器人基本不向上看，可以适当减小这个值，例如 30.0 度。
-    minDyObsPointNum: 1                 # 若动态残影多，适当提高 minDyObsPointNum（1 到 2/3）。
+    minDyObsPointNum: 3                 # 若动态残影多，适当提高 minDyObsPointNum（1 到 2/3）。
     noDataObstacle: False               # treat no data as obstacle
     noDataBlockSkipNum: 0
     minBlockPointNum: 10                # 原15，地形块最少点数，太小：噪声多，太大：小障碍被吞掉
-    vehicleHeight: 0.5                  # 地形障碍参与代价计算的最大相对高度
+    vehicleHeight: 0.6                  # 小于车辆高度的点才会进行处理
     voxelPointUpdateThre: 100
     voxelTimeUpdateThre: 1.0            # 原1.0,决定这些 voxel 多久才重新整理一次
     minRelZ: -1.5                       # 地面最低处理高度；太高：地面点被截掉，地面估计发飘。
-    maxRelZ: 0.5                        # 地面最高处理高度；坡顶/近车体障碍被截掉。      
+    maxRelZ: 0.5                        # 地面最高处理高度；坡顶/近车体障碍被截掉。
     disRatioZ: 0.2                      # Z 值的最大最小范围由这两个值决定，但是并不等于这两个值，是有一个比例关系的，距离机器人越远，限定范围就越大，这其中考虑了坡度
 
 # 远场地形节点
@@ -136,13 +136,13 @@ terrain_analysis_ext:
     noDecayDis: 0.0
     clearingDis: 20.0
     useSorting: True
-    quantileZ: 0.2         # 原0.4；越大，地面抬得越高，越“容易上坡”，但也越可能吞掉低矮障碍。useful if use_sorting is enabled.
-    vehicleHeight: 1.0
+    quantileZ: 0.45         # 原0.4；越大，地面抬得越高，越“容易上坡”，但也越可能吞掉低矮障碍。useful if use_sorting is enabled.
+    vehicleHeight: 0.6
     voxelPointUpdateThre: 100
     voxelTimeUpdateThre: 2.0          # 原2.0,决定这些 voxel 多久才重新整理一次
     lowerBoundZ: -1.5      # 地面最低处理高度；太高：地面点被截掉，地面估计发飘。
     upperBoundZ: 0.5       # 地面最高处理高度；坡顶/近车体障碍被截掉。
-    disRatioZ: 0.2         #太小：远处坡面容易被裁掉；太大：会引入过多天花板/杂点。
+    disRatioZ: 0.45         #太小：远处坡面容易被裁掉；太大：会引入过多天花板/杂点。
     checkTerrainConn: False   # 检查地形连通性，如果连通性太差，则不参与代价计算
     terrainUnderVehicle: -0.75
     terrainConnThre: 0.5
@@ -165,7 +165,7 @@ small_gicp_relocalization:
     use_sim_time: True
     num_threads: 4
     num_neighbors: 20
-    global_leaf_size: 0.1
+    global_leaf_size: 0.15
     registered_leaf_size: 0.05
     max_dist_sq: 3.0
     map_frame: "map"
@@ -183,19 +183,15 @@ pointcloud_to_laserscan:
     target_frame: base_footprint
     min_height: -0.5
     max_height: 6.0
-    min_intensity: 0.1
-    max_intensity: 2.0
+    min_intensity: 0.12
+    max_intensity: 20.0
     angle_min: -3.1415926                   # -M_PI/2
     angle_max: 3.1415926                    # M_PI/2
     angle_increment: 0.00872665             # M_PI/360.0
-    scan_time: 0.05
-    range_min: 0.3     # 原0.6，二维点云滤波半径
+    scan_time: 0.05                         # 点云投影成激光雷达扫描的时间，单位：秒,与livox的 publish_freq 20Hz 对应 0.05s
+    range_min: 0.45                          # 点云半径 点云投影成激光雷达扫描时的最小范围，单位：米
     range_max: 10.0
     use_inf: true
-    qos_overrides:
-      /obstacle_scan:
-        publisher:
-          reliability: reliable
 
 slam_toolbox:
   ros__parameters:
@@ -212,7 +208,7 @@ slam_toolbox:
     base_frame: base_footprint
     scan_topic: obstacle_scan
     use_map_saver: true
-    mode: mapping        # 持续建图：贝叶斯概率更新，障碍物消失后 raytrace 扫过时及时清除为 free
+    mode: mapping
 
     # if you'd like to immediately start continuing a map at a given pose
     # or at the dock, but they are mutually exclusive, if pose is given
@@ -224,10 +220,10 @@ slam_toolbox:
     debug_logging: false
     throttle_scans: 1
     scan_queue_size: 10
-    transform_publish_period: 0.02               # 动态发布 map->odom in SLAM mode
-    map_update_interval: 0.5     # 原0.5，地图更新更快，规划器能更及时看到新区域
+    transform_publish_period: 0.05                #  与livox的publish_freq 20Hz 对应 0.05s，if 0 never publishes odometry
+    map_update_interval: 0.5
     resolution: 0.05
-    min_laser_range: 0.3                          # 原0.6，二维点云滤波半径；slam_toolbox 的 laser_scan 里设置的 range_min 是在 slam_toolbox 内部进行滤波的，而 pointcloud_to_laserscan 的 range_min 是在生成 laser_scan 消息时就滤掉了，所以 pointcloud_to_laserscan 的 range_min 可以设置得更小一些，给 slam_toolbox 留更多的点来做匹配，但也要注意不要设置得太小，以免引入过多噪声点。
+    min_laser_range: 0.3                         # for rastering images
     max_laser_range: 10.0                         # for rastering images
     minimum_time_interval: 0.2    # 原0.2，提高扫描接受频率，建图更连续
     transform_timeout: 0.2
@@ -238,8 +234,8 @@ slam_toolbox:
     # General Parameters
     use_scan_matching: false
     use_scan_barycenter: true
-    minimum_travel_distance: 0.1 #每次位姿更新的最小移动距离，单位米；过大可能导致地图更新不及时，过小可能引入过多噪声点导致匹配失败；建议设置为机器人在仿真中每个控制周期内的平均移动距离，例如 0.03m 对应 20Hz 控制频率下平均每次移动0.6m/s的情况；如果机器人速度较快，可以适当增大这个值，例如 0.05m；如果机器人速度较慢，可以适当减小这个值，例如 0.02m。
-    minimum_travel_heading: 0.1 #每次位姿更新的最小旋转角度，单位弧度；过大可能导致地图更新不及时，过小可能引入过多噪声点导致匹配失败；建议设置为机器人在仿真中每个控制周期内的平均旋转角度，例如 0.03rad 对应 20Hz 控制频率下平均每次旋转0.6rad/s的情况；如果机器人旋转较快，可以适当增大这个值，例如 0.05rad；如果机器人旋转较慢，可以适当减小这个值，例如 0.02rad。
+    minimum_travel_distance: 0.02
+    minimum_travel_heading: 0.02
     scan_buffer_size: 10
     scan_buffer_maximum_scan_distance: 10.0
     link_match_minimum_response_fine: 0.1
@@ -355,7 +351,7 @@ controller_server:
       yaw_goal_tolerance: 6.28
     FollowPath:
       plugin: "pb_omni_pid_pursuit_controller::OmniPidPursuitController"
-      translation_kp: 3.0
+      translation_kp: 10.0
       translation_ki: 0.1
       translation_kd: 0.3
       enable_rotation: false
@@ -374,8 +370,8 @@ controller_server:
       use_rotate_to_heading_treshold: 0.1
       min_approach_linear_velocity: 0.5
       approach_velocity_scaling_dist: 1.0
-      v_linear_min: -2.5
-      v_linear_max: 2.5
+      v_linear_min: -3.0
+      v_linear_max: 3.0
       v_angular_min: -3.0
       v_angular_max: 3.0
       curvature_min: 0.4                                # 低曲率阈值，低于此值不减速。
@@ -391,14 +387,14 @@ local_costmap:
     ros__parameters:
       use_sim_time: True
       update_frequency: 10.0
-      publish_frequency: 5.0
+      publish_frequency: 10.0
       global_frame: odom
       robot_base_frame: gimbal_yaw_fake
       rolling_window: true
       width: 5
       height: 5
       resolution: 0.05
-      robot_radius: 0.2
+      robot_radius: 0.3
       plugins: ["static_layer", "intensity_voxel_layer", "inflation_layer"]
       intensity_voxel_layer:
         plugin: pb_nav2_costmap_2d::IntensityVoxelLayer
@@ -412,9 +408,9 @@ local_costmap:
         unknown_threshold: 5
         z_resolution: 0.05
         z_voxels: 16
-        min_obstacle_height: 0.0      # 原0.0；障碍物最小高度，滤掉0.07m高的减速带
+        min_obstacle_height: 0.12  #地面高度过滤，0.12m
         max_obstacle_height: 2.0
-        min_obstacle_intensity: 0.1
+        min_obstacle_intensity: 0.12
         max_obstacle_intensity: 2.0
         observation_sources: terrain_map
         terrain_map:
@@ -423,17 +419,17 @@ local_costmap:
           # It doesn't need to start with '/'
           topic: <robot_namespace>/terrain_map
           sensor_frame: front_mid360    # 新添加，用于指定传感器坐标系，之前默认是 robot_base_frame，这样就能更准确地利用点云数据了
-          min_obstacle_height: 0.0      # 障碍物最小高度，滤掉0.07m高的减速带
+          min_obstacle_height: 0.12  #地面高度过滤，0.12m
           max_obstacle_height: 2.0
           obstacle_max_range: 5.0
-          obstacle_min_range: 0.2
+          obstacle_min_range: 0.4   #离传感器原点多近的不算障碍
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 4.0
-        inflation_radius: 0.7       # 原0.4；局部膨胀半径
+        cost_scaling_factor: 3.0        # 稍降：配合更大的 robot_radius，避免代价场过于拥挤
+        inflation_radius: 0.40          # 局部代价地图膨胀半径
       always_send_full_costmap: False
 
 global_costmap:
@@ -444,7 +440,7 @@ global_costmap:
       publish_frequency: 2.0
       global_frame: map
       robot_base_frame: gimbal_yaw_fake
-      robot_radius: 0.2
+      robot_radius: 0.3                # 导航碰撞半径
       resolution: 0.05
       # rolling_window: true             # 跟随机器人，机器人始终在地图内；避免越界崩溃
       # width: 40                        # 40m 覆盖 RM 赛场 40m 宽
@@ -462,9 +458,9 @@ global_costmap:
         unknown_threshold: 5
         z_resolution: 0.05
         z_voxels: 16
-        min_obstacle_height: 0.0      # 原0.0；障碍物最小高度，滤掉0.07m高的减速带
+        min_obstacle_height: 0.12  #地面高度过滤，0.12m
         max_obstacle_height: 2.0
-        min_obstacle_intensity: 0.1
+        min_obstacle_intensity: 0.12        # 地面高度过滤；global costmap 仅把相对地面高度不低于 10cm 的点标为障碍
         max_obstacle_intensity: 2.0
         observation_sources: terrain_map_ext
         terrain_map_ext:
@@ -473,10 +469,10 @@ global_costmap:
           # It doesn't need to start with '/'
           topic: <robot_namespace>/terrain_map_ext
           sensor_frame: front_mid360
-          min_obstacle_height: 0.0      # 障碍物最小高度，滤掉0.07m高的减速带
+          min_obstacle_height: 0.12  #地面高度过滤，0.12m
           max_obstacle_height: 2.0
           obstacle_max_range: 10.0
-          obstacle_min_range: 0.2
+          obstacle_min_range: 0.4   #离传感器原点多近的不算障碍
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
@@ -485,8 +481,8 @@ global_costmap:
         # trinary_costmap: true
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 4.0
-        inflation_radius: 0.7
+        cost_scaling_factor: 3.0
+        inflation_radius: 0.40          # 全局代价地图膨胀半径
       always_send_full_costmap: False
 
 # The yaml_filename does not need to be specified since it going to be set by defaults in launch.
@@ -523,9 +519,9 @@ smoother_server:
     smoother_plugins: ["simple_smoother"]
     simple_smoother:
       plugin: "nav2_smoother::SimpleSmoother"
-      tolerance: 1.0e-6  #原1.0e-10 路径上所有节点的移动量总和 < tolerance，认为已收敛
-      max_its: 500       #原1000 最大迭代次数
-      do_refinement: True #平滑后再做一次细化迭代，结果更优但耗时更长
+      tolerance: 1.0e-10
+      max_its: 1000
+      do_refinement: True
 
 behavior_server:
   ros__parameters:
