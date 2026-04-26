@@ -3,6 +3,7 @@ export QT_QPA_PLATFORM=xcb
 
 source /opt/ros/humble/setup.bash
 source install/setup.bash
+gnome-terminal -- ros2 launch rmu_gazebo_simulator bringup_sim.launch.py world:=rmuc_2026fix &
 
 ros2 launch pb2025_nav_bringup rm_navigation_simulation_launch.py \
 	slam:=True \

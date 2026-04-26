@@ -95,7 +95,7 @@ sensor_scan_generation:
     use_sim_time: True
     lidar_frame: "front_mid360"
     base_frame: "base_footprint"
-    robot_base_frame: "gimbal_yaw"  #？？？？
+    robot_base_frame: "gimbal_yaw"  
 
 # 最大坡度20度，最高坡高0.2m，雷达高度0.41m，雷达向下倾角30度，平地上有0.07m高减速带
 #近场地形节点
@@ -147,7 +147,7 @@ terrain_analysis_ext:
     terrainUnderVehicle: -0.75
     terrainConnThre: 0.5
     ceilingFilteringThre: 2.0
-    localTerrainMapRadius: 4.0    # 远场地形地图的半径，过大可能引入过多不相关的地形点，过小可能导致坡面被裁掉；建议设置为机器人在仿真中每个控制周期内的平均移动距离，例如 4.2m 对应 20Hz 控制频率下平均每次移动0.6m/s的情况；如果机器人速度较快，可以适当增大这个值，例如 5.0m；如果机器人速度较慢，可以适当减小这个值，例如 3.0m。
+    localTerrainMapRadius: 5.0    # 远场地形地图的半径，过大可能引入过多不相关的地形点，过小可能导致坡面被裁掉；建议设置为机器人在仿真中每个控制周期内的平均移动距离，例如 4.2m 对应 20Hz 控制频率下平均每次移动0.6m/s的情况；如果机器人速度较快，可以适当增大这个值，例如 5.0m；如果机器人速度较慢，可以适当减小这个值，例如 3.0m。
 
 fake_vel_transform:
   ros__parameters:
@@ -183,7 +183,7 @@ pointcloud_to_laserscan:
     target_frame: base_footprint
     min_height: -0.5
     max_height: 6.0
-    min_intensity: 0.12
+    min_intensity: 0.1 #地面高度过滤0.1m，点云强度过滤，min_intensity 以上的点才会被标为障碍物；过高可能导致地面点被误标为障碍物，过低可能导致部分障碍物被漏掉；建议设置为机器人在仿真中每个控制周期内的平均移动距离，例如 0.12 对应 20Hz 控制频率下平均每次移动0.6m/s的情况；如果机器人速度较快，可以适当增大这个值，例如 0.2；如果机器人速度较慢，可以适当减小这个值，例如 0.05。
     max_intensity: 20.0
     angle_min: -3.1415926                   # -M_PI/2
     angle_max: 3.1415926                    # M_PI/2
@@ -220,7 +220,7 @@ slam_toolbox:
     debug_logging: false
     throttle_scans: 1
     scan_queue_size: 10
-    transform_publish_period: 0.05                #  与livox的publish_freq 20Hz 对应 0.05s，if 0 never publishes odometry
+    transform_publish_period: 0.05                #  动态发布map到odom,由opint-lio修正里程计漂移；与livox的publish_freq 20Hz 对应 0.05s，if 0 never publishes odometry
     map_update_interval: 0.5
     resolution: 0.05
     min_laser_range: 0.3                         # for rastering images
@@ -332,9 +332,9 @@ controller_server:
   ros__parameters:
     use_sim_time: True
     odom_topic: odometry
-    controller_frequency: 20.0
+    controller_frequency: 100.0
     min_x_velocity_threshold: 0.001
-    min_y_velocity_threshold: 0.5
+    min_y_velocity_threshold: 0.001
     min_theta_velocity_threshold: 0.001
     failure_tolerance: 0.3
     progress_checker_plugins: ["progress_checker"]
@@ -386,15 +386,15 @@ local_costmap:
   local_costmap:
     ros__parameters:
       use_sim_time: True
-      update_frequency: 10.0
-      publish_frequency: 10.0
+      update_frequency: 20.0
+      publish_frequency: 20.0
       global_frame: odom
       robot_base_frame: gimbal_yaw_fake
       rolling_window: true
-      width: 5
-      height: 5
+      width: 10
+      height: 10
       resolution: 0.05
-      robot_radius: 0.3
+      robot_radius: 0.1
       plugins: ["static_layer", "intensity_voxel_layer", "inflation_layer"]
       intensity_voxel_layer:
         plugin: pb_nav2_costmap_2d::IntensityVoxelLayer
@@ -408,9 +408,9 @@ local_costmap:
         unknown_threshold: 5
         z_resolution: 0.05
         z_voxels: 16
-        min_obstacle_height: 0.12  #地面高度过滤，0.12m
+        min_obstacle_height: 0.1 #地面高度过滤0.1m
         max_obstacle_height: 2.0
-        min_obstacle_intensity: 0.12
+        min_obstacle_intensity: 0.1 #地面高度过滤0.1m
         max_obstacle_intensity: 2.0
         observation_sources: terrain_map
         terrain_map:
@@ -419,7 +419,7 @@ local_costmap:
           # It doesn't need to start with '/'
           topic: <robot_namespace>/terrain_map
           sensor_frame: front_mid360    # 新添加，用于指定传感器坐标系，之前默认是 robot_base_frame，这样就能更准确地利用点云数据了
-          min_obstacle_height: 0.12  #地面高度过滤，0.12m
+          min_obstacle_height: 0.1 #地面高度过滤0.1m
           max_obstacle_height: 2.0
           obstacle_max_range: 5.0
           obstacle_min_range: 0.4   #离传感器原点多近的不算障碍
@@ -428,19 +428,19 @@ local_costmap:
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0        # 稍降：配合更大的 robot_radius，避免代价场过于拥挤
-        inflation_radius: 0.60          # 局部代价地图膨胀半径
+        cost_scaling_factor: 5.0        # 控制势场衰减，越小衰减越慢，越不容易靠近墙体，官方默认10
+        inflation_radius: 0.55          # 局部代价地图膨胀半径
       always_send_full_costmap: False
 
 global_costmap:
   global_costmap:
     ros__parameters:
       use_sim_time: True
-      update_frequency: 5.0   # 原5.0，建图更快，规划器能更及时看到新区域；过高可占用 CPU资源
-      publish_frequency: 2.0
+      update_frequency: 20.0   # 原5.0，建图更快，规划器能更及时看到新区域；过高可占用 CPU资源
+      publish_frequency: 20.0
       global_frame: map
       robot_base_frame: gimbal_yaw_fake
-      robot_radius: 0.3                # 导航碰撞半径
+      robot_radius: 0.1               # 导航碰撞半径
       resolution: 0.05
       rolling_window: true             # 跟随机器人，机器人始终在地图内；避免越界崩溃
       width: 40                        # 40m 覆盖 RM 赛场 40m 宽
@@ -458,9 +458,9 @@ global_costmap:
         unknown_threshold: 5
         z_resolution: 0.05
         z_voxels: 16
-        min_obstacle_height: 0.12  #地面高度过滤，0.12m
+        min_obstacle_height: 0.1 #地面高度过滤0.1m
         max_obstacle_height: 2.0
-        min_obstacle_intensity: 0.12        # 地面高度过滤；global costmap 仅把相对地面高度不低于 10cm 的点标为障碍
+        min_obstacle_intensity: 0.1 #地面高度过滤0.1m；global costmap 仅把相对地面高度不低于 10cm 的点标为障碍
         max_obstacle_intensity: 2.0
         observation_sources: terrain_map_ext
         terrain_map_ext:
@@ -469,7 +469,7 @@ global_costmap:
           # It doesn't need to start with '/'
           topic: <robot_namespace>/terrain_map_ext
           sensor_frame: front_mid360
-          min_obstacle_height: 0.12  #地面高度过滤，0.12m
+          min_obstacle_height: 0.1 #地面高度过滤0.1m
           max_obstacle_height: 2.0
           obstacle_max_range: 10.0
           obstacle_min_range: 0.4   #离传感器原点多近的不算障碍
@@ -481,8 +481,8 @@ global_costmap:
         # trinary_costmap: true
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
-        inflation_radius: 0.60          # 全局代价地图膨胀半径
+        cost_scaling_factor: 5.0
+        inflation_radius: 0.7          # 全局代价地图膨胀半径
       always_send_full_costmap: False
 
 # The yaml_filename does not need to be specified since it going to be set by defaults in launch.
@@ -511,17 +511,48 @@ planner_server:
       allow_unknown: true           # 允许在未知/障碍区域规划，避免动态障碍导致规划直接abort
       downsample_costmap: false
       downsampling_factor: 1
+      max_iterations: 1000000             # 搜索的最大总迭代次数（如果无法到达），设置为-1以禁用
+      max_on_approach_iterations: 1000    # 一旦在容差范围内，尝试到达目标的最大迭代次数
+      max_planning_time: 4.5              # 规划、平滑和上采样的最大时间（秒）。将根据规划后的剩余时间缩放最大平滑和上采样时间。
+      cost_travel_multiplier: 4.0         # For 2D: 应用于搜索的代价乘数，以避开高代价区域。较大的值将更精确地放置在通道的中心（如果存在非“FREE”代价势场），但计算时间稍长。为了优化速度，1.0是合理的值。合理的折衷值是2.0。0.0的值有效地禁用避开障碍物的功能，像一个简单的二进制搜索A*。
+      motion_model_for_search: "DUBIN"    # For Hybrid Dubin, Redds-Shepp
+      angle_quantization_bins: 72         # For Hybrid nodes: 搜索的角度桶数，对于2D节点必须为1（无角度搜索）
+      analytic_expansion_ratio: 3.5       # For Hybrid/Lattice nodes: 在搜索过程中尝试解析扩展的比例，用于最终接近。
+      analytic_expansion_max_length: 3.0  # For Hybrid/Lattice nodes: 解析扩展被认为有效的最大长度，以防止不安全的捷径（单位：米）。这应该与最小转弯半径成比例，不应小于最小半径的4-5倍。
+      minimum_turning_radius: 0.05        # For Hybrid/Lattice nodes: 路径/车辆的最小转弯半径，单位：米
+      retrospective_penalty: 0.025        # For Hybrid/Lattice nodes: 优先考虑路径上较晚的机动而不是较早的机动。节省搜索时间，因为较早的节点不会被扩展，直到有必要。必须 >= 0.0且 <= 1.0
+      reverse_penalty: 1.0                # For Reeds-Shepp model: 应用于倒车的惩罚，必须 >= 1
+      change_penalty: 0.0                 # For Hybrid nodes: 应用于改变方向的惩罚，必须 >= 0
+      non_straight_penalty: 0.0          # For Hybrid nodes: 应用于非直线运动的惩罚，必须 >= 1
+      cost_penalty: 2.0                   # For Hybrid nodes: 在将更高代价区域添加到障碍物地图动态规划距离扩展启发式时应用的惩罚。这将驱动机器人更靠近通道的中心。1.3 - 3.5 之间的值是合理的。
+      rotation_penalty: 5.0               # For Lattice node: 仅在使用包含原地旋转原语的最小控制集时应用于纯原地旋转命令的惩罚。除非严格必要用于避开障碍物，否则应始终设置足够高的权重，以避免此操作，否则可能会在路径中频繁出现不连续的情况，要求机器人原地旋转以节省路径距离。
+      lookup_table_size: 20.0             # For Hybrid nodes: 缓存的dubin/reeds-sheep距离窗口的大小，单位：米。
+      cache_obstacle_heuristic: True      # For Hybrid nodes: 在同一目标位置的后续重新规划之间缓存障碍物地图动态规划距离扩展启发式。如果代价地图基本静态，则显著加快重新规划性能（40倍）。
+      allow_reverse_expansion: True      # For Lattice node: 是否在前向原语或反向扩展状态格子图中扩展，将使每一步的分支因子加倍。
+      smooth_path: True                   # For Lattice/Hybrid nodes: 是否平滑路径，对于2D节点始终为 true。
+      smoother:
+        max_iterations: 10000
+        w_smooth: 0.4
+        w_data: 0.1
+        tolerance: 1.0e-10
+        do_refinement: true
 
 # 路径平滑器，将全局路径折线平滑成曲线
 smoother_server:
   ros__parameters:
     use_sim_time: True
-    smoother_plugins: ["simple_smoother"]
-    simple_smoother:
-      plugin: "nav2_smoother::SimpleSmoother"
-      tolerance: 1.0e-10
-      max_its: 1000
+    costmap_topic: global_costmap/costmap_raw
+    footprint_topic: global_costmap/published_footprint
+    robot_base_frame: gimbal_yaw_fake
+    transform_tolerance: 0.1
+    smoother_plugins: ["savitzky_golay_smoother"]
+    savitzky_golay_smoother:
+      plugin: "nav2_smoother::SavitzkyGolaySmoother"
+      window_size: 7
+      poly_order: 3
       do_refinement: True
+      refinement_num: 2
+      enforce_path_inversion: True
 
 behavior_server:
   ros__parameters:
@@ -569,17 +600,17 @@ waypoint_follower:
 velocity_smoother:
   ros__parameters:
     use_sim_time: True
-    smoothing_frequency: 20.0
+    smoothing_frequency: 30.0
     scale_velocities: False
     feedback: "OPEN_LOOP"
-    max_velocity: [3.2, 3.2, 3.0]
-    min_velocity: [-2.5, -2.5, -3.0]
-    max_accel: [5.5, 5.5, 5.0]
-    max_decel: [-5.5, -5.5, -5.0]
-    odom_topic: "odometry"
-    odom_duration: 0.1
-    deadband_velocity: [0.0, 0.0, 0.0]
+    max_velocity: [2.5, 2.5, 2.5] #与 MPPI 限速一致，不再截断高速输出
+    min_velocity: [-2.5, -2.5, -2.5]
+    deadband_velocity: [0.05, 0.05, 0.05]
     velocity_timeout: 1.0
+    max_accel: [2.5, 2.5, 1.5] #与 MPPI 加速度一致
+    max_decel: [-3.5, -3.5, -3.0] #与 MPPI 制动一致
+    odom_topic: "Odometry"
+    odom_duration: 0.1
 
 pb_teleop_twist_joy_node:
   ros__parameters:
