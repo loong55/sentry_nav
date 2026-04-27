@@ -88,10 +88,10 @@
             <input_port name="key_port" type="pb_rm_interfaces::msg::RobotStatus_&lt;std::allocator&lt;void&gt; &gt;" default="{@referee_robotStatus}">RobotStatus port on blackboard</input_port>
         </Condition>
         <Action ID="NavigateThroughPosesAction">
-            <input_port name="waypoint_file" type="std::string">CSV waypoint file path</input_port>
             <output_port name="current_waypoint" type="int">Current waypoint index from feedback</output_port>
+            <input_port name="waypoint_file" type="std::string">CSV waypoint file path</input_port>
             <input_port name="frame_id" type="std::string" default="map">Waypoint frame id</input_port>
-            <input_port name="action_name" type="std::string" default="">Action server name</input_port>
+            <input_port name="action_name" type="std::string" default="navigate_through_poses">Action server name</input_port>
         </Action>
         <Condition ID="PubNav2Goal">
             <input_port name="goal" type="geometry_msgs::msg::PoseStamped_&lt;std::allocator&lt;void&gt; &gt;" default="0;0;0">Expected goal pose that send to nav2. Fill with format `x;y;yaw`</input_port>

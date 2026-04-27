@@ -15,33 +15,61 @@
 #ifndef PB2025_SENTRY_BEHAVIOR__PLUGINS__ACTION__NAVIGATE_THROUGH_POSES_HPP_
 #define PB2025_SENTRY_BEHAVIOR__PLUGINS__ACTION__NAVIGATE_THROUGH_POSES_HPP_
 
+#include <chrono>
+#include <future>
+#include <memory>
 #include <string>
 
-#include "behaviortree_ros2/bt_action_node.hpp"
+#include "behaviortree_cpp/action_node.h"
+#include "behaviortree_ros2/ros_node_params.hpp"
 #include "nav2_msgs/action/navigate_through_poses.hpp"
+#include "rclcpp/executors/single_threaded_executor.hpp"
+#include "rclcpp_action/rclcpp_action.hpp"
 
 namespace pb2025_sentry_behavior
 {
 class NavigateThroughPosesAction
-: public BT::RosActionNode<nav2_msgs::action::NavigateThroughPoses>
+: public BT::StatefulActionNode
 {
 public:
+  using ActionType = nav2_msgs::action::NavigateThroughPoses;
+  using ActionClient = rclcpp_action::Client<ActionType>;
+  using GoalHandle = rclcpp_action::ClientGoalHandle<ActionType>;
+  using WrappedResult = GoalHandle::WrappedResult;
+
   NavigateThroughPosesAction(
     const std::string & name, const BT::NodeConfig & conf, const BT::RosNodeParams & params);
 
   static BT::PortsList providedPorts();
 
-  bool setGoal(Goal & goal) override;
+  BT::NodeStatus onStart() override;
 
-  void onHalt() override;
+  BT::NodeStatus onRunning() override;
 
-  BT::NodeStatus onResultReceived(const WrappedResult & wr) override;
-
-  BT::NodeStatus onFeedback(const std::shared_ptr<const Feedback> feedback) override;
-
-  BT::NodeStatus onFailure(BT::ActionNodeErrorCode error) override;
+  void onHalted() override;
 
 private:
+  bool ensureClient();
+  bool buildGoal(ActionType::Goal & goal);
+  BT::NodeStatus handleResult(const WrappedResult & wr);
+  rclcpp::Logger logger() const;
+  rclcpp::Time now() const;
+
+  std::shared_ptr<rclcpp::Node> node_;
+  rclcpp::CallbackGroup::SharedPtr callback_group_;
+  rclcpp::executors::SingleThreadedExecutor callback_executor_;
+  std::shared_ptr<ActionClient> action_client_;
+  std::string default_action_name_;
+  std::string action_name_;
+  std::chrono::milliseconds server_timeout_;
+  std::chrono::milliseconds wait_for_server_timeout_;
+  std::chrono::steady_clock::time_point goal_request_time_;
+  std::shared_future<typename GoalHandle::SharedPtr> future_goal_handle_;
+  GoalHandle::SharedPtr goal_handle_;
+  WrappedResult result_;
+  bool goal_response_received_{false};
+  bool goal_rejected_{false};
+  bool result_received_{false};
   int total_waypoints_{0};
 };
 }  // namespace pb2025_sentry_behavior
