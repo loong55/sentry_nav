@@ -6,6 +6,7 @@
 PROCESS_NAMES=(
   "pb2025_sentry_behavior_client"
   "pb2025_sentry_behavior_server"
+  "referee_sim_node"
 )
 
 echo "[INFO] 尝试优雅关闭进程: ${PROCESS_NAMES[*]}"
@@ -39,6 +40,10 @@ ros2 daemon stop || true
 # 2. 强制杀死所有仿真相关进程
 echo "[2/4] Killing simulation and nav2 processes..."
 SIM_PATTERNS=(
+  "refree_sim.sh"
+  "ros2 launch referee_sim referee_sim.launch.py"
+  "referee_sim.launch.py"
+  "referee_sim_node"
   "gazebo.sh"
   "simulation_nav.sh"
   "nav_no_map.sh"

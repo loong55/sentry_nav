@@ -4,6 +4,7 @@
     "C_Cpp.default.compilerPath": "/usr/bin/g++",
     "cmake.ignoreCMakeListsMissing": true,
     "python.defaultInterpreterPath": "/usr/bin/python3",
+    "python.terminal.activateEnvironment": false,
     "python.analysis.extraPaths": [
         "/opt/ros/humble/local/lib/python3.10/dist-packages",
         "/home/nuc/2026_nav/install/referee_sim/lib/python3.10/site-packages",

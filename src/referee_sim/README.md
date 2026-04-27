@@ -18,5 +18,9 @@ ros2 launch referee_sim referee_sim.launch.py
 ```bash
 rqt --force-discover
 ```
-在插件列表中找到 “plugins--->dynamic_config”
-在插件内调节数值，观察话题和终端日志变化。
+在插件列表中找到 “Plugins -> Referee -> Referee Simulator”。
+
+如果 referee_sim 以 red_standard_robot1 命名空间启动，插件会自动连接到
+/red_standard_robot1/referee_sim；如果是全局启动，则自动连接到 /referee_sim。
+
+在插件内调节血量、弹量等数值，观察话题和终端日志变化。

@@ -23,14 +23,13 @@ QVBoxLayout = qt_widgets.QVBoxLayout
 QWidget = qt_widgets.QWidget
 from rclpy.parameter import Parameter
 import rclpy
+from rcl_interfaces.srv import SetParameters
 from rclpy.node import Node
 from rqt_gui_py.plugin import Plugin
 from std_srvs.srv import Trigger
 
 from pb_rm_interfaces.msg import GameStatus
 from pb_rm_interfaces.msg import PostureCmd
-
-AsyncParametersClient = importlib.import_module("rclpy.parameter_client").AsyncParametersClient
 
 
 class RefereeSimPlugin(Plugin):
@@ -42,20 +41,11 @@ class RefereeSimPlugin(Plugin):
             rclpy.init(args=None)
 
         self._node = Node("referee_sim_rqt_plugin")
-        self._param_client = AsyncParametersClient(self._node, "/referee_sim")
-        self._start_client = self._node.create_client(Trigger, "/referee_sim/start_game")
-        self._game_status_sub = self._node.create_subscription(
-            GameStatus,
-            "/referee/game_status",
-            self._game_status_cb,
-            10,
-        )
-        self._posture_sub = self._node.create_subscription(
-            PostureCmd,
-            "/cmd_posture",
-            self._posture_cb,
-            10,
-        )
+        self._target_namespace = None
+        self._param_client = None
+        self._start_client = None
+        self._game_status_sub = None
+        self._posture_sub = None
 
         self._widget = QWidget()
         self._widget.setWindowTitle("Referee Simulator")
@@ -70,6 +60,7 @@ class RefereeSimPlugin(Plugin):
         self._ammo_slider, self._ammo_spin = self._make_slider_spin(0, 3000, 300)
 
         self._posture_label = QLabel("MOVE(3)")
+        self._target_label = QLabel("未连接")
 
         self._game_progress_label = QLabel("NOT_START(0)")
         self._remain_time_label = QLabel("0")
@@ -80,6 +71,7 @@ class RefereeSimPlugin(Plugin):
         form.addRow("前哨站血量", self._row_widget(self._outpost_hp_slider, self._outpost_hp_spin))
         form.addRow("机器人血量", self._row_widget(self._robot_hp_slider, self._robot_hp_spin))
         form.addRow("允许发弹量", self._row_widget(self._ammo_slider, self._ammo_spin))
+        form.addRow("连接目标", self._target_label)
         form.addRow("姿态(监听)", self._posture_label)
         form.addRow("比赛控制", self._start_btn)
         form.addRow("比赛状态", self._game_progress_label)
@@ -96,13 +88,16 @@ class RefereeSimPlugin(Plugin):
         self._spin_timer.timeout.connect(self._spin_once)
         self._spin_timer.start(50)
 
-        self._set_param("ally_base_hp", 5000)
-        self._set_param("ally_outpost_hp", 1500)
-        self._set_param("robot_hp", 400)
-        self._set_param("projectile_allowance_17mm", 300)
+        self._refresh_timer = QTimer(self._widget)
+        self._refresh_timer.timeout.connect(self._refresh_target)
+        self._refresh_timer.start(1000)
+
+        self._refresh_target()
 
     def shutdown_plugin(self):
         self._spin_timer.stop()
+        self._refresh_timer.stop()
+        self._disconnect_target()
         self._node.destroy_node()
 
     def _spin_once(self):
@@ -123,8 +118,11 @@ class RefereeSimPlugin(Plugin):
         self._start_btn.clicked.connect(self._on_start_clicked)
 
     def _on_start_clicked(self):
+        if self._start_client is None:
+            self._node.get_logger().warn("No referee_sim node connected")
+            return
         if not self._start_client.wait_for_service(timeout_sec=0.2):
-            self._node.get_logger().warn("/referee_sim/start_game service not ready")
+            self._node.get_logger().warn("start_game service not ready")
             return
         req = Trigger.Request()
         future = self._start_client.call_async(req)
@@ -139,10 +137,77 @@ class RefereeSimPlugin(Plugin):
         future.add_done_callback(_done_cb)
 
     def _set_param(self, name: str, value: int):
+        if self._param_client is None:
+            self._node.get_logger().warn(f"No referee_sim node connected, skip param {name}")
+            return
         if not self._param_client.service_is_ready():
             self._param_client.wait_for_service(timeout_sec=0.2)
         param = Parameter(name=name, value=value)
-        self._param_client.set_parameters([param])
+        req = SetParameters.Request()
+        req.parameters = [param.to_parameter_msg()]
+        self._param_client.call_async(req)
+
+    def _refresh_target(self):
+        namespace = self._detect_target_namespace()
+        if namespace == self._target_namespace:
+            return
+        self._disconnect_target()
+        self._target_namespace = namespace
+        if namespace is None:
+            self._target_label.setText("未连接")
+            return
+
+        prefix = self._namespace_prefix(namespace)
+        node_name = f"{prefix}/referee_sim"
+        self._param_client = self._node.create_client(SetParameters, f"{node_name}/set_parameters")
+        self._start_client = self._node.create_client(Trigger, f"{node_name}/start_game")
+        self._game_status_sub = self._node.create_subscription(
+            GameStatus,
+            f"{prefix}/referee/game_status",
+            self._game_status_cb,
+            10,
+        )
+        self._posture_sub = self._node.create_subscription(
+            PostureCmd,
+            f"{prefix}/cmd_posture",
+            self._posture_cb,
+            10,
+        )
+        self._target_label.setText(node_name)
+
+    def _disconnect_target(self):
+        if self._game_status_sub is not None:
+            self._node.destroy_subscription(self._game_status_sub)
+            self._game_status_sub = None
+        if self._posture_sub is not None:
+            self._node.destroy_subscription(self._posture_sub)
+            self._posture_sub = None
+        if self._start_client is not None:
+            self._node.destroy_client(self._start_client)
+            self._start_client = None
+        if self._param_client is not None:
+            self._node.destroy_client(self._param_client)
+            self._param_client = None
+
+    def _detect_target_namespace(self):
+        candidates = []
+        for node_name, namespace in self._node.get_node_names_and_namespaces():
+            if node_name == "referee_sim":
+                candidates.append(namespace)
+
+        if not candidates:
+            return None
+
+        normalized = ["" if ns in ("", "/") else ns.rstrip("/") for ns in candidates]
+        if "/red_standard_robot1" in normalized:
+            return "/red_standard_robot1"
+        if "" in normalized:
+            return ""
+        return normalized[0]
+
+    @staticmethod
+    def _namespace_prefix(namespace: str) -> str:
+        return "" if namespace in ("", "/") else namespace.rstrip("/")
 
     def _game_status_cb(self, msg: GameStatus):
         self._game_progress_label.setText(self._progress_to_text(int(msg.game_progress)))

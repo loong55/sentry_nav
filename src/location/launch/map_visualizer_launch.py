@@ -6,7 +6,7 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description():
     package_share_dir = FindPackageShare('location')
     script_path = PathJoinSubstitution([package_share_dir, 'scripts', 'map_visualizer.py'])
-    map_file = PathJoinSubstitution([package_share_dir, 'map', 'rmuc_2025.yaml'])
+    map_file = PathJoinSubstitution([package_share_dir, 'map', 'RMUC2026_0.05.yaml'])
 
     return LaunchDescription([
         DeclareLaunchArgument(
