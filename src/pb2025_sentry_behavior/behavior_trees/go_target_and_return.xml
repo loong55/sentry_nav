@@ -4,15 +4,15 @@
     <Sequence>
       <NavigateThroughPosesAction
         action_name="navigate_through_poses"
-        waypoint_file="behavior_trees/waypoints/go_target.csv"
+        waypoint_file="behavior_trees/waypoints/origin_to_outpost.csv"
         frame_id="map"
-        current_waypoint="{go_current_waypoint}"/>
+        current_waypoint="{origin_to_outpost}"/>
 
       <NavigateThroughPosesAction
         action_name="navigate_through_poses"
-        waypoint_file="behavior_trees/waypoints/return_home.csv"
+        waypoint_file="behavior_trees/waypoints/outpost_to_supply.csv"
         frame_id="map"
         current_waypoint="{return_current_waypoint}"/>
     </Sequence>
   </BehaviorTree>
-</root>
+</root> 

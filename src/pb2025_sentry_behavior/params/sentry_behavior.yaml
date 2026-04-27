@@ -4,7 +4,7 @@ pb2025_sentry_behavior_server:
     action_name: pb2025_sentry_behavior         # 动作服务器名称
     tick_frequency: 5                           # 行为树执行频率 (defaults to 100 Hz)
     groot2_port: 1667                           # Groot2调试端口 (defaults to 1667)
-    ros_plugins_timeout: 5000                   # Optional (defaults 1000 ms), 避免连续导航点发送时超时
+    ros_plugins_timeout: 20000                  # Optional (defaults 1000 ms), 当前项目中 NavigateThroughPoses goal response 可能较慢，避免误报 SEND_GOAL_TIMEOUT
     use_cout_logger: false                      # 是否在控制台输出树状态 (defaults to false)
 
     plugins:

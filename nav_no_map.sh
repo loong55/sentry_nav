@@ -5,11 +5,11 @@ source install/setup.bash
 
 gnome-terminal -- ros2 launch standard_robot_pp_ros2 standard_robot_pp_ros2.launch.py &
 
-# 最多等待 15 秒检查 /tf_static 中是否出现 front_mid360。
+# 最多等待 6 秒检查 /tf_static 中是否出现 front_mid360。
 # 若检测到关键静态 TF，就继续按原逻辑启动导航（不额外拉起 robot_state_publisher）。
 #若超时未检测到，就自动把导航启动参数切到 use_robot_state_pub:=True 兜底，保证 base_footprint/front_mid360 和 gimbal_yaw/gimbal_yaw_fake 相关 TF 不再缺失。
 wait_for_static_tf() {
-	local timeout_sec=15
+	local timeout_sec=6
 	local elapsed=0
 
 	while [ "$elapsed" -lt "$timeout_sec" ]; do
