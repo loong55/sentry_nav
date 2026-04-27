@@ -346,9 +346,9 @@ controller_server:
       required_movement_radius: 0.1
       movement_time_allowance: 999.0
     general_goal_checker:
-      stateful: False
+      stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.2
+      xy_goal_tolerance: 0.30
       yaw_goal_tolerance: 6.28
       path_length_tolerance: 0.5
 
@@ -387,16 +387,16 @@ controller_server:
     FollowPath:
       plugin: "goal_approach_controller::GoalApproachController"
       inner_plugin: "nav2_mppi_controller::MPPIController"
-      approach_distance: 2.5  #距目标时开始限速
-      approach_velocity: 0.2
-      direct_approach_distance: 2.0  #进入直接驱动模式的距离，绕过MPPI防止画弧
-      direct_approach_kp: 3.0  #直接驱动P控制增益
+      approach_distance: 0.8  #只在最后 0.8m 才限速，避免 1m 以上长时间爬行
+      approach_velocity: 0.8
+      direct_approach_distance: 0.5  #最后 0.5m 直接朝目标点驱动，减少近目标粘滞
+      direct_approach_kp: 2.0  #直接驱动P控制增益
       time_steps: 80  #增加到80，预测时域4.8s，让MPPI能看到冲过目标的后果
-      model_dt: 0.02  #稍微放大步长，配合time_steps延长预测时域
-      batch_size: 1500 #控制器的采样数。
+      model_dt: 0.06  #进一步拉长预测时域，降低多点导航时接近路点的绕圈倾向
+      batch_size: 1200 #保留较高采样质量，同时把单周期计算压回 50Hz 预算内。
 
-      vx_std: 0.3 #增大采样多样性，让MPPI能采到更多减速/停止轨迹
-      vy_std: 0.3
+      vx_std: 0.35 #增大采样多样性，让MPPI能采到更多减速/停止轨迹
+      vy_std: 0.35
       wz_std: 0.2
 
       vx_max: 2.5
@@ -409,7 +409,7 @@ controller_server:
 
       ax_max: 1.5 #加速度提高，高速时能快速响应
       ay_max: 1.5
-      az_max: 1.0
+      az_max: 3.0
 
       ax_min: -3.5 #关键：制动力必须对称，高速下刹得住
       ay_min: -3.5
@@ -423,6 +423,8 @@ controller_server:
       motion_model: "Omni" #控制器的运动模型。
       visualize: false #是否可视化。
       reset_period: 0.08 # (only in Humble)
+      retry_attempt_limit: 2 #软重置尝试次数，降低多点导航连续失败概率
+      regenerate_noises: true
       TrajectoryVisualizer:
         trajectory_step: 5 #是指在可视化轨迹时，每隔多少个轨迹点绘制一个点。
         time_step: 3 #是指在可视化轨迹时，每隔多少个时间步长绘制一个点。
@@ -439,8 +441,8 @@ controller_server:
       GoalCritic: #必须开启，否则机器人没有到达目标的动力
         enabled: true
         cost_power: 1
-        cost_weight: 25.0 #提高权重，增强最终接近阶段的目标吸引力，防止弧线绕圈
-        threshold_to_consider: 4.0
+        cost_weight: 20.0 #提高权重，增强最终接近阶段的目标吸引力，防止弧线绕圈
+        threshold_to_consider: 3.0
       ObstaclesCritic: #开启提供额外的障碍物排斥力
         enabled: true
         cost_power: 1
@@ -448,8 +450,8 @@ controller_server:
         critical_weight: 20.0 #近距离障碍物惩罚
         consider_footprint: false #用圆形近似，omni机器人更高效
         collision_cost: 10000.0
-        collision_margin_distance: 0.2 #碰撞边界余量
-        near_goal_distance: 0.5
+        collision_margin_distance: 0.25 #碰撞边界余量
+        near_goal_distance: 0.1
 
       CostCritic: #通过 costmap 梯度引导避障
         enabled: true
@@ -464,9 +466,9 @@ controller_server:
       PathFollowCritic: #必须开启，这是防止乱跑的核心
         enabled: true
         cost_power: 1
-        cost_weight: 15.0
+        cost_weight: 8.0
         offset_from_furthest: 5 #关注路径前方更远的点
-        threshold_to_consider: 1.0 #放大关闭距离，让GoalCritic在近目标区域主导，防止画弧
+        threshold_to_consider: 3.0 #放大关闭距离，让GoalCritic在近目标区域主导，防止画弧
 
       PathAlignCritic: #让轨迹方向与路径对齐，高速下更平滑
         enabled: true
@@ -474,7 +476,7 @@ controller_server:
         cost_weight: 15.0
         max_path_occupancy_ratio: 0.05
         trajectory_point_step: 4
-        threshold_to_consider: 0.8 #放大关闭距离，与PathFollowCritic同步，减少近目标干扰
+        threshold_to_consider: 3.0 #在接近路点前持续提供方向引导，减少多点切换时的圆周运动
         offset_from_furthest: 20
         use_path_orientations: false #omni机器人用运动方向而非朝向
 
@@ -491,8 +493,8 @@ local_costmap:
       width: 10
       height: 10
       resolution: 0.05
-      robot_radius: 0.1
-      footprint: "[ [0.1, 0.1], [0.1, -0.1], [-0.1, -0.1], [-0.1, 0.1] ]"
+      robot_radius: 0.2
+      footprint: "[ [0.15, 0.15], [0.15, -0.15], [-0.15, -0.15], [-0.15, 0.15] ]"
       plugins: ["static_layer", "intensity_voxel_layer", "inflation_layer"]
       intensity_voxel_layer:
         plugin: pb_nav2_costmap_2d::IntensityVoxelLayer
@@ -538,8 +540,8 @@ global_costmap:
       publish_frequency: 20.0
       global_frame: map
       robot_base_frame: gimbal_yaw_fake
-      robot_radius: 0.1               # 导航碰撞半径
-      footprint: "[ [0.1, 0.1], [0.1, -0.1], [-0.1, -0.1], [-0.1, 0.1] ]"
+      robot_radius: 0.2               # 导航碰撞半径
+      footprint: "[ [0.15, 0.15], [0.15, -0.15], [-0.15, -0.15], [-0.15, 0.15] ]"
       resolution: 0.05
       rolling_window: true             # 跟随机器人，机器人始终在地图内；避免越界崩溃
       width: 40                        # 40m 覆盖 RM 赛场 40m 宽
@@ -706,7 +708,7 @@ velocity_smoother:
     min_velocity: [-2.5, -2.5, -2.5]
     deadband_velocity: [0.05, 0.05, 0.05]
     velocity_timeout: 1.0
-    max_accel: [2.5, 2.5, 1.5] #与 MPPI 加速度一致
+    max_accel: [2.5, 2.5, 3.0] #与 MPPI 加速度一致
     max_decel: [-3.5, -3.5, -3.0] #与 MPPI 制动一致
     odom_topic: "Odometry"
     odom_duration: 0.1
