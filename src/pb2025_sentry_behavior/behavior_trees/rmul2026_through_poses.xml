@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+  <BehaviorTree ID="wait_game_started">
+    <ForceSuccess>
+      <RetryUntilSuccessful num_attempts="1800">
+        <Fallback>
+          <IsGameStatus expected_game_progress="4" key_port="{@referee_gameStatus}"/>
+          <IsHpDeduced key_port="{@referee_robotStatus}"/>
+          <ForceFailure>
+            <Sleep msec="100"/>
+          </ForceFailure>
+        </Fallback>
+      </RetryUntilSuccessful>
+    </ForceSuccess>
+  </BehaviorTree>
+
+  <BehaviorTree ID="match_not_finished">
+    <Inverter>
+      <IsGameStatus expected_game_progress="5" key_port="{@referee_gameStatus}"/>
+    </Inverter>
+  </BehaviorTree>
+
+  <BehaviorTree ID="recover_if_low_hp">
+    <Sequence>
+      <Inverter>
+        <IsStatusOK hp_min="151" key_port="{@referee_robotStatus}"/>
+      </Inverter>
+      <PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+      <PubNav2Goal goal="0;0;0" topic_name="goal_pose"/>
+      <Sleep msec="3000"/>
+    </Sequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="continuous_patrol">
+    <Sequence>
+      <PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+      <NavigateThroughPosesAction
+        server_name="navigate_through_poses"
+        waypoint_file="behavior_trees/waypoints/rmul2026_patrol_center.csv"
+        frame_id="map"
+        current_waypoint="{current_waypoint}"/>
+    </Sequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="rmul2026_through_poses">
+    <Repeat num_cycles="-1">
+      <ReactiveSequence>
+        <SubTree ID="wait_game_started"/>
+        <SubTree ID="match_not_finished"/>
+        <ReactiveFallback>
+          <SubTree ID="recover_if_low_hp"/>
+          <SubTree ID="continuous_patrol"/>
+        </ReactiveFallback>
+      </ReactiveSequence>
+    </Repeat>
+  </BehaviorTree>
+</root>
