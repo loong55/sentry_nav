@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4"
+      main_tree_to_execute="Main_tree">
+  <BehaviorTree ID="Main_tree">
+    <Sequence>
+      <NavigateThroughPosesAction waypoint_file="/home/cod-sentry/dyx_ws/cod-sentry/src/cod_bringup/wps/rmul26.csv"
+                                  frame_id="map"
+                                  current_waypoint="{wp_idx}"/>
+      <KeepRunningUntilFailure>
+        <ReactiveFallback>
+          <Inverter>
+            <WriteToBlackboard Hp="{hp}"
+                               Zone_status="{zone_status}"
+                               Is_defence="{is_defence}"
+                               Is_attack="{is_attack}"
+                               Self_status="{self_status}"
+                               Is_recover="{is_recover}"/>
+          </Inverter>
+          <Sequence>
+            <HpCondition Hp="{hp}"/>
+            <ReactiveSequence>
+              <PubNav2Goal goal_pose="{home_position}"
+                           frame_id="map"
+                           min_pub_interval_ms="500"/>
+              <StayHome Hp="{hp}"/>
+            </ReactiveSequence>
+          </Sequence>
+          <ReactiveSequence>
+            <Inverter>
+              <ZsCondition Zone_status="{zone_status}"/>
+            </Inverter>
+            <PubNav2Goal goal_pose="{main_position}"
+                         frame_id="map"
+                         min_pub_interval_ms="500"/>
+          </ReactiveSequence>
+          <AlwaysSuccess/>
+        </ReactiveFallback>
+      </KeepRunningUntilFailure>
+    </Sequence>
+  </BehaviorTree>
+
+  <!-- Description of Node Models (used by Groot) -->
+  <TreeNodesModel>
+    <Condition ID="HpCondition"
+               editable="true">
+      <input_port name="Hp"/>
+    </Condition>
+    <Action ID="NavigateThroughPosesAction"
+            editable="true">
+      <input_port name="waypoint_file"/>
+      <input_port name="frame_id"/>
+      <output_port name="current_waypoint"/>
+    </Action>
+    <Action ID="PubNav2Goal"
+            editable="true">
+      <input_port name="goal_pose"/>
+      <input_port name="frame_id"/>
+      <input_port name="min_pub_interval_ms"/>
+    </Action>
+    <Condition ID="StayHome"
+               editable="true">
+      <input_port name="Hp"/>
+    </Condition>
+    <Action ID="WriteToBlackboard"
+            editable="true">
+      <output_port name="Hp"/>
+      <output_port name="Zone_status"/>
+      <output_port name="Is_defence"/>
+      <output_port name="Is_attack"/>
+      <output_port name="Self_status"/>
+      <output_port name="Is_recover"/>
+    </Action>
+    <Condition ID="ZsCondition"
+               editable="true">
+      <input_port name="Zone_status"/>
+    </Condition>
+  </TreeNodesModel>
+
+</root>

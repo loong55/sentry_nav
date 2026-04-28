@@ -1,0 +1,5 @@
+build
+cmake-build-debug
+log
+install
+.idea

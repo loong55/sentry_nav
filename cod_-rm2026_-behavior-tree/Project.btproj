@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4" project_name="Project">
+    <include path="COD_Behavior/cod_bt/tree_1.xml"/>
+    <!-- Description of Node Models (used by Groot) -->
+    <TreeNodesModel>
+        <Condition ID="HpCondition" editable="true">
+            <input_port name="Hp"/>
+        </Condition>
+        <Action ID="SendNav2Goal" editable="true">
+            <input_port name="goal_pose"/>
+        </Action>
+        <Action ID="WriteToBlackboard" editable="true">
+            <output_port name="Position"/>
+            <output_port name="Hp"/>
+            <output_port name="Zone_status"/>
+        </Action>
+    </TreeNodesModel>
+</root>

@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4"
+      main_tree_to_execute="Main_tree">
+  <BehaviorTree ID="Main_tree">
+    <Sequence>
+      <PubNav2Goal goal_pose="{main_position}"
+                   frame_id="map"
+                   min_pub_interval_ms="500"/>
+      <KeepRunningUntilFailure>
+        <ReactiveFallback>
+          <Inverter>
+            <WriteToBlackboard Hp="{hp}"
+                               Zone_status="{zone_status}"
+                               Is_defence="{is_defence}"
+                               Is_attack="{is_attack}"
+                               Self_status="{self_status}"
+                               Is_recover="{is_recover}"/>
+          </Inverter>
+          <Sequence>
+            <HpCondition Hp="{hp}"/>
+            <ReactiveSequence>
+              <PubNav2Goal goal_pose="{home_position}"
+                           frame_id="map"
+                           min_pub_interval_ms="500"/>
+              <StayHome Hp="{hp}"/>
+            </ReactiveSequence>
+          </Sequence>
+          <ReactiveSequence>
+            <Inverter>
+              <ZsCondition Zone_status="{zone_status}"/>
+            </Inverter>
+            <Sequence>
+              <LoadWaypoints waypoint_file="/home/rmnuc2/COD_ws/COD_loopback_sim/t1.csv"
+                             frame_id="map"
+                             waypoints="{waypoints}"
+                             wait_times="{wait_times}"
+                             total_waypoints="{total_wp}"/>
+              <KeepRunningUntilFailure>
+                <Sequence>
+                  <GetCurrentWaypoint waypoints="{waypoints}"
+                                      wait_times="{wait_times}"
+                                      wp_idx="{wp_idx}"
+                                      current_goal="{current_goal}"
+                                      current_wait_sec="5.0"/>
+                  <ReactiveSequence>
+                    <PubNav2Goal goal_pose="{current_goal}"
+                                 frame_id="map"
+                                 min_pub_interval_ms="500"/>
+                    <WaitUntilReached goal_pose="{current_goal}"
+                                      tolerance="0.5"/>
+                  </ReactiveSequence>
+                  <WaitDuration duration_sec="5.0"/>
+                  <NextWaypoint wp_idx="{wp_idx}"
+                                total_waypoints="{total_wp}"/>
+                </Sequence>
+              </KeepRunningUntilFailure>
+            </Sequence>
+          </ReactiveSequence>
+          <PubNav2Goal goal_pose="{ap_position1}"
+                       frame_id="map"
+                       min_pub_interval_ms="500"/>
+          <AlwaysSuccess/>
+        </ReactiveFallback>
+      </KeepRunningUntilFailure>
+    </Sequence>
+  </BehaviorTree>
+
+  <!-- Description of Node Models (used by Groot) -->
+  <TreeNodesModel>
+    <Action ID="GetCurrentWaypoint"
+            editable="true">
+      <input_port name="waypoints"/>
+      <input_port name="wait_times"/>
+      <input_port name="wp_idx"/>
+      <output_port name="current_goal"/>
+      <output_port name="current_wait_sec"/>
+    </Action>
+    <Condition ID="HpCondition"
+               editable="true">
+      <input_port name="Hp"/>
+    </Condition>
+    <Action ID="LoadWaypoints"
+            editable="true">
+      <input_port name="waypoint_file"/>
+      <input_port name="frame_id"/>
+      <output_port name="waypoints"/>
+      <output_port name="wait_times"/>
+      <output_port name="total_waypoints"/>
+    </Action>
+    <Action ID="NextWaypoint"
+            editable="true">
+      <inout_port name="wp_idx"/>
+      <input_port name="total_waypoints"/>
+    </Action>
+    <Action ID="PubNav2Goal"
+            editable="true">
+      <input_port name="goal_pose"/>
+      <input_port name="frame_id"/>
+      <input_port name="min_pub_interval_ms"/>
+    </Action>
+    <Condition ID="StayHome"
+               editable="true">
+      <input_port name="Hp"/>
+    </Condition>
+    <Action ID="WaitDuration"
+            editable="true">
+      <input_port name="duration_sec"/>
+    </Action>
+    <Action ID="WaitUntilReached"
+            editable="true">
+      <input_port name="goal_pose"/>
+      <input_port name="tolerance"/>
+    </Action>
+    <Action ID="WriteToBlackboard"
+            editable="true">
+      <output_port name="Hp"/>
+      <output_port name="Zone_status"/>
+      <output_port name="Is_defence"/>
+      <output_port name="Is_attack"/>
+      <output_port name="Self_status"/>
+      <output_port name="Is_recover"/>
+    </Action>
+    <Condition ID="ZsCondition"
+               editable="true">
+      <input_port name="Zone_status"/>
+    </Condition>
+  </TreeNodesModel>
+
+</root>

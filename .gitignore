@@ -22,7 +22,3 @@ src/pb2025_sentry_nav/pb2025_nav_bringup/pcd/simulation/*.pcd
 
 *.pgm
 *.yaml
-
-# AI参考仓库，不参与版本控制
-cod_-rm2026_-behavior-tree/
-cod_-rm2026_-navigation/
