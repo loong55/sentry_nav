@@ -23,7 +23,6 @@
 #include "behaviortree_cpp/action_node.h"
 #include "behaviortree_ros2/ros_node_params.hpp"
 #include "nav2_msgs/action/navigate_through_poses.hpp"
-#include "rclcpp/executors/single_threaded_executor.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 
 namespace pb2025_sentry_behavior
@@ -56,8 +55,6 @@ private:
   rclcpp::Time now() const;
 
   std::shared_ptr<rclcpp::Node> node_;
-  rclcpp::CallbackGroup::SharedPtr callback_group_;
-  rclcpp::executors::SingleThreadedExecutor callback_executor_;
   std::shared_ptr<ActionClient> action_client_;
   std::string default_action_name_;
   std::string action_name_;
@@ -65,11 +62,8 @@ private:
   std::chrono::milliseconds wait_for_server_timeout_;
   std::chrono::steady_clock::time_point goal_request_time_;
   std::shared_future<typename GoalHandle::SharedPtr> future_goal_handle_;
+  std::shared_future<WrappedResult> future_result_;
   GoalHandle::SharedPtr goal_handle_;
-  WrappedResult result_;
-  bool goal_response_received_{false};
-  bool goal_rejected_{false};
-  bool result_received_{false};
   int total_waypoints_{0};
 };
 }  // namespace pb2025_sentry_behavior

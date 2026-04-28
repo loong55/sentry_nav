@@ -34,9 +34,6 @@ NavigateThroughPosesAction::NavigateThroughPosesAction(
   if (!node_) {
     throw BT::RuntimeError("NavigateThroughPosesAction: ROS node expired");
   }
-
-  callback_group_ = node_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  callback_executor_.add_callback_group(callback_group_, node_->get_node_base_interface());
 }
 
 bool NavigateThroughPosesAction::ensureClient()
@@ -56,7 +53,7 @@ bool NavigateThroughPosesAction::ensureClient()
   }
 
   action_name_ = requested_action_name;
-  action_client_ = rclcpp_action::create_client<ActionType>(node_, action_name_, callback_group_);
+  action_client_ = rclcpp_action::create_client<ActionType>(node_, action_name_);
   if (!action_client_->wait_for_action_server(wait_for_server_timeout_)) {
     RCLCPP_ERROR(
       logger(), "NavigateThroughPosesAction action server not reachable: %s",
@@ -140,61 +137,33 @@ BT::NodeStatus NavigateThroughPosesAction::onStart()
 
   goal_handle_.reset();
   future_goal_handle_ = {};
-  result_ = {};
-  result_.code = rclcpp_action::ResultCode::UNKNOWN;
-  goal_response_received_ = false;
-  goal_rejected_ = false;
-  result_received_ = false;
+  future_result_ = {};
+  setOutput("current_waypoint", 0);
 
-  typename ActionClient::SendGoalOptions options;
-  options.goal_response_callback = [this](GoalHandle::SharedPtr goal_handle) {
-    goal_response_received_ = true;
-    goal_handle_ = goal_handle;
-    goal_rejected_ = (goal_handle == nullptr);
-  };
-  options.feedback_callback =
-    [this](GoalHandle::SharedPtr, const std::shared_ptr<const ActionType::Feedback> feedback) {
-      const int current_waypoint = total_waypoints_ - feedback->number_of_poses_remaining;
-      setOutput("current_waypoint", current_waypoint);
-      RCLCPP_DEBUG(
-        logger(), "NavigateThroughPosesAction progressing waypoint %d/%d", current_waypoint,
-        total_waypoints_);
-    };
-  options.result_callback = [this](const WrappedResult & result) {
-    result_ = result;
-    result_received_ = true;
-  };
-
-  future_goal_handle_ = action_client_->async_send_goal(goal, options);
+  future_goal_handle_ = action_client_->async_send_goal(goal);
   goal_request_time_ = std::chrono::steady_clock::now();
   return BT::NodeStatus::RUNNING;
 }
 
 BT::NodeStatus NavigateThroughPosesAction::onRunning()
 {
-  callback_executor_.spin_some();
-
-  if (!goal_response_received_ && future_goal_handle_.valid()) {
-    const auto ret = callback_executor_.spin_until_future_complete(
-      future_goal_handle_, std::chrono::milliseconds(0));
-    if (ret == rclcpp::FutureReturnCode::SUCCESS) {
+  if (!goal_handle_) {
+    if (future_goal_handle_.valid() &&
+      future_goal_handle_.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
+    {
       goal_handle_ = future_goal_handle_.get();
       future_goal_handle_ = {};
-      goal_response_received_ = true;
-      goal_rejected_ = (goal_handle_ == nullptr);
+
+      if (!goal_handle_) {
+        RCLCPP_ERROR(logger(), "NavigateThroughPosesAction goal rejected by server");
+        return BT::NodeStatus::FAILURE;
+      }
+
+      future_result_ = action_client_->async_get_result(goal_handle_);
     }
   }
 
-  if (result_received_) {
-    return handleResult(result_);
-  }
-
-  if (goal_rejected_) {
-    RCLCPP_ERROR(logger(), "NavigateThroughPosesAction goal rejected by server");
-    return BT::NodeStatus::FAILURE;
-  }
-
-  if (!goal_response_received_) {
+  if (!goal_handle_) {
     const auto elapsed = std::chrono::steady_clock::now() - goal_request_time_;
     if (elapsed > server_timeout_) {
       RCLCPP_ERROR(
@@ -203,6 +172,15 @@ BT::NodeStatus NavigateThroughPosesAction::onRunning()
         std::chrono::duration<double>(elapsed).count());
       return BT::NodeStatus::FAILURE;
     }
+
+    return BT::NodeStatus::RUNNING;
+  }
+
+  if (future_result_.valid() &&
+    future_result_.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
+  {
+    setOutput("current_waypoint", total_waypoints_);
+    return handleResult(future_result_.get());
   }
 
   return BT::NodeStatus::RUNNING;
@@ -217,8 +195,7 @@ void NavigateThroughPosesAction::onHalted()
   }
 
   try {
-    auto cancel_future = action_client_->async_cancel_goal(goal_handle_);
-    callback_executor_.spin_until_future_complete(cancel_future, server_timeout_);
+    action_client_->async_cancel_goal(goal_handle_);
   } catch (const std::exception & error) {
     RCLCPP_WARN(
       logger(), "NavigateThroughPosesAction cancel failed during halt: %s", error.what());
@@ -226,9 +203,7 @@ void NavigateThroughPosesAction::onHalted()
 
   goal_handle_.reset();
   future_goal_handle_ = {};
-  goal_response_received_ = false;
-  goal_rejected_ = false;
-  result_received_ = false;
+  future_result_ = {};
 }
 
 BT::PortsList NavigateThroughPosesAction::providedPorts()
