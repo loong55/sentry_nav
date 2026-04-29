@@ -27,18 +27,23 @@ PubNav2GoalAction::PubNav2GoalAction(
 
 bool PubNav2GoalAction::setMessage(geometry_msgs::msg::PoseStamped & msg)
 {
-  auto goal = getInput<geometry_msgs::msg::PoseStamped>("goal");
+  auto goal = getInput<std::string>("goal");
+  if (!goal) {
+    throw BT::RuntimeError("missing input [goal]: ", goal.error());
+  }
+
+  const auto parsed_goal = poseStampedFromString(goal.value());
 
   msg.header.stamp = now();
   msg.header.frame_id = "map";
-  msg.pose = goal->pose;
+  msg.pose = parsed_goal.pose;
   return true;
 }
 
 BT::PortsList PubNav2GoalAction::providedPorts()
 {
   BT::PortsList additional_ports = {
-    BT::InputPort<geometry_msgs::msg::PoseStamped>(
+    BT::InputPort<std::string>(
       "goal", "0;0;0", "Expected goal pose that send to nav2. Fill with format `x;y;yaw`"),
   };
   return providedBasicPorts(additional_ports);

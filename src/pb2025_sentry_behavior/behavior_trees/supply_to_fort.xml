@@ -3,11 +3,11 @@
   <BehaviorTree ID="supply_to_fort">
     <Sequence>
       <!-- 多点导航，开局直接去堡垒 -->
-			<NavigateThroughPosesAction
+			<!-- <NavigateThroughPosesAction
 				action_name="navigate_through_poses"
 				waypoint_file="behavior_trees/waypoints/supply_to_port.csv"
 				frame_id="map"
-				current_waypoint="{return_current_waypoint}"/>
+				current_waypoint="{return_current_waypoint}"/> -->
 
       <!-- 无限循环-->
       <KeepRunningUntilFailure>
@@ -15,31 +15,32 @@
         <ReactiveFallback>
 
 					<!-- 低状态回家序列，先判断低状态，再反应式序列回补给区同时判断高状态 -->
-					<Sequence>
-						<!-- 第一个节点（低状态判断）成功，下一轮不会tick，除非全部成功，会从头tick-->
-						<Inverter>
-							<IsStatusOK ammo_min="20" hp_min="150" key_port="{@referee_robotStatus}"/>
-						</Inverter>
-						<!-- 反应式序列，每轮tick，不论内部节点啥状态，都会从头tick到尾，直到全部成功-->
-						<ReactiveSequence>
-							<PubNav2Goal goal="1.76;-4.56;0.0" topic_name="goal_pose" min_pub_interval_ms="500"/>
-							<!-- 判断是否回满状态，回满了全部成功，下轮tick不再去补给区-->					
-							<IsStatusOK ammo_min="200" hp_min="350" key_port="{@referee_robotStatus}"/>
-						</ReactiveSequence>
-					</Sequence>
+        	<!-- 严格补给态：低血低弹进入，直到高血高弹才退出 -->
+					<ReactiveSequence>
+						<NeedSupply
+							key_port="{@referee_robotStatus}"
+							enter_hp_below="150"
+							enter_ammo_below="20"
+							exit_hp_min="350"
+							exit_ammo_min="200"/>
+						<PubNav2Goal
+							goal="-1.76;-4.56;0.0"
+							topic_name="goal_pose"
+							min_pub_interval_ms="500"/>
+					</ReactiveSequence>
 
 					<!-- 高状态去堡垒反应式序列，先判断是否在堡垒，再发点；每轮tick，不论内部节点啥状态，都会从头tick到尾，直到全部成功 -->
-					<ReactiveSequence>
+					<!-- <ReactiveSequence> -->
 						<!-- 第一个节点（位置判断）成功，下一轮tick会继续判断位置，直到全部成功 -->
-						<Inverter>
-							<IsRobotNearPose goal="2.67;0.58;0.0"
+						<!-- <Inverter> -->
+							<!-- <IsRobotNearPose goal="2.67;0.58;0.0"
 													 tolerance="0.2"
 													 global_frame="map"
-													 robot_base_frame="chassis"/>
-						</Inverter>
+													 robot_base_frame="chassis"/> -->
+						<!-- </Inverter> -->
 						<!-- 每0.5秒发布一次，发布后立刻返回success，然后0.5秒内不tick此节点 -->
-						<PubNav2Goal goal="2.67;0.58;0.0" topic_name="goal_pose" min_pub_interval_ms="500"/> 						
-					</ReactiveSequence>  
+						<!-- <PubNav2Goal goal="2.67;0.58;0.0" topic_name="goal_pose" min_pub_interval_ms="500"/> 						 -->
+					<!-- </ReactiveSequence>   -->
 
           <!-- 保底选择成功，导致无限循环 -->
           <AlwaysSuccess/>

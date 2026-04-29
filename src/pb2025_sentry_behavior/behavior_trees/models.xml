@@ -4,6 +4,7 @@
             <input_port name="costmap_port" type="nav_msgs::msg::OccupancyGrid_&lt;std::allocator&lt;void&gt; &gt;" default="{@nav_globalCostmap}">GlobalCostmap port on blackboard</input_port>
             <input_port name="tracker_port" type="auto_aim_interfaces::msg::Target_&lt;std::allocator&lt;void&gt; &gt;" default="{@tracker_target}">Vision target port on blackboard</input_port>
             <output_port name="goal" type="geometry_msgs::msg::PoseStamped_&lt;std::allocator&lt;void&gt; &gt;" default="{attack_pose}">Expected goal pose that send to nav2. Fill with format `x;y;yaw`</output_port>
+            <input_port name="min_pub_interval_ms" type="unsigned int" default="0">Minimum publish interval in milliseconds. 0 means publish every tick.</input_port>
             <input_port name="topic_name" type="std::string" default="__default__placeholder__">Topic name</input_port>
         </Condition>
         <Action ID="CsvGetCurrentWaypoint">
@@ -93,6 +94,13 @@
             <input_port name="hp_min" type="int" default="300">Minimum HP. NOTE: Sentry init/max HP is 400</input_port>
             <input_port name="key_port" type="pb_rm_interfaces::msg::RobotStatus_&lt;std::allocator&lt;void&gt; &gt;" default="{@referee_robotStatus}">RobotStatus port on blackboard</input_port>
         </Condition>
+        <Condition ID="NeedSupply">
+            <input_port name="enter_ammo_below" type="int" default="20">Enter supply mode when ammo is below this value</input_port>
+            <input_port name="enter_hp_below" type="int" default="150">Enter supply mode when hp is below this value</input_port>
+            <input_port name="exit_ammo_min" type="int" default="200">Exit supply mode when ammo reaches this value</input_port>
+            <input_port name="exit_hp_min" type="int" default="350">Exit supply mode when hp reaches this value</input_port>
+            <input_port name="key_port" type="pb_rm_interfaces::msg::RobotStatus_&lt;std::allocator&lt;void&gt; &gt;" default="{@referee_robotStatus}">RobotStatus port on blackboard</input_port>
+        </Condition>
         <Action ID="NavigateThroughPosesAction">
             <output_port name="current_waypoint" type="int">Current waypoint index from feedback</output_port>
             <input_port name="waypoint_file" type="std::string">CSV waypoint file path</input_port>
@@ -100,7 +108,8 @@
             <input_port name="action_name" type="std::string" default="navigate_through_poses">Action server name</input_port>
         </Action>
         <Condition ID="PubNav2Goal">
-            <input_port name="goal" type="geometry_msgs::msg::PoseStamped_&lt;std::allocator&lt;void&gt; &gt;" default="0;0;0">Expected goal pose that send to nav2. Fill with format `x;y;yaw`</input_port>
+            <input_port name="goal" type="std::string" default="0;0;0">Expected goal pose that send to nav2. Fill with format `x;y;yaw`</input_port>
+            <input_port name="min_pub_interval_ms" type="unsigned int" default="0">Minimum publish interval in milliseconds. 0 means publish every tick.</input_port>
             <input_port name="topic_name" type="std::string" default="__default__placeholder__">Topic name</input_port>
         </Condition>
         <Action ID="PublishGimbalAbsolute">
@@ -154,6 +163,7 @@
         <Condition ID="pub_nav2_goal_interval">
             <input_port name="goal" type="geometry_msgs::msg::PoseStamped_&lt;std::allocator&lt;void&gt; &gt;" default="0;0;0">Expected goal pose that send to nav2. Fill with format `x;y;yaw`</input_port>
             <input_port name="frame_id" type="std::string" default="map">Goal frame id</input_port>
+            <input_port name="min_pub_interval_ms" type="unsigned int" default="0">Minimum publish interval in milliseconds. 0 means publish every tick.</input_port>
             <input_port name="topic_name" type="std::string" default="__default__placeholder__">Topic name</input_port>
         </Condition>
     </TreeNodesModel>

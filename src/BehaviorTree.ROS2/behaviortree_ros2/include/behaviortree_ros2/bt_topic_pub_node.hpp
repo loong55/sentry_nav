@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <memory>
 #include <string>
 #include <rclcpp/executors.hpp>
@@ -57,8 +58,12 @@ public:
    */
   static PortsList providedBasicPorts(PortsList addition)
   {
-    PortsList basic = { InputPort<std::string>("topic_name", "__default__placeholder__",
-                                               "Topic name") };
+    PortsList basic = {
+      InputPort<std::string>("topic_name", "__default__placeholder__", "Topic name"),
+      InputPort<unsigned>(
+        "min_pub_interval_ms", 0,
+        "Minimum publish interval in milliseconds. 0 means publish every tick.")
+    };
     basic.insert(addition.begin(), addition.end());
     return basic;
   }
@@ -91,6 +96,8 @@ protected:
 
 private:
   std::shared_ptr<Publisher> publisher_;
+  std::chrono::steady_clock::time_point last_publish_time_{};
+  bool has_published_once_ = false;
 
   bool createPublisher(const std::string& topic_name);
 };
@@ -179,12 +186,27 @@ inline NodeStatus RosTopicPubNode<T>::tick()
     }
   }
 
+  unsigned min_interval_ms = 0;
+  getInput("min_pub_interval_ms", min_interval_ms);
+  if(min_interval_ms > 0 && has_published_once_)
+  {
+    const auto now = std::chrono::steady_clock::now();
+    const auto elapsed =
+      std::chrono::duration_cast<std::chrono::milliseconds>(now - last_publish_time_).count();
+    if(elapsed < min_interval_ms)
+    {
+      return NodeStatus::SUCCESS;
+    }
+  }
+
   T msg;
   if(!setMessage(msg))
   {
     return NodeStatus::FAILURE;
   }
   publisher_->publish(msg);
+  last_publish_time_ = std::chrono::steady_clock::now();
+  has_published_once_ = true;
   return NodeStatus::SUCCESS;
 }
 

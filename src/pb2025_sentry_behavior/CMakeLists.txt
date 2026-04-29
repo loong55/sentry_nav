@@ -45,6 +45,9 @@ list(APPEND plugin_libs is_rfid_detected)
 ament_auto_add_library(is_status_ok SHARED plugins/condition/is_status_ok.cpp)
 list(APPEND plugin_libs is_status_ok)
 
+ament_auto_add_library(need_supply SHARED plugins/condition/need_supply.cpp)
+list(APPEND plugin_libs need_supply)
+
 ament_auto_add_library(is_attacked SHARED plugins/condition/is_attacked.cpp)
 list(APPEND plugin_libs is_attacked)
 
