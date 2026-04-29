@@ -28,12 +28,17 @@ BT::NodeStatus IsGameStatusCondition::checkGameStart()
   int expected_game_progress = 4;
   int min_remain_time = 0;
   int max_remain_time = 420;
+  bool wait_for_message = false;
+  bool wait_until_expected = false;
   auto msg = getInput<pb_rm_interfaces::msg::GameStatus>("key_port");
+  getInput("wait_for_message", wait_for_message);
+  getInput("wait_until_expected", wait_until_expected);
+
   if (!msg) {
     static rclcpp::Clock steady_clock(RCL_STEADY_TIME);
     RCLCPP_WARN_THROTTLE(
       logger_, steady_clock, 3000, "GameStatus message is not available");
-    return BT::NodeStatus::FAILURE;
+    return wait_for_message ? BT::NodeStatus::RUNNING : BT::NodeStatus::FAILURE;
   }
 
   getInput("expected_game_progress", expected_game_progress);
@@ -49,8 +54,11 @@ BT::NodeStatus IsGameStatusCondition::checkGameStart()
   const bool is_time_in_range =
     (msg->stage_remain_time >= min_remain_time) && (msg->stage_remain_time <= max_remain_time);
 
-  return (is_progress_match && is_time_in_range) ? BT::NodeStatus::SUCCESS
-                                                 : BT::NodeStatus::FAILURE;
+  if (is_progress_match && is_time_in_range) {
+    return BT::NodeStatus::SUCCESS;
+  }
+
+  return wait_until_expected ? BT::NodeStatus::RUNNING : BT::NodeStatus::FAILURE;
 }
 
 BT::PortsList IsGameStatusCondition::providedPorts()
@@ -61,6 +69,12 @@ BT::PortsList IsGameStatusCondition::providedPorts()
     BT::InputPort<int>("expected_game_progress", 4, "Expected game progress stage"),
     BT::InputPort<int>("min_remain_time", 0, "Minimum remaining time (s)"),
     BT::InputPort<int>("max_remain_time", 420, "Maximum remaining time (s)"),
+    BT::InputPort<bool>(
+      "wait_for_message", false,
+      "Return RUNNING instead of FAILURE while waiting for the first GameStatus message"),
+    BT::InputPort<bool>(
+      "wait_until_expected", false,
+      "Return RUNNING instead of FAILURE while GameStatus has not reached the expected stage/time")
   };
 }
 }  // namespace pb2025_sentry_behavior

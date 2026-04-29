@@ -57,8 +57,10 @@
             <input_port name="key_port" type="pb_rm_interfaces::msg::Buff_&lt;std::allocator&lt;void&gt; &gt;" default="{@referee_buff}">Buff port on blackboard</input_port>
         </Condition>
         <Condition ID="IsGameStatus">
+            <input_port name="wait_until_expected" type="bool" default="false">Return RUNNING instead of FAILURE while GameStatus has not reached the expected stage/time</input_port>
             <input_port name="max_remain_time" type="int" default="420">Maximum remaining time (s)</input_port>
             <input_port name="min_remain_time" type="int" default="0">Minimum remaining time (s)</input_port>
+            <input_port name="wait_for_message" type="bool" default="false">Return RUNNING instead of FAILURE while waiting for the first GameStatus message</input_port>
             <input_port name="expected_game_progress" type="int" default="4">Expected game progress stage</input_port>
             <input_port name="key_port" type="pb_rm_interfaces::msg::GameStatus_&lt;std::allocator&lt;void&gt; &gt;" default="{@referee_gameStatus}">GameStatus port on blackboard</input_port>
         </Condition>

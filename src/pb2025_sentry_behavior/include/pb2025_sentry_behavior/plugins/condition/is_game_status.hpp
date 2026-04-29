@@ -41,6 +41,7 @@ private:
    * @brief Tick function for game status ports
    */
   BT::NodeStatus checkGameStart();
+
   rclcpp::Logger logger_ = rclcpp::get_logger("IsGameStatusCondition");
 };
 }  // namespace pb2025_sentry_behavior
