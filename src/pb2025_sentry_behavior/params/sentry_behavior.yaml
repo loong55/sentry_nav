@@ -23,4 +23,4 @@ pb2025_sentry_behavior_server:
 pb2025_sentry_behavior_client:
   ros__parameters:
     use_sim_time: true
-    target_tree: go_target_and_return                            # 要执行的行为树名称 2026rmuc / rmul2026 / rmul2026_through_poses / go_target_and_return / three_point_loop / rmul_2026_three
+    target_tree: supply_to_fort                            # 要执行的行为树名称 2026rmuc / rmul2026 / rmul2026_through_poses / go_target_and_return / three_point_loop / rmul_2026_three / near_pose_then_pub_goal

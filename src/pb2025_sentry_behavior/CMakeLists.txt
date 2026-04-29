@@ -54,6 +54,9 @@ list(APPEND plugin_libs is_energy_enough)
 ament_auto_add_library(is_detect_enemy SHARED plugins/condition/is_detect_enemy.cpp)
 list(APPEND plugin_libs is_detect_enemy)
 
+ament_auto_add_library(is_robot_near_pose SHARED plugins/condition/is_robot_near_pose.cpp)
+list(APPEND plugin_libs is_robot_near_pose)
+
 ament_auto_add_library(is_atk_op SHARED plugins/condition/is_atk_op.cpp)
 list(APPEND plugin_libs is_atk_op)
 
@@ -82,6 +85,11 @@ list(APPEND plugin_libs send_nav2_goal)
 
 ament_auto_add_library(pub_nav2_goal SHARED plugins/action/pub_nav2_goal.cpp)
 list(APPEND plugin_libs pub_nav2_goal)
+
+ament_auto_add_library(
+  pub_nav2_goal_interval SHARED
+  plugins/action/pub_nav2_goal_interval.cpp)
+list(APPEND plugin_libs pub_nav2_goal_interval)
 
 ament_auto_add_library(
   navigate_through_poses SHARED

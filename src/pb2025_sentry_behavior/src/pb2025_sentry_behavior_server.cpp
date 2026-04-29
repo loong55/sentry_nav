@@ -61,6 +61,8 @@ void SentryBehaviorServer::subscribe(
 SentryBehaviorServer::SentryBehaviorServer(const rclcpp::NodeOptions & options)
 : TreeExecutionServer(options)//TreeExecutionServer是一个行为树执行服务器的基类，而options是ROS2的节点配置参数。
 {
+  globalBlackboard()->set("node", node());
+
   node()->declare_parameter("use_cout_logger", false);//声明一个参数，用于配置是否使用cout日志记录器
   node()->get_parameter("use_cout_logger", use_cout_logger_);//获取参数的值
 

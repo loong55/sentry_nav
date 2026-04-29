@@ -79,6 +79,12 @@
             <input_port name="friendly_fortress_gain_point" type="bool" default="false">己方堡垒增益点</input_port>
             <input_port name="key_port" type="pb_rm_interfaces::msg::RfidStatus_&lt;std::allocator&lt;void&gt; &gt;" default="{@referee_rfidStatus}">RfidStatus port on blackboard</input_port>
         </Condition>
+        <Condition ID="IsRobotNearPose">
+            <input_port name="robot_base_frame" type="std::string" default="chassis">Robot base frame</input_port>
+            <input_port name="global_frame" type="std::string" default="map">Global frame for the goal pose</input_port>
+            <input_port name="tolerance" type="double" default="0.300000">Position tolerance in meters</input_port>
+            <input_port name="goal" type="geometry_msgs::msg::PoseStamped_&lt;std::allocator&lt;void&gt; &gt;" default="0;0;0">Target pose in global frame. Fill with format `x;y;yaw`</input_port>
+        </Condition>
         <Condition ID="IsShootLocked">
             <input_port name="key_port" type="pb_rm_interfaces::msg::RobotStatus_&lt;std::allocator&lt;void&gt; &gt;" default="{@referee_robotStatus}">RobotStatus port on blackboard</input_port>
         </Condition>
@@ -145,5 +151,10 @@
         <Decorator ID="TickAfterTimeout">
             <input_port name="timeout" type="float">time in s to wait before ticking child again</input_port>
         </Decorator>
+        <Condition ID="pub_nav2_goal_interval">
+            <input_port name="goal" type="geometry_msgs::msg::PoseStamped_&lt;std::allocator&lt;void&gt; &gt;" default="0;0;0">Expected goal pose that send to nav2. Fill with format `x;y;yaw`</input_port>
+            <input_port name="frame_id" type="std::string" default="map">Goal frame id</input_port>
+            <input_port name="topic_name" type="std::string" default="__default__placeholder__">Topic name</input_port>
+        </Condition>
     </TreeNodesModel>
 </root>
