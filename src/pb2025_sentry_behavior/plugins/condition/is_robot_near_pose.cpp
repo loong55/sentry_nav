@@ -27,18 +27,40 @@ IsRobotNearPoseCondition::IsRobotNearPoseCondition(
   const std::string & name, const BT::NodeConfig & config)
 : BT::ConditionNode(name, config)
 {
-  if (!config.blackboard->get("node", node_) || !node_) {
-    throw BT::RuntimeError("Missing ROS node in blackboard with key [node]");
+  ensureNode();
+}
+
+bool IsRobotNearPoseCondition::ensureNode()
+{
+  if (node_) {
+    return true;
   }
 
-  tf_buffer_ = std::make_shared<tf2_ros::Buffer>(node_->get_clock());
-  tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_, node_, false);
+  if (config().blackboard) {
+    if (!config().blackboard->get("node", node_)) {
+      if (auto * root_blackboard = config().blackboard->rootBlackboard()) {
+        (void)root_blackboard->get("node", node_);
+      }
+    }
+  }
+
+  if (!node_) {
+    return false;
+  }
+
+  if (!tf_buffer_) {
+    tf_buffer_ = std::make_shared<tf2_ros::Buffer>(node_->get_clock());
+    tf_buffer_->setUsingDedicatedThread(true);
+    tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_, node_, true);
+  }
+
+  return true;
 }
 
 BT::PortsList IsRobotNearPoseCondition::providedPorts()
 {
   return {
-    BT::InputPort<geometry_msgs::msg::PoseStamped>(
+    BT::InputPort<std::string>(
       "goal", "0;0;0", "Target pose in global frame. Fill with format `x;y;yaw`"),
     BT::InputPort<double>("tolerance", 0.3, "Position tolerance in meters"),
     BT::InputPort<std::string>("global_frame", "map", "Global frame for the goal pose"),
@@ -47,7 +69,11 @@ BT::PortsList IsRobotNearPoseCondition::providedPorts()
 
 BT::NodeStatus IsRobotNearPoseCondition::tick()
 {
-  auto goal = getInput<geometry_msgs::msg::PoseStamped>("goal");
+  if (!ensureNode()) {
+    throw BT::RuntimeError("Missing ROS node in blackboard with key [node]");
+  }
+
+  auto goal = getInput<std::string>("goal");
   auto tolerance = getInput<double>("tolerance");
   auto global_frame = getInput<std::string>("global_frame");
   auto robot_base_frame = getInput<std::string>("robot_base_frame");
@@ -63,6 +89,8 @@ BT::NodeStatus IsRobotNearPoseCondition::tick()
     return BT::NodeStatus::FAILURE;
   }
 
+  const auto parsed_goal = poseStampedFromString(goal.value());
+
   geometry_msgs::msg::PoseStamped current_pose;
   const std::string target_frame = global_frame ? global_frame.value() : "map";
   const std::string base_frame = robot_base_frame ? robot_base_frame.value() : "chassis";
@@ -75,8 +103,8 @@ BT::NodeStatus IsRobotNearPoseCondition::tick()
   }
 
   const double distance = std::hypot(
-    current_pose.pose.position.x - goal->pose.position.x,
-    current_pose.pose.position.y - goal->pose.position.y);
+    current_pose.pose.position.x - parsed_goal.pose.position.x,
+    current_pose.pose.position.y - parsed_goal.pose.position.y);
 
   if (distance <= tolerance.value()) {
     RCLCPP_INFO_THROTTLE(

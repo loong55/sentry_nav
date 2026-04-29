@@ -84,7 +84,7 @@
             <input_port name="robot_base_frame" type="std::string" default="chassis">Robot base frame</input_port>
             <input_port name="global_frame" type="std::string" default="map">Global frame for the goal pose</input_port>
             <input_port name="tolerance" type="double" default="0.300000">Position tolerance in meters</input_port>
-            <input_port name="goal" type="geometry_msgs::msg::PoseStamped_&lt;std::allocator&lt;void&gt; &gt;" default="0;0;0">Target pose in global frame. Fill with format `x;y;yaw`</input_port>
+            <input_port name="goal" type="std::string" default="0;0;0">Target pose in global frame. Fill with format `x;y;yaw`</input_port>
         </Condition>
         <Condition ID="IsShootLocked">
             <input_port name="key_port" type="pb_rm_interfaces::msg::RobotStatus_&lt;std::allocator&lt;void&gt; &gt;" default="{@referee_robotStatus}">RobotStatus port on blackboard</input_port>

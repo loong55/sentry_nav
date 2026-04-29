@@ -2,20 +2,15 @@
 <root BTCPP_format="4" main_tree_to_execute="supply_to_fort">
   <BehaviorTree ID="supply_to_fort">
     <Sequence>
-      <!-- 多点导航，开局直接去堡垒 -->
-			<!-- <NavigateThroughPosesAction
-				action_name="navigate_through_poses"
-				waypoint_file="behavior_trees/waypoints/supply_to_port.csv"
-				frame_id="map"
-				current_waypoint="{return_current_waypoint}"/> -->
-
+			<!-- 比赛开始条件 -->
+		  <IsGameStatus min_remain_time="0" max_remain_time="420"
+                  expected_game_progress="4" key_port="{@referee_gameStatus}"/>
       <!-- 无限循环-->
       <KeepRunningUntilFailure>
         <!-- 反应式选择，下一轮tick无论前面节点啥状态，都会从头tick,直到有一个成功 -->
         <ReactiveFallback>
 
-					<!-- 低状态回家序列，先判断低状态，再反应式序列回补给区同时判断高状态 -->
-        	<!-- 严格补给态：低血低弹进入，直到高血高弹才退出 -->
+        	<!-- 反应式序列回补给区，低血低弹进入，直到高血高弹才退出 -->
 					<ReactiveSequence>
 						<NeedSupply
 							key_port="{@referee_robotStatus}"
@@ -30,17 +25,17 @@
 					</ReactiveSequence>
 
 					<!-- 高状态去堡垒反应式序列，先判断是否在堡垒，再发点；每轮tick，不论内部节点啥状态，都会从头tick到尾，直到全部成功 -->
-					<!-- <ReactiveSequence> -->
+					<ReactiveSequence>
 						<!-- 第一个节点（位置判断）成功，下一轮tick会继续判断位置，直到全部成功 -->
-						<!-- <Inverter> -->
-							<!-- <IsRobotNearPose goal="2.67;0.58;0.0"
+						<Inverter>
+							<IsRobotNearPose goal="2.67;0.58;0.0"
 													 tolerance="0.2"
 													 global_frame="map"
-													 robot_base_frame="chassis"/> -->
-						<!-- </Inverter> -->
+													 robot_base_frame="chassis"/>
+						</Inverter>
 						<!-- 每0.5秒发布一次，发布后立刻返回success，然后0.5秒内不tick此节点 -->
-						<!-- <PubNav2Goal goal="2.67;0.58;0.0" topic_name="goal_pose" min_pub_interval_ms="500"/> 						 -->
-					<!-- </ReactiveSequence>   -->
+						<PubNav2Goal goal="2.67;0.58;0.0" topic_name="goal_pose" min_pub_interval_ms="500"/> 						
+					</ReactiveSequence>  
 
           <!-- 保底选择成功，导致无限循环 -->
           <AlwaysSuccess/>

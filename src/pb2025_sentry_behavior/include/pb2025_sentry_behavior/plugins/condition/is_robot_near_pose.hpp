@@ -37,6 +37,8 @@ public:
   BT::NodeStatus tick() override;
 
 private:
+  bool ensureNode();
+
   rclcpp::Node::SharedPtr node_;
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
