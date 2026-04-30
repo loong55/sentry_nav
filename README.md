@@ -20,10 +20,25 @@
 ### 7、添加姿态切换功能：消息接口src/pb_rm_interfaces/msg/PostureCmd.msg,串口通信包中添加姿态切换功能，行为树中添加姿态切换节点
 ### 8、修复行为树halt()函数无法正常停止问题，详细见：src/BehaviorTree.ROS2/behaviortree_ros2/include/behaviortree_ros2/bt_action_node.hpp
 ### 9、加入军临战队2025赛季开发的地图坐标查看文件，用于查看pgm地图中的坐标点，方便写行为树
-### 10、添加功能包referee_sim，用于仿真裁判系统,启动后点击refresh：
+```bash
+./location.sh
+```
+### 10、添加功能包referee_sim，用于仿真裁判系统,详情看其下的readme
 ```bash
 ./referee_sim.sh
 ```
+### 11、添加功能包waypoint_editor，用于输出连续导航点，用于多点连线导航；行为树有使用案例
+```bash
+./waypoint_editor.sh
+```
+运行脚本后，先加载地图，然后添加航点，之后保存csv文件。
+
+### 12、行为树设计思路
+1、插件navigate_through_poses，多点连线导航功能，设计了一个新的行为树supply_outpost_fort.xml，包含补给区、前哨和堡垒三个地点的导航逻辑。
+2、插件is_robot_near_pose，通过tf判断坐标点是否到达，避免了之前行为树中通过发布目标点来判断是否到达的逻辑问题。
+3、插件need_supply，通过记忆变量，来控制机器人低状态回家，高状态出家逻辑，避免了只有一种状态用来判断回家和出家的问题。
+
+### 13、局部路径规划器移植了cod战队的mppi，效果不错，尤其在狭窄环境下，能更好地避障。
 
 ### 编译
 #### 1.工作空间外安装 small_gicp
