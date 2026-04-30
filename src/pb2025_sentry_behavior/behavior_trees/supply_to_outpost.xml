@@ -23,7 +23,7 @@
 							exit_ammo_min="200"/>
 						<Fallback>
 							<IsRobotNearPose goal="-1.78906;-4.54782;0.0"
-											 tolerance="0.2"
+											 tolerance="0.5"
 											 global_frame="map"
 											 robot_base_frame="chassis"/>
 							<NavigateThroughPosesAction
@@ -39,7 +39,7 @@
 						<!-- 第一个节点（位置判断）成功，下一轮tick会继续判断位置，直到全部成功 -->
 						<Inverter>
 							<IsRobotNearPose goal="11.7622;3.06587;0.0"
-													 tolerance="0.2"
+													 tolerance="0.5"
 													 global_frame="map"
 													 robot_base_frame="chassis"/>
 						</Inverter>

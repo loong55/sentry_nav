@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4" main_tree_to_execute="supply_outpost_fort">
+  <!-- ========================= 子行为树 ========================= -->
+	
+	<!-- =====比赛开始条件，没收到裁判系统消息或在未开赛，都返回running===== -->
+	<BehaviorTree ID="check_game_started">
+		<IsGameStatus min_remain_time="0" max_remain_time="420"
+									expected_game_progress="4" key_port="{@referee_gameStatus}"
+									wait_for_message="true"
+									wait_until_expected="true"/>
+	</BehaviorTree>
+
+	<!-- =======================补给区到堡垒========================== -->
+	<BehaviorTree ID="supply_to_fort">
+		<!-- 反应式选择，下一轮tick无论前面节点啥状态，都会从头tick,直到有一个成功 -->
+		<ReactiveFallback>
+
+			<!-- 反应式序列回补给区，低血低弹进入，直到高血高弹才退出 -->
+			<ReactiveSequence>
+				<NeedSupply
+					key_port="{@referee_robotStatus}"
+					enter_hp_below="150"
+					enter_ammo_below="20"
+					exit_hp_min="350"
+					exit_ammo_min="200"/>
+				<PubNav2Goal
+					goal="-1.76;-4.56;0.0"
+					topic_name="goal_pose"
+					min_pub_interval_ms="500"/>
+			</ReactiveSequence>
+
+			<!-- 高状态去堡垒反应式序列，先判断是否在堡垒，再发点；每轮tick，不论内部节点啥状态，都会从头tick到尾，直到全部成功 -->
+			<ReactiveSequence>
+				<!-- 第一个节点（位置判断）成功，下一轮tick会继续判断位置，直到全部成功 -->
+				<Inverter>
+					<IsRobotNearPose goal="2.67;0.58;0.0"
+												tolerance="0.2"
+												global_frame="map"
+												robot_base_frame="chassis"/>
+				</Inverter>
+				<!-- 每0.5秒发布一次，发布后立刻返回success，然后0.5秒内不tick此节点 -->
+				<PubNav2Goal goal="2.67;0.58;0.0" topic_name="goal_pose" min_pub_interval_ms="500"/> 						
+			</ReactiveSequence>  
+
+			<!-- 保底选择成功，导致无限循环 -->
+			<AlwaysSuccess/>
+		</ReactiveFallback>
+	</BehaviorTree>
+
+	<!-- =======================补给区到前哨========================== -->
+	<BehaviorTree ID="supply_to_outpost">
+		<!-- 反应式选择，下一轮tick无论前面节点啥状态，都会从头tick,直到有一个成功 -->
+		<ReactiveFallback>
+
+			<!-- 反应式序列回补给区，低血低弹进入，直到高血高弹才退出 -->
+			<Sequence>
+				<NeedSupply
+					key_port="{@referee_robotStatus}"
+					enter_hp_below="150"
+					enter_ammo_below="20"
+					exit_hp_min="350"
+					exit_ammo_min="200"/>
+				<Fallback>
+					<IsRobotNearPose goal="-1.78906;-4.54782;0.0"
+									 tolerance="0.5"
+									 global_frame="map"
+									 robot_base_frame="chassis"/>
+					<NavigateThroughPosesAction
+						action_name="navigate_through_poses"
+						waypoint_file="behavior_trees/waypoints/outpost_to_supply.csv"
+						frame_id="map"
+						current_waypoint="{outpost_to_supply}"/>
+				</Fallback>
+			</Sequence>
+
+			<!-- 高状态去前哨反应式序列，先判断是否在前哨，再发点；每轮tick，不论内部节点啥状态，都会从头tick到尾，直到全部成功 -->
+			<Sequence>
+				<!-- 第一个节点（位置判断）成功，下一轮tick会继续判断位置，直到全部成功 -->
+				<Inverter>
+					<IsRobotNearPose goal="11.7622;3.06587;0.0"
+											 tolerance="0.5"
+											 global_frame="map"
+											 robot_base_frame="chassis"/>
+				</Inverter>
+				<NavigateThroughPosesAction
+					action_name="navigate_through_poses"
+					waypoint_file="behavior_trees/waypoints/supply_to_outpost.csv"
+					frame_id="map"
+					current_waypoint="{supply_to_outpost}"/>				
+			</Sequence>  
+
+			<!-- 保底选择成功，导致无限循环 -->
+			<AlwaysSuccess/>
+		</ReactiveFallback>
+	</BehaviorTree>
+
+	<!-- ========================= 主行为树 ========================= -->
+  <BehaviorTree ID="supply_outpost_fort">
+    <Sequence>
+			<!-- 比赛开始条件，没收到裁判系统消息或在未开赛，都返回running -->
+			<SubTree ID="check_game_started"/>
+      <!-- 无限循环-->
+      <KeepRunningUntilFailure>
+        <!-- 反应式选择，下一轮tick无论前面节点啥状态，都会从头tick,直到有一个成功 -->
+        <ReactiveFallback>
+
+					<!-- 基地血量小于2500,进入守家策略；先判断机器人是否位于前哨，再选择执行前哨回补给区，还是直接补给区到堡垒-->
+					<Sequence>
+						<Inverter>
+							<IsBaseHPHealthy base_hp_min="2500" key_port="{@referee_allRobotHP}"/>
+						</Inverter>
+						<Fallback>
+							<Sequence>
+								<IsRobotNearPose goal="11.7622;3.06587;0.0"
+												 tolerance="0.5"
+												 global_frame="map"
+												 robot_base_frame="chassis"/>
+								<NavigateThroughPosesAction
+									action_name="navigate_through_poses"
+									waypoint_file="behavior_trees/waypoints/outpost_to_supply.csv"
+									frame_id="map"
+									current_waypoint="{outpost_to_supply}"/>
+							</Sequence>
+							<SubTree ID="supply_to_fort"/>
+						</Fallback>
+					</Sequence>
+
+					<!-- 基地血量大于2500,进入推前哨策略-->
+					<SubTree ID="supply_to_outpost"/>
+
+          <!-- 保底选择成功，导致无限循环 -->
+          <AlwaysSuccess/>
+        </ReactiveFallback>
+      </KeepRunningUntilFailure>                                                                             
+    </Sequence>  
+  </BehaviorTree>
+</root>
