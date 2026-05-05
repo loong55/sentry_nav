@@ -5,15 +5,17 @@ source install/setup.bash
 
 gnome-terminal -- ros2 launch standard_robot_pp_ros2 standard_robot_pp_ros2.launch.py &
 
-# 最多等待 6 秒检查 /tf_static 中是否出现 front_mid360。
-# 若检测到关键静态 TF，就继续按原逻辑启动导航（不额外拉起 robot_state_publisher）。
-#若超时未检测到，就自动把导航启动参数切到 use_robot_state_pub:=True 兜底，保证 base_footprint/front_mid360 和 gimbal_yaw/gimbal_yaw_fake 相关 TF 不再缺失。
-wait_for_static_tf() {
-	local timeout_sec=6
+
+# 最多等待 15 秒检查 base_footprint -> front_mid360 是否已经可查询。
+# 仅检查 /tf_static 中出现某个 child_frame_id 容易误判，因为单个静态 TF 片段存在
+# 并不代表整条机器人 TF 链已经接通。
+# 若超时仍无法查询到这条关键变换，就自动启用 nav 侧 robot_state_publisher 兜底。
+wait_for_robot_tf() {
+	local timeout_sec=15
 	local elapsed=0
 
 	while [ "$elapsed" -lt "$timeout_sec" ]; do
-		if timeout 2s ros2 topic echo --once /tf_static 2>/dev/null | grep -q "child_frame_id: front_mid360"; then
+		if timeout 2s ros2 run tf2_ros tf2_echo base_footprint front_mid360 2>/dev/null | grep -q "Translation:"; then
 			return 0
 		fi
 		sleep 1
@@ -24,10 +26,10 @@ wait_for_static_tf() {
 }
 
 USE_ROBOT_STATE_PUB=False
-if wait_for_static_tf; then
-	echo "[nav_no_map] TF ready: base_footprint/front_mid360 tree detected from upstream robot_state_publisher."
+if wait_for_robot_tf; then
+	echo "[nav_no_map] TF ready: base_footprint -> front_mid360 transform is available from upstream robot_state_publisher."
 else
-	echo "[nav_no_map] WARN: /tf_static not ready within timeout, enabling nav-side robot_state_publisher fallback."
+	echo "[nav_no_map] WARN: base_footprint -> front_mid360 transform not ready within timeout, enabling nav-side robot_state_publisher fallback."
 	USE_ROBOT_STATE_PUB=True
 fi
 
