@@ -5,6 +5,7 @@ source ./install/setup.bash
 
 启动雷达 
 发雷达数据+rviz显示
+source ./install/setup.bash
 ros2 launch livox_ros_driver2 rviz_MID360_launch.py
 
 单纯发雷达数据

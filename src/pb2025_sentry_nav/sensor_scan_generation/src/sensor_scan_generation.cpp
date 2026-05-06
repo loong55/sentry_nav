@@ -26,10 +26,12 @@ SensorScanGenerationNode::SensorScanGenerationNode(const rclcpp::NodeOptions & o
   this->declare_parameter<std::string>("lidar_frame", "");
   this->declare_parameter<std::string>("base_frame", "");
   this->declare_parameter<std::string>("robot_base_frame", "");
+  this->declare_parameter<double>("transform_tolerance", 0.1);
 
   this->get_parameter("lidar_frame", lidar_frame_);
   this->get_parameter("base_frame", base_frame_);
   this->get_parameter("robot_base_frame", robot_base_frame_);
+  this->get_parameter("transform_tolerance", transform_tolerance_);
 
   tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_unique<tf2_ros::TransformListener>(*tf_buffer_);
@@ -69,8 +71,12 @@ void SensorScanGenerationNode::laserCloudAndOdometryHandler(
   tf2::Transform tf_odom_to_lidar;
 
   tf2::fromMsg(odometry_msg->pose.pose, tf_odom_to_lidar);
-  tf_lidar_to_robot_base_ = getTransform(lidar_frame_, robot_base_frame_, pcd_msg->header.stamp);
-  tf_lidar_to_chassis = getTransform(lidar_frame_, base_frame_, pcd_msg->header.stamp);
+  if (!getTransform(lidar_frame_, robot_base_frame_, pcd_msg->header.stamp, tf_lidar_to_robot_base_)) {
+    return;
+  }
+  if (!getTransform(lidar_frame_, base_frame_, pcd_msg->header.stamp, tf_lidar_to_chassis)) {
+    return;
+  }
 
   tf_odom_to_chassis = tf_odom_to_lidar * tf_lidar_to_chassis;
   tf_odom_to_robot_base = tf_odom_to_lidar * tf_lidar_to_robot_base_;
@@ -85,18 +91,25 @@ void SensorScanGenerationNode::laserCloudAndOdometryHandler(
   pub_laser_cloud_->publish(out);
 }
 
-tf2::Transform SensorScanGenerationNode::getTransform(
-  const std::string & target_frame, const std::string & source_frame, const rclcpp::Time & time)
+bool SensorScanGenerationNode::getTransform(
+  const std::string & target_frame, const std::string & source_frame, const rclcpp::Time & time,
+  tf2::Transform & transform)
 {
+  const rclcpp::Time query_time = time - rclcpp::Duration::from_seconds(transform_tolerance_);
   try {
     auto transform_stamped = tf_buffer_->lookupTransform(
-      target_frame, source_frame, time, rclcpp::Duration::from_seconds(0.5));
-    tf2::Transform transform;
+      target_frame, source_frame, query_time, rclcpp::Duration::from_seconds(0.5));
     tf2::fromMsg(transform_stamped.transform, transform);
-    return transform;
+    return true;
   } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN(this->get_logger(), "TF lookup failed: %s. Returning identity.", ex.what());
-    return tf2::Transform::getIdentity();
+    RCLCPP_WARN(
+      this->get_logger(),
+      "TF lookup failed after applying %.3fs tolerance (requested %.6f, queried %.6f): %s. Dropping current frame.",
+      transform_tolerance_,
+      time.seconds(),
+      query_time.seconds(),
+      ex.what());
+    return false;
   }
 }
 

@@ -41,8 +41,9 @@ private:
     const nav_msgs::msg::Odometry::ConstSharedPtr & odometry,
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr & laserCloud2);
 
-  tf2::Transform getTransform(
-    const std::string & target_frame, const std::string & source_frame, const rclcpp::Time & time);
+  bool getTransform(
+    const std::string & target_frame, const std::string & source_frame, const rclcpp::Time & time,
+    tf2::Transform & transform);
 
   void publishTransform(
     const tf2::Transform & transform, const std::string & parent_frame,
@@ -55,6 +56,7 @@ private:
   std::string lidar_frame_;
   std::string base_frame_;
   std::string robot_base_frame_;
+  double transform_tolerance_;
 
   std::unique_ptr<tf2_ros::TransformBroadcaster> br_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_laser_cloud_;

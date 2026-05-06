@@ -64,8 +64,8 @@ point_lio:
       plane_thr: 0.1                                    # 0.05, the threshold for plane criteria, the smaller, the flatter a plane
       match_s: 81.0
       ivox_grid_resolution: 0.5
-      gravity: [-0.0099982204539426, -0.8606479746334103, -0.4967292571495497]
-      gravity_init: [-0.0099982204539426, -0.8606479746334103, -0.4967292571495497]
+      gravity: [-0.0123736479755950, -0.8626368802867523, -0.4934542060061677]
+      gravity_init: [-0.0123736479755950, -0.8626368802867523, -0.4934542060061677]
       extrinsic_T: [ 0.0, 0.0, 0.0 ]
       extrinsic_R: [ 1.0, 0.0, 0.0,
                      0.0, 1.0, 0.0,
@@ -100,6 +100,7 @@ sensor_scan_generation:
     lidar_frame: "front_mid360"
     base_frame: "base_footprint"
     robot_base_frame: "gimbal_yaw" #gimbal_yaw实体激光雷达与yaw固连相对底盘会转动  gimbal_yaw_fake用于导航，和底盘固连
+    transform_tolerance: 0.5 #tf报警告增大
 
 # 最大坡度20度，最高坡高0.2m，雷达高度0.36m，雷达向下倾角60度，平地上有0.07m高减速带
 #近场地形节点
@@ -226,11 +227,11 @@ slam_toolbox:
     transform_publish_period: 0.05                #  与livox的publish_freq 20Hz 对应 0.05s，if 0 never publishes odometry
     map_update_interval: 0.5
     resolution: 0.05
-    min_laser_range: 0.3                         # for rastering images
+    min_laser_range: 0.45                        # 与 obstacle_scan/雷达最小有效量程保持一致，避免 slam_toolbox 启动裁剪告警
     max_laser_range: 10.0                         # for rastering images
     minimum_time_interval: 0.2
     transform_timeout: 0.2
-    tf_buffer_duration: 10.
+    tf_buffer_duration: 20.0     #tf报错时适当增大这个值，例如 20.0s；如果tf报错频繁，可以适当增大这个值
     stack_size_to_use: 40000000                   # program needs a larger stack size to serialize large maps
     enable_interactive_mode: true
 
