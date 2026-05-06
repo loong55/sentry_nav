@@ -367,15 +367,15 @@ controller_server:
       batch_size: 1200
 
       vx_std: 0.35
-      vy_std: 0.35
+      vy_std: 0.15   # 走直线
       wz_std: 0.2
 
       vx_max: 2.5
-      vy_max: 2.5
+      vy_max: 1.5   # 走直线
       wz_max: 1.5
 
       vx_min: -2.5
-      vy_min: -2.5
+      vy_min: -1.5 # 走直线
       wz_min: -1.5
 
       ax_max: 1.5
@@ -417,17 +417,17 @@ controller_server:
       ObstaclesCritic:
         enabled: true
         cost_power: 1
-        repulsion_weight: 1.5
-        critical_weight: 20.0
+        repulsion_weight: 0.8       #畏惧障碍物，调小不畏惧，原1.5
+        critical_weight: 20.0       #畏惧障碍物，调小不畏惧，原20.0
         consider_footprint: false
         collision_cost: 10000.0
-        collision_margin_distance: 0.25
+        collision_margin_distance: 0.15   #畏惧障碍物，原0.25，机器人离障碍物多近才算碰撞；过大可能导致过于畏惧障碍物，过小可能导致碰撞；
         near_goal_distance: 0.1
 
       CostCritic:
         enabled: true
         cost_power: 1
-        cost_weight: 3.8
+        cost_weight: 2.0           #畏惧障碍物，调小不畏惧，原3.8
         critical_cost: 253.0
         consider_footprint: true
         collision_cost: 1000000.0
@@ -437,14 +437,14 @@ controller_server:
       PathFollowCritic:
         enabled: true
         cost_power: 1
-        cost_weight: 8.0
+        cost_weight: 20.0    #走直线，提高这个值；走得更接近全局路径，原8.0
         offset_from_furthest: 5
         threshold_to_consider: 3.0
 
       PathAlignCritic:
         enabled: true
         cost_power: 1
-        cost_weight: 15.0
+        cost_weight: 30.0   #走直线，提高这个值；走得更接近全局路径，原15.0
         max_path_occupancy_ratio: 0.05
         trajectory_point_step: 4
         threshold_to_consider: 3.0
@@ -469,7 +469,7 @@ local_costmap:
       intensity_voxel_layer:
         plugin: pb_nav2_costmap_2d::IntensityVoxelLayer
         enabled: true
-        track_unknown_space: true    # 局部地图未知空间视为障碍
+        track_unknown_space: false    # 不追踪未知区域，局部地图未知空间不视为障碍
         footprint_clearing_enabled: true
         publish_voxel_map: false
         combination_method: 1
@@ -498,8 +498,8 @@ local_costmap:
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 5.0
-        inflation_radius: 0.4
+        cost_scaling_factor: 8.0    #调大代价衰减更快，机器人更敢靠近障碍物；调小代价衰减更慢。
+        inflation_radius: 0.3       #机器人离障碍物多近才算有代价；过大可能导致过于畏惧障碍物，过小可能导致碰撞；
       always_send_full_costmap: False
 
 global_costmap:
@@ -520,7 +520,7 @@ global_costmap:
       intensity_voxel_layer:
         plugin: pb_nav2_costmap_2d::IntensityVoxelLayer
         enabled: true
-        track_unknown_space: true
+        track_unknown_space: false  #不追踪未知区域，全局地图未知空间不视为障碍
         footprint_clearing_enabled: true
         publish_voxel_map: false
         combination_method: 1
@@ -549,8 +549,8 @@ global_costmap:
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 5.0
-        inflation_radius: 0.4
+        cost_scaling_factor: 8.0
+        inflation_radius: 0.3
       always_send_full_costmap: False
 
 # The yaml_filename does not need to be specified since it going to be set by defaults in launch.
