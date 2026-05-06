@@ -3,7 +3,7 @@
 # --- 配置参数 ---
 TOPIC="/livox/imu"
 DURATION=10
-YAML_FILE="src/pb2025_sentry_nav/pb2025_nav_bringup/config/reality/nav2_params.yaml"
+YAML_FILE="src/pb2025_sentry_nav/pb2025_nav_bringup/config/reality/nav2_params_mppi.yaml"
 TEMP_DATA="imu_raw_output.log"
 
 echo ">>> 开始采集话题 $TOPIC 数据，持续 $DURATION 秒..."

@@ -20,7 +20,11 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, TextSubstitution
+from launch.substitutions import (
+    LaunchConfiguration,
+    PathJoinSubstitution,
+    TextSubstitution,
+)
 from launch_ros.actions import Node
 from launch_ros.descriptions import ParameterFile
 from nav2_common.launch import RewrittenYaml
@@ -38,6 +42,7 @@ def generate_launch_description():
     map_yaml_file = LaunchConfiguration("map")
     prior_pcd_file = LaunchConfiguration("prior_pcd_file")
     use_sim_time = LaunchConfiguration("use_sim_time")
+    params_name = LaunchConfiguration("params_name")
     params_file = LaunchConfiguration("params_file")
     autostart = LaunchConfiguration("autostart")
     use_composition = LaunchConfiguration("use_composition")
@@ -92,10 +97,16 @@ def generate_launch_description():
         description="Use simulation (Gazebo) clock if True",
     )
 
+    declare_params_name_cmd = DeclareLaunchArgument(
+        "params_name",
+        default_value="nav2_params.yaml",
+        description="Nav2 parameter file name under config/reality",
+    )
+
     declare_params_file_cmd = DeclareLaunchArgument(
         "params_file",
-        default_value=os.path.join(
-            bringup_dir, "config", "reality", "nav2_params.yaml"
+        default_value=PathJoinSubstitution(
+            [bringup_dir, "config", "reality", params_name]
         ),
         description="Full path to the ROS2 parameters file to use for all launched nodes",
     )
@@ -208,6 +219,7 @@ def generate_launch_description():
     ld.add_action(declare_map_yaml_cmd)
     ld.add_action(declare_prior_pcd_file_cmd)
     ld.add_action(declare_use_sim_time_cmd)
+    ld.add_action(declare_params_name_cmd)
     ld.add_action(declare_params_file_cmd)
     ld.add_action(declare_autostart_cmd)
     ld.add_action(declare_use_composition_cmd)

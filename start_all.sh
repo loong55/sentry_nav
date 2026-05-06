@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# 可选值示例：nav2_params.yaml / nav2_params_mppi.yaml
+NAV2_PARAMS_NAME="nav2_params.yaml"
+
 source /opt/ros/humble/setup.bash
 source install/setup.bash
 
@@ -16,6 +19,7 @@ gnome-terminal -- ros2 launch standard_robot_pp_ros2 standard_robot_pp_ros2.laun
 sleep 5
 
 
-ros2 launch pb2025_nav_bringup rm_navigation_reality_launch.py world:=2 slam:=False use_robot_state_pub:=False &
+echo "[start_all] Using nav2 params: ${NAV2_PARAMS_NAME}"
+ros2 launch pb2025_nav_bringup rm_navigation_reality_launch.py world:=2 slam:=False use_robot_state_pub:=False params_name:=${NAV2_PARAMS_NAME} &
 sleep 5
 # ros2 launch pb2025_sentry_behavior pb2025_sentry_behavior_launch.py &    
