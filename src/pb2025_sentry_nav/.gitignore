@@ -21,3 +21,16 @@ __pycache__
 
 pb2025_nav_bringup/map/reality/*.yaml
 pb2025_nav_bringup/map/reality/*.pgm
+
+# 允许完整跟踪 pb2025_nav_bringup 目录
+!pb2025_nav_bringup/**
+
+# 仅保留 reality 目录结构，不跟踪其内部数据文件
+pb2025_nav_bringup/map/reality/*
+!pb2025_nav_bringup/map/reality/.gitkeep
+pb2025_nav_bringup/map/simulation/*
+!pb2025_nav_bringup/map/simulation/.gitkeep
+pb2025_nav_bringup/pcd/reality/*
+!pb2025_nav_bringup/pcd/reality/.gitkeep
+pb2025_nav_bringup/pcd/simulation/*
+!pb2025_nav_bringup/pcd/simulation/.gitkeep

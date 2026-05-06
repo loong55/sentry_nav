@@ -22,3 +22,12 @@ src/pb2025_sentry_nav/pb2025_nav_bringup/pcd/simulation/*.pcd
 
 *.pgm
 *.yaml
+
+# 允许完整跟踪 pb2025_nav_bringup 目录
+!src/pb2025_sentry_nav/pb2025_nav_bringup/**
+
+# 仅保留 reality 目录结构，不跟踪其内部数据文件
+src/pb2025_sentry_nav/pb2025_nav_bringup/map/reality/*
+!src/pb2025_sentry_nav/pb2025_nav_bringup/map/reality/.gitkeep
+src/pb2025_sentry_nav/pb2025_nav_bringup/pcd/reality/*
+!src/pb2025_sentry_nav/pb2025_nav_bringup/pcd/reality/.gitkeep
