@@ -7,46 +7,46 @@
 
         <!-- 强制发布移动姿态（3） -->
         <!-- <PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/> -->
-        <!-- <Sleep msec="3000"/> -->
+        <!-- <Sleep msec="5000"/> -->
 
         <!-- 关闭姿态切换（0） -->
         <!-- <PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/> -->
-        <!-- <Sleep msec="3000"/> -->
+        <!-- <Sleep msec="5000"/> -->
 
         <!-- 开启底盘复位 -->
-        <PublishChassisCmd topic_name="cmd_chassis" reset="1" rotate="0"/>
-        <Sleep msec="5000"/>
+        <!-- <PublishChassisCmd topic_name="cmd_chassis" reset="1" rotate="0"/> -->
+        <!-- <Sleep msec="2000"/> -->
 
         <!-- 关闭底盘复位 -->
-        <PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0"/>
-        <Sleep msec="5000"/>
+        <!-- <PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0"/> -->
+        <!-- <Sleep msec="2000"/> -->
 
         <!-- 开启底盘旋转 -->
-        <PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1"/>
-        <Sleep msec="5000"/>
+        <!-- <PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1"/> -->
+        <!-- <Sleep msec="5000"/> -->
 
         <!-- 关闭底盘旋转 -->
-        <PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0"/>
-        <Sleep msec="5000"/>
+        <!-- <PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0"/> -->
+        <!-- <Sleep msec="5000"/> -->
 
 				<!-- <PubNav2Goal
 					goal="0.0;0.0;0.0"
 					topic_name="goal_pose"
 					min_pub_interval_ms="500"/> -->
-        <!-- <ReactiveFallback> -->
+        <ReactiveFallback>
           <!-- 第一个节点（位置判断）成功，下一轮tick会继续判断位置，直到全部成功 -->
-          <!-- <IsRobotNearPose goal_pose="{@fort}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/> -->
+          <IsRobotNearPose goal_pose="{@fort}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
           <!-- 每0.5秒发布一次，发布后立刻返回success，然后0.5秒内不tick此节点 -->
           <!-- goal 是字符串 x;y;yaw，不能与 goal_pose 共用 {@fort}（PoseStamped） -->
-          <!-- <PubNav2Goal goal_pose="{@fort}" topic_name="goal_pose" min_pub_interval_ms="500"/> -->
-        <!-- </ReactiveFallback>   -->
+          <PubNav2Goal goal_pose="{@fort}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+        </ReactiveFallback>  
 
-        <!-- <ReactiveFallback> -->
+        <Fallback>
           <!-- 第一个节点（位置判断）成功，下一轮tick会继续判断位置，直到全部成功 -->
-          <!-- <IsRobotNearPose goal_pose="{@supply}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/> -->
+          <IsRobotNearPose goal_pose="{@supply}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
           <!-- 每0.5秒发布一次，发布后立刻返回success，然后0.5秒内不tick此节点 -->
-          <!-- <PubNav2Goal goal_pose="{@supply}" topic_name="goal_pose" min_pub_interval_ms="500"/> 						 -->
-        <!-- </ReactiveFallback>   -->
+          <PubNav2Goal goal_pose="{@supply}" topic_name="goal_pose" min_pub_interval_ms="500"/> 						
+        </Fallback>  
                   
         <!-- 第一个目标点，等待导航完成 -->
         <!-- <PubNav2Goal goal="1.0;0;0" topic_name="goal_pose"/> -->
