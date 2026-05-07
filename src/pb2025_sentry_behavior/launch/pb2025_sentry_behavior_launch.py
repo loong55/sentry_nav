@@ -47,6 +47,17 @@ def generate_launch_description():
         allow_substs=True,
     )
 
+    pose_yaml_path = os.path.join(bringup_dir, "params", "pose.yaml")
+    configured_pose_params = ParameterFile(
+        RewrittenYaml(
+            source_file=pose_yaml_path,
+            root_key=namespace,
+            param_rewrites=param_substitutions,
+            convert_types=True,
+        ),
+        allow_substs=True,
+    )
+
     stdout_linebuf_envvar = SetEnvironmentVariable(
         "RCUTILS_LOGGING_BUFFERED_STREAM", "1"
     )
@@ -86,7 +97,7 @@ def generate_launch_description():
                 executable="pb2025_sentry_behavior_server",
                 name="pb2025_sentry_behavior_server",
                 output="screen",
-                parameters=[configured_params],
+                parameters=[configured_params, configured_pose_params],
                 arguments=["--ros-args", "--log-level", log_level],
             ),
             Node(

@@ -27,6 +27,27 @@ PubNav2GoalAction::PubNav2GoalAction(
 
 bool PubNav2GoalAction::setMessage(geometry_msgs::msg::PoseStamped & msg)
 {
+  const auto ports = config().input_ports;
+  const bool goal_pose_from_xml =
+    ports.find("goal_pose") != ports.end() && !ports.at("goal_pose").empty();
+
+  if (goal_pose_from_xml) {
+    auto goal_pose = getInput<geometry_msgs::msg::PoseStamped>("goal_pose");
+    if (!goal_pose) {
+      RCLCPP_ERROR(
+        node_->get_logger(), "PubNav2Goal: invalid [goal_pose]: %s", goal_pose.error().c_str());
+      return false;
+    }
+    msg = goal_pose.value();
+    msg.header.stamp = now();
+    if (msg.header.frame_id.empty()) {
+      auto frame_in = getInput<std::string>("frame_id");
+      msg.header.frame_id =
+        (frame_in && !frame_in.value().empty()) ? frame_in.value() : std::string("map");
+    }
+    return true;
+  }
+
   auto goal = getInput<std::string>("goal");
   if (!goal) {
     throw BT::RuntimeError("missing input [goal]: ", goal.error());
@@ -35,7 +56,9 @@ bool PubNav2GoalAction::setMessage(geometry_msgs::msg::PoseStamped & msg)
   const auto parsed_goal = poseStampedFromString(goal.value());
 
   msg.header.stamp = now();
-  msg.header.frame_id = "map";
+  auto frame_in = getInput<std::string>("frame_id");
+  msg.header.frame_id =
+    (frame_in && !frame_in.value().empty()) ? frame_in.value() : std::string("map");
   msg.pose = parsed_goal.pose;
   return true;
 }
@@ -43,8 +66,11 @@ bool PubNav2GoalAction::setMessage(geometry_msgs::msg::PoseStamped & msg)
 BT::PortsList PubNav2GoalAction::providedPorts()
 {
   BT::PortsList additional_ports = {
+    BT::InputPort<geometry_msgs::msg::PoseStamped>(
+      "goal_pose", "When set (e.g. {supply} from params/pose.yaml), overrides [goal]"),
     BT::InputPort<std::string>(
       "goal", "0;0;0", "Expected goal pose that send to nav2. Fill with format `x;y;yaw`"),
+    BT::InputPort<std::string>("frame_id", "map", "Frame id when goal_pose has empty frame_id"),
   };
   return providedBasicPorts(additional_ports);
 }

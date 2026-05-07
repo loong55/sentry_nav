@@ -60,6 +60,9 @@ bool IsRobotNearPoseCondition::ensureNode()
 BT::PortsList IsRobotNearPoseCondition::providedPorts()
 {
   return {
+    BT::InputPort<geometry_msgs::msg::PoseStamped>(
+      "goal_pose",
+      "Optional: {supply},{fort},… from params/pose.yaml blackboard; overrides [goal]"),
     BT::InputPort<std::string>(
       "goal", "0;0;0", "Target pose in global frame. Fill with format `x;y;yaw`"),
     BT::InputPort<double>("tolerance", 0.3, "Position tolerance in meters"),
@@ -73,15 +76,10 @@ BT::NodeStatus IsRobotNearPoseCondition::tick()
     throw BT::RuntimeError("Missing ROS node in blackboard with key [node]");
   }
 
-  auto goal = getInput<std::string>("goal");
   auto tolerance = getInput<double>("tolerance");
   auto global_frame = getInput<std::string>("global_frame");
   auto robot_base_frame = getInput<std::string>("robot_base_frame");
 
-  if (!goal) {
-    RCLCPP_ERROR(node_->get_logger(), "IsRobotNearPose: missing input [goal]: %s", goal.error().c_str());
-    return BT::NodeStatus::FAILURE;
-  }
   if (!tolerance) {
     RCLCPP_ERROR(
       node_->get_logger(), "IsRobotNearPose: missing input [tolerance]: %s",
@@ -89,7 +87,29 @@ BT::NodeStatus IsRobotNearPoseCondition::tick()
     return BT::NodeStatus::FAILURE;
   }
 
-  const auto parsed_goal = poseStampedFromString(goal.value());
+  const auto ports = config().input_ports;
+  const bool goal_pose_from_xml =
+    ports.find("goal_pose") != ports.end() && !ports.at("goal_pose").empty();
+
+  geometry_msgs::msg::PoseStamped parsed_goal;
+  if (goal_pose_from_xml) {
+    auto goal_pose_in = getInput<geometry_msgs::msg::PoseStamped>("goal_pose");
+    if (!goal_pose_in) {
+      RCLCPP_ERROR(
+        node_->get_logger(), "IsRobotNearPose: invalid [goal_pose]: %s",
+        goal_pose_in.error().c_str());
+      return BT::NodeStatus::FAILURE;
+    }
+    parsed_goal = goal_pose_in.value();
+  } else {
+    auto goal = getInput<std::string>("goal");
+    if (!goal) {
+      RCLCPP_ERROR(
+        node_->get_logger(), "IsRobotNearPose: missing input [goal]: %s", goal.error().c_str());
+      return BT::NodeStatus::FAILURE;
+    }
+    parsed_goal = poseStampedFromString(goal.value());
+  }
 
   geometry_msgs::msg::PoseStamped current_pose;
   const std::string target_frame = global_frame ? global_frame.value() : "map";

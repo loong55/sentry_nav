@@ -1,0 +1,48 @@
+# 导航目标位姿（由 launch 合并进 pb2025_sentry_behavior_server）
+# 黑板键与下列名称一致：goal_pose="{supply}" 等
+pb2025_sentry_behavior_server:
+  ros__parameters:
+    supply:  # 补给区
+      frame_id: "map"
+      position:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+      orientation:
+        w: 1.0
+
+    fort:  # 堡垒 
+      frame_id: "map"
+      position:
+        x: 1.0
+        y: -0.2
+        z: 0.0
+      orientation:
+        w: 1.0
+
+    highway_in:  # 公路入口侧
+      frame_id: "map"
+      position:
+        x: 0.7
+        y: 1.6
+        z: 0.0
+      orientation:
+        w: 1.0
+
+    highway_out:  # 公路出口侧
+      frame_id: "map"
+      position:
+        x: -2.0
+        y: -1.0
+        z: 0.0
+      orientation:
+        w: 1.0
+
+    outpost:  # 前哨
+      frame_id: "map"
+      position:
+        x: 3.05161
+        y: -4.0
+        z: 0.0
+      orientation:
+        w: 1.0

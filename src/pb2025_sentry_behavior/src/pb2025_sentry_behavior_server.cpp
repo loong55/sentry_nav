@@ -21,6 +21,8 @@
 
 #include "pb2025_sentry_behavior/pb2025_sentry_behavior_server.hpp"
 
+#include <utility>
+
 // 包含C++17标准库中的filesystem头文件，用于处理文件系统相关的操作
 #include <filesystem>
 // 包含文件流输入输出头文件，用于文件读写操作
@@ -42,8 +44,74 @@
 #include "pb_rm_interfaces/msg/ground_robot_position.hpp"
 #include "pb_rm_interfaces/msg/rfid_status.hpp"
 #include "pb_rm_interfaces/msg/robot_status.hpp"
+
+#include "geometry_msgs/msg/pose_stamped.hpp"
+
 namespace pb2025_sentry_behavior
 {
+
+namespace
+{
+
+geometry_msgs::msg::PoseStamped load_pose_stamped_prefix(
+  const rclcpp::Node::SharedPtr & node, const std::string & prefix)
+{
+  geometry_msgs::msg::PoseStamped pose;
+  pose.header.frame_id = node->get_parameter(prefix + ".frame_id").as_string();
+  pose.pose.position.x = node->get_parameter(prefix + ".position.x").as_double();
+  pose.pose.position.y = node->get_parameter(prefix + ".position.y").as_double();
+  pose.pose.position.z = node->get_parameter(prefix + ".position.z").as_double();
+
+  pose.pose.orientation.x = 0.0;
+  pose.pose.orientation.y = 0.0;
+  pose.pose.orientation.z = 0.0;
+  pose.pose.orientation.w = 1.0;
+  const std::string ori_prefix = prefix + ".orientation";
+  if (node->has_parameter(ori_prefix + ".x")) {
+    pose.pose.orientation.x = node->get_parameter(ori_prefix + ".x").as_double();
+  }
+  if (node->has_parameter(ori_prefix + ".y")) {
+    pose.pose.orientation.y = node->get_parameter(ori_prefix + ".y").as_double();
+  }
+  if (node->has_parameter(ori_prefix + ".z")) {
+    pose.pose.orientation.z = node->get_parameter(ori_prefix + ".z").as_double();
+  }
+  if (node->has_parameter(ori_prefix + ".w")) {
+    pose.pose.orientation.w = node->get_parameter(ori_prefix + ".w").as_double();
+  }
+  return pose;
+}
+
+void load_nav_pose_parameters_into_blackboard(
+  const rclcpp::Node::SharedPtr & node, const BT::Blackboard::Ptr & blackboard)
+{
+  static const std::pair<const char *, const char *> k_bindings[] = {
+    {"supply", "supply"},
+    {"fort", "fort"},
+    {"highway_in", "highway_in"},
+    {"highway_out", "highway_out"},
+    {"outpost", "outpost"},
+  };
+
+  for (const auto & [bb_key, param_prefix] : k_bindings) {
+    const std::string frame_param = std::string(param_prefix) + ".frame_id";
+    if (!node->has_parameter(frame_param)) {
+      continue;
+    }
+    try {
+      blackboard->set(bb_key, load_pose_stamped_prefix(node, param_prefix));
+      RCLCPP_INFO(
+        node->get_logger(), "Loaded pose blackboard key [%s] from params [%s]", bb_key,
+        param_prefix);
+    } catch (const std::exception & e) {
+      RCLCPP_WARN(
+        node->get_logger(), "Skip pose [%s] (%s): %s", bb_key, param_prefix, e.what());
+    }
+  }
+}
+
+}  // namespace
+
 //订阅器；参数：话题名称，黑板键名，服务质量
 template <typename T>
 void SentryBehaviorServer::subscribe(
@@ -63,8 +131,14 @@ SentryBehaviorServer::SentryBehaviorServer(const rclcpp::NodeOptions & options)
 {
   globalBlackboard()->set("node", node());
 
-  node()->declare_parameter("use_cout_logger", false);//声明一个参数，用于配置是否使用cout日志记录器
-  node()->get_parameter("use_cout_logger", use_cout_logger_);//获取参数的值
+  load_nav_pose_parameters_into_blackboard(node(), globalBlackboard());
+
+  // Params YAML + automatically_declare_parameters_from_overrides(true) may already
+  // declare use_cout_logger; avoid ParameterAlreadyDeclaredException.
+  if (!node()->has_parameter("use_cout_logger")) {
+    node()->declare_parameter("use_cout_logger", false);
+  }
+  node()->get_parameter("use_cout_logger", use_cout_logger_);
 
   //订阅裁判系统信息
   subscribe<pb_rm_interfaces::msg::EventData>("referee/event_data", "referee_eventData");
@@ -140,6 +214,7 @@ int main(int argc, char * argv[])
   rclcpp::init(argc, argv);
 
   rclcpp::NodeOptions options;
+  options.automatically_declare_parameters_from_overrides(true);
   auto action_server = std::make_shared<pb2025_sentry_behavior::SentryBehaviorServer>(options);
 
   //[INFO] [1699123456.123456789] [pb2025_sentry_behavior_server]: Starting SentryBehaviorServer
