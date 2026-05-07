@@ -37,6 +37,8 @@ namespace
 const char * postureToString(uint8_t posture)
 {
   switch (posture) {
+    case pb_rm_interfaces::msg::PostureCmd::OFF:
+      return "OFF(关闭)";
     case pb_rm_interfaces::msg::PostureCmd::ATTACK:
       return "ATTACK(进攻)";
     case pb_rm_interfaces::msg::PostureCmd::DEFENSE:
@@ -48,6 +50,11 @@ const char * postureToString(uint8_t posture)
     default:
       return "UNKNOWN(未知)";
   }
+}
+
+const char * chassisCmdStateToString(uint8_t state)
+{
+  return state == pb_rm_interfaces::msg::ChassisCmd::ENABLE ? "ON(开启)" : "OFF(关闭)";
 }
 
 [[maybe_unused]] const char * hpDeductionReasonToString(uint8_t reason)
@@ -165,9 +172,9 @@ void StandardRobotPpRos2Node::createSubscription()
     "cmd_gimbal_joint", 10,
     std::bind(&StandardRobotPpRos2Node::cmdGimbalJointCallback, this, std::placeholders::_1));
 
-  cmd_shoot_sub_ = this->create_subscription<example_interfaces::msg::UInt8>(
-    "cmd_spin", 10,
-    std::bind(&StandardRobotPpRos2Node::cmdShootCallback, this, std::placeholders::_1));
+  cmd_chassis_sub_ = this->create_subscription<pb_rm_interfaces::msg::ChassisCmd>(
+    "cmd_chassis", 10,
+    std::bind(&StandardRobotPpRos2Node::cmdChassisCallback, this, std::placeholders::_1));
   cmd_posture_sub_ = this->create_subscription<pb_rm_interfaces::msg::PostureCmd>(
     "cmd_posture", 10,
     std::bind(&StandardRobotPpRos2Node::cmdPostureCallback, this, std::placeholders::_1));
@@ -900,14 +907,18 @@ void StandardRobotPpRos2Node::logCombinedRefereeDebug()
   RCLCPP_INFO_THROTTLE(
     get_logger(), *this->get_clock(), 1000,
     "referee hp=%u bullets_remaining=%u angle=%.3f game_progress=%u stage_remain_time=%u ally_base_hp=%u\n"
-    "Sending data: vx=%.2f, vy=%.2f, wz=%.2f, posture=%u(%s)",
+    "Sending data: vx=%.2f, vy=%.2f, wz=%.2f, posture=%u(%s), chassis_reset=%u(%s), chassis_rotate=%u(%s)",
     latest_robot_hp_debug_, latest_bullets_remaining_, latest_robot_angle_,
     latest_game_progress_debug_, latest_stage_remain_time_, latest_ally_base_hp_,
     send_robot_cmd_data_.data.speed_vector.vx,
     send_robot_cmd_data_.data.speed_vector.vy,
     send_robot_cmd_data_.data.speed_vector.wz,
     send_robot_cmd_data_.data.posture.posture,
-    postureToString(send_robot_cmd_data_.data.posture.posture));
+    postureToString(send_robot_cmd_data_.data.posture.posture),
+    send_robot_cmd_data_.data.chassis_cmd.reset,
+    chassisCmdStateToString(send_robot_cmd_data_.data.chassis_cmd.reset),
+    send_robot_cmd_data_.data.chassis_cmd.rotate,
+    chassisCmdStateToString(send_robot_cmd_data_.data.chassis_cmd.rotate));
 }
 
 // 保存云台的俯仰和偏航角度，供publishImuData使用
@@ -942,13 +953,13 @@ void StandardRobotPpRos2Node::sendData()
   send_robot_cmd_data_.frame_header.id = ID_ROBOT_CMD;     // 数据包ID
   send_robot_cmd_data_.frame_header.len = sizeof(SendRobotCmdData) - 6;  // 数据长度
 
-  // 初始化速度为0，姿态为移动3，射击和摩擦轮状态为关闭
+  // 初始化速度、底盘控制和姿态控制为关闭态
   send_robot_cmd_data_.data.speed_vector.vx = 0;
   send_robot_cmd_data_.data.speed_vector.vy = 0;
   send_robot_cmd_data_.data.speed_vector.wz = 0;
-  send_robot_cmd_data_.data.shoot.fire = 0;
-  send_robot_cmd_data_.data.shoot.fric_on = 0;
-  send_robot_cmd_data_.data.posture.posture = 3;
+  send_robot_cmd_data_.data.chassis_cmd.reset = pb_rm_interfaces::msg::ChassisCmd::DISABLE;
+  send_robot_cmd_data_.data.chassis_cmd.rotate = pb_rm_interfaces::msg::ChassisCmd::DISABLE;
+  send_robot_cmd_data_.data.posture.posture = pb_rm_interfaces::msg::PostureCmd::MOVE;
 
   // 计算帧头CRC8校验
   crc8::append_CRC8_check_sum(
@@ -1043,22 +1054,28 @@ void StandardRobotPpRos2Node::visionTargetCallback(
   //send_robot_cmd_data_.data.tracking.tracking = msg->tracking;
 }
 
-//射击回调
-void StandardRobotPpRos2Node::cmdShootCallback(const example_interfaces::msg::UInt8::SharedPtr msg)
+//底盘控制回调
+void StandardRobotPpRos2Node::cmdChassisCallback(
+  const pb_rm_interfaces::msg::ChassisCmd::SharedPtr msg)
 {
-  send_robot_cmd_data_.data.shoot.fire = msg->data;
+  send_robot_cmd_data_.data.chassis_cmd.reset =
+    msg->reset == pb_rm_interfaces::msg::ChassisCmd::ENABLE ?
+    pb_rm_interfaces::msg::ChassisCmd::ENABLE : pb_rm_interfaces::msg::ChassisCmd::DISABLE;
+  send_robot_cmd_data_.data.chassis_cmd.rotate =
+    msg->rotate == pb_rm_interfaces::msg::ChassisCmd::ENABLE ?
+    pb_rm_interfaces::msg::ChassisCmd::ENABLE : pb_rm_interfaces::msg::ChassisCmd::DISABLE;
 }
 
 //机器人姿态回调
 void StandardRobotPpRos2Node::cmdPostureCallback(
   const pb_rm_interfaces::msg::PostureCmd::SharedPtr msg)
 {
-  if (msg->posture < pb_rm_interfaces::msg::PostureCmd::ATTACK ||
+  if (msg->posture < pb_rm_interfaces::msg::PostureCmd::OFF ||
     msg->posture > pb_rm_interfaces::msg::PostureCmd::SPIN)
   {
     RCLCPP_WARN_THROTTLE(
       get_logger(), *this->get_clock(), 1000,
-      "Invalid posture command: %u (valid range: 1~4)", msg->posture);
+      "Invalid posture command: %u (valid range: 0~4)", msg->posture);
     return;
   }
   send_robot_cmd_data_.data.posture.posture = msg->posture;
@@ -1066,12 +1083,6 @@ void StandardRobotPpRos2Node::cmdPostureCallback(
   //   get_logger(), "Posture command received: %s (%u)", postureToString(msg->posture),
   //   msg->posture);
 }
-// void StandardRobotPpRos2Node::cmdShootCallback(const example_interfaces::msg::UInt8::SharedPtr msg)
-// {
-//   send_robot_cmd_data_.data.shoot.fric_on = true;
-//   send_robot_cmd_data_.data.shoot.fire = msg->data;
-// }
-
 //参数设置函数（视觉探测相关）
 void StandardRobotPpRos2Node::setParam(const rclcpp::Parameter & param)
 {
@@ -1126,6 +1137,7 @@ void StandardRobotPpRos2Node::setParam(const rclcpp::Parameter & param)
 }
 
 // 根据机器人ID获取检测颜色
+
 bool StandardRobotPpRos2Node::getDetectColor(uint8_t robot_id, uint8_t & color)
 {
   // 机器人ID判断规则：

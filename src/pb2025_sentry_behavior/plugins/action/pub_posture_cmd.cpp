@@ -49,7 +49,7 @@ bool PublishPostureCmdAction::setMessage(pb_rm_interfaces::msg::PostureCmd & msg
   msg.force_switch = force_switch;
 
   if (
-    msg.posture < pb_rm_interfaces::msg::PostureCmd::ATTACK ||
+    msg.posture < pb_rm_interfaces::msg::PostureCmd::OFF ||
     msg.posture > pb_rm_interfaces::msg::PostureCmd::SPIN)
   {
     msg.posture = pb_rm_interfaces::msg::PostureCmd::MOVE;
@@ -62,7 +62,7 @@ bool PublishPostureCmdAction::setMessage(pb_rm_interfaces::msg::PostureCmd & msg
 bool PublishPostureCmdAction::setHaltMessage(pb_rm_interfaces::msg::PostureCmd & msg)
 {
   msg.stamp = rclcpp::Clock(RCL_ROS_TIME).now();
-  msg.posture = pb_rm_interfaces::msg::PostureCmd::MOVE;
+  msg.posture = pb_rm_interfaces::msg::PostureCmd::OFF;
   msg.reason = pb_rm_interfaces::msg::PostureCmd::REASON_DEFAULT;
   msg.force_switch = false;
   return true;

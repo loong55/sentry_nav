@@ -105,6 +105,9 @@ list(APPEND plugin_libs pub_spin_speed)
 ament_auto_add_library(pub_posture_cmd SHARED plugins/action/pub_posture_cmd.cpp)
 list(APPEND plugin_libs pub_posture_cmd)
 
+ament_auto_add_library(pub_chassis_cmd SHARED plugins/action/pub_chassis_cmd.cpp)
+list(APPEND plugin_libs pub_chassis_cmd)
+
 ament_auto_add_library(pub_twist SHARED plugins/action/pub_twist.cpp)
 list(APPEND plugin_libs pub_twist)
 

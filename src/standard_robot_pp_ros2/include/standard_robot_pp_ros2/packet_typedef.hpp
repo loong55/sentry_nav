@@ -403,13 +403,13 @@ struct SendRobotCmdData
 
     struct
     {
-      uint8_t fire; // 开火命令
-      uint8_t fric_on; // 摩擦轮启动
-    } __attribute__((packed)) shoot;
+      uint8_t reset; // 底盘复位命令，1=复位，0=关闭
+      uint8_t rotate; // 底盘旋转命令，1=旋转，0=关闭
+    } __attribute__((packed)) chassis_cmd;
 
     struct
     {
-      uint8_t posture; // 姿态切换命令， 1=进攻 2=防御 3=移动 4=开小陀螺
+      uint8_t posture; // 姿态切换命令，0=关闭姿态 1=进攻 2=防御 3=移动 4=开小陀螺
     } __attribute__((packed)) posture;
   } __attribute__((packed)) data;
 

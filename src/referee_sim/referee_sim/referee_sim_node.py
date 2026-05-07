@@ -180,13 +180,14 @@ class RefereeSimNode(Node):
     @staticmethod
     def _normalize_posture(value: int) -> int:
         if value in (
+            int(PostureCmd.OFF),
             int(PostureCmd.ATTACK),
             int(PostureCmd.DEFENSE),
             int(PostureCmd.MOVE),
             int(PostureCmd.SPIN),
         ):
             return value
-        return int(PostureCmd.MOVE)
+        return int(PostureCmd.OFF)
 
     @staticmethod
     def _progress_to_text(progress: int) -> str:

@@ -23,6 +23,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
   "msg/Gimbal.msg"
   "msg/GimbalCmd.msg"
+  "msg/ChassisCmd.msg"
   "msg/PostureCmd.msg"
   "msg/Models.msg"
   "msg/RobotStateInfo.msg"

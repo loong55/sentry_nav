@@ -7,33 +7,6 @@
             <input_port name="min_pub_interval_ms" type="unsigned int" default="0">Minimum publish interval in milliseconds. 0 means publish every tick.</input_port>
             <input_port name="topic_name" type="std::string" default="__default__placeholder__">Topic name</input_port>
         </Condition>
-        <Action ID="CsvGetCurrentWaypoint">
-            <output_port name="wait_sec" type="double"/>
-            <output_port name="goal" type="geometry_msgs::msg::PoseStamped_&lt;std::allocator&lt;void&gt; &gt;"/>
-            <input_port name="wp_idx" type="int"/>
-            <input_port name="wait_times" type="std::vector&lt;double, std::allocator&lt;double&gt; &gt;"/>
-            <input_port name="waypoints" type="std::vector&lt;geometry_msgs::msg::PoseStamped_&lt;std::allocator&lt;void&gt; &gt;, std::allocator&lt;geometry_msgs::msg::PoseStamped_&lt;std::allocator&lt;void&gt; &gt; &gt; &gt;"/>
-        </Action>
-        <Condition ID="CsvIsWaypointReached">
-            <input_port name="robot_base_frame" type="std::string" default="base_link">Robot base frame</input_port>
-            <input_port name="tolerance" type="double" default="0.500000">Distance tolerance in meters</input_port>
-            <input_port name="goal" type="geometry_msgs::msg::PoseStamped_&lt;std::allocator&lt;void&gt; &gt;"/>
-        </Condition>
-        <Action ID="CsvLoadWaypoints">
-            <output_port name="wp_idx" type="int"/>
-            <output_port name="total_waypoints" type="int"/>
-            <output_port name="wait_times" type="std::vector&lt;double, std::allocator&lt;double&gt; &gt;"/>
-            <output_port name="waypoints" type="std::vector&lt;geometry_msgs::msg::PoseStamped_&lt;std::allocator&lt;void&gt; &gt;, std::allocator&lt;geometry_msgs::msg::PoseStamped_&lt;std::allocator&lt;void&gt; &gt; &gt; &gt;"/>
-            <input_port name="frame_id" type="std::string" default="map">Waypoint frame id</input_port>
-            <input_port name="waypoint_file" type="std::string">Absolute CSV waypoint file path</input_port>
-        </Action>
-        <Action ID="CsvNextWaypoint">
-            <input_port name="total_waypoints" type="int"/>
-            <inout_port name="wp_idx" type="int"/>
-        </Action>
-        <Action ID="CsvWaitDuration">
-            <input_port name="seconds" type="double" default="0.000000">Wait duration in seconds</input_port>
-        </Action>
         <Condition ID="IsATKOP">
             <input_port name="op_hp" type="int" default="0">前哨血量</input_port>
             <input_port name="key_port" type="pb_rm_interfaces::msg::GameRobotHP_&lt;std::allocator&lt;void&gt; &gt;" default="{@referee_allRobotHP}">GameRobotHP port on blackboard</input_port>
@@ -114,6 +87,12 @@
             <input_port name="min_pub_interval_ms" type="unsigned int" default="0">Minimum publish interval in milliseconds. 0 means publish every tick.</input_port>
             <input_port name="topic_name" type="std::string" default="__default__placeholder__">Topic name</input_port>
         </Condition>
+        <Action ID="PublishChassisCmd">
+            <input_port name="reset" type="unsigned int" default="0">Reset chassis</input_port>
+            <input_port name="rotate" type="unsigned int" default="0">Rotate chassis</input_port>
+            <input_port name="duration" type="std::chrono::milliseconds" default="">Publish then sleep duration in milliseconds</input_port>
+            <input_port name="topic_name" type="std::string" default="__default__placeholder__">Topic name</input_port>
+        </Action>
         <Action ID="PublishGimbalAbsolute">
             <input_port name="topic_name" type="std::string" default="__default__placeholder__">Topic name</input_port>
             <input_port name="duration" type="std::chrono::milliseconds">Publish duration</input_port>

@@ -9,11 +9,26 @@
         <PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
         <Sleep msec="3000"/>
 
-
-        <!-- 强制发布小陀螺姿态（4） -->
-        <PublishPostureCmd topic_name="cmd_posture" posture="4" reason="0" force_switch="true"/>
+        <!-- 关闭姿态切换（0） -->
+        <PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
         <Sleep msec="3000"/>
-        
+
+        <!-- 开启底盘复位 -->
+        <PublishChassisCmd topic_name="cmd_chassis" reset="1" rotate="0"/>
+        <Sleep msec="3000"/>
+
+        <!-- 关闭底盘复位 -->
+        <PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0"/>
+        <Sleep msec="3000"/>
+
+        <!-- 开启底盘旋转 -->
+        <PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1"/>
+        <Sleep msec="3000"/>
+
+        <!-- 关闭底盘旋转 -->
+        <PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0"/>
+        <Sleep msec="3000"/>
+
         <!-- 第一个目标点，等待导航完成 -->
         <!-- <PubNav2Goal goal="1.0;0;0" topic_name="goal_pose"/> -->
         <!-- <Sleep msec="5000"/> -->
