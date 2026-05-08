@@ -64,7 +64,7 @@
 				<Fallback>
 					<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.5" global_frame="map" robot_base_frame="chassis"/>
 					<NavigateThroughPosesAction action_name="navigate_through_poses"
-						waypoint_file="behavior_trees/waypoints/outpost_to_highway_out.csv"
+						waypoint_file="behavior_trees/waypoints/test/outpost_to_highway_out.csv"
 						frame_id="map" current_waypoint="{outpost_to_highway_out}"/>
 				</Fallback>
 				<!-- 先底盘复位2秒，再公路出口到公路入口-->
@@ -81,7 +81,7 @@
           <IsRobotNearPose goal_pose="{@supply}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
           <!-- 每0.5秒发布一次，发布后立刻返回success，然后0.5秒内不tick此节点 -->
 					<NavigateThroughPosesAction action_name="navigate_through_poses"
-						waypoint_file="behavior_trees/waypoints/highway_in_to_supply.csv"
+						waypoint_file="behavior_trees/waypoints/test/highway_in_to_supply.csv"
 						frame_id="map" current_waypoint="{highway_in_to_supply}"/>						
         </Fallback>  						
 			</Sequence>			
@@ -105,7 +105,7 @@
 				<Fallback>
 					<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.5" global_frame="map" robot_base_frame="chassis"/>
 					<NavigateThroughPosesAction action_name="navigate_through_poses"
-						waypoint_file="behavior_trees/waypoints/outpost_to_highway_out.csv"
+						waypoint_file="behavior_trees/waypoints/test/outpost_to_highway_out.csv"
 						frame_id="map" current_waypoint="{outpost_to_highway_out}"/>
 				</Fallback>
 				<!-- 先底盘复位2秒，再公路出口到公路入口-->
@@ -122,12 +122,12 @@
           <IsRobotNearPose goal_pose="{@supply}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
           <!-- 每0.5秒发布一次，发布后立刻返回success，然后0.5秒内不tick此节点 -->
 					<NavigateThroughPosesAction action_name="navigate_through_poses"
-						waypoint_file="behavior_trees/waypoints/highway_in_to_supply.csv"
+						waypoint_file="behavior_trees/waypoints/test/highway_in_to_supply.csv"
 						frame_id="map" current_waypoint="{highway_in_to_supply}"/>						
         </Fallback>  						
 			</Sequence>
 
-			<!-- 高状态从补给区去前哨序列，先判断是否在前哨，再发点-->
+			<!-- 高状态从补给区去前哨序列，先判断是否在前哨，再发点 -->
 			<Sequence>
 				<!-- 判断是否在前哨作门控，导航前发布移动姿态 -->
 				<Inverter>
@@ -139,7 +139,7 @@
 				<Fallback>
           <IsRobotNearPose goal_pose="{@highway_in}" tolerance="0.5" global_frame="map" robot_base_frame="chassis"/>
 					<NavigateThroughPosesAction action_name="navigate_through_poses"
-						waypoint_file="behavior_trees/waypoints/supply_to_highway_in.csv"
+						waypoint_file="behavior_trees/waypoints/test/supply_to_highway_in.csv"
 						frame_id="map" current_waypoint="{supply_to_highway_in}"/>					
 				</Fallback>
 				<!-- 先底盘复位2秒，再公路入口到公路出口-->
@@ -154,7 +154,7 @@
 				<Fallback>
           <IsRobotNearPose goal_pose="{@outpost}" tolerance="0.5" global_frame="map" robot_base_frame="chassis"/>
 					<NavigateThroughPosesAction action_name="navigate_through_poses"
-						waypoint_file="behavior_trees/waypoints/highway_out_to_outpost.csv"
+						waypoint_file="behavior_trees/waypoints/test/highway_out_to_outpost.csv"
 						frame_id="map" current_waypoint="{highway_out_to_outpost}"/>					
 				</Fallback>
 				<!-- 到达前哨后，先关移动姿态，再开小陀螺 -->

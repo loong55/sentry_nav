@@ -21,6 +21,7 @@
 
 #include "pb2025_sentry_behavior/pb2025_sentry_behavior_server.hpp"
 
+#include <set>
 #include <utility>
 
 // 包含C++17标准库中的filesystem头文件，用于处理文件系统相关的操作
@@ -85,27 +86,43 @@ geometry_msgs::msg::PoseStamped load_pose_stamped_prefix(
 void load_nav_pose_parameters_into_blackboard(
   const rclcpp::Node::SharedPtr & node, const BT::Blackboard::Ptr & blackboard)
 {
-  static const std::pair<const char *, const char *> k_bindings[] = {
-    {"supply", "supply"},
-    {"fort", "fort"},
-    {"highway_in", "highway_in"},
-    {"highway_out", "highway_out"},
-    {"outpost", "outpost"},
-  };
+  constexpr char k_frame_suffix[] = ".frame_id";
+  const auto listed_params = node->list_parameters({}, 2);
+  std::set<std::string> pose_prefixes;
 
-  for (const auto & [bb_key, param_prefix] : k_bindings) {
-    const std::string frame_param = std::string(param_prefix) + ".frame_id";
-    if (!node->has_parameter(frame_param)) {
+  for (const auto & param_name : listed_params.names) {
+    if (
+      param_name.size() > sizeof(k_frame_suffix) - 1 &&
+      param_name.compare(
+        param_name.size() - (sizeof(k_frame_suffix) - 1), sizeof(k_frame_suffix) - 1,
+        k_frame_suffix) == 0)
+    {
+      pose_prefixes.insert(
+        param_name.substr(0, param_name.size() - (sizeof(k_frame_suffix) - 1)));
+    }
+  }
+
+  for (const auto & prefix : pose_prefixes) {
+    if (
+      !node->has_parameter(prefix + ".position.x") ||
+      !node->has_parameter(prefix + ".position.y") ||
+      !node->has_parameter(prefix + ".position.z"))
+    {
+      RCLCPP_WARN(
+        node->get_logger(), "Skip pose [%s]: missing required position fields",
+        prefix.c_str());
       continue;
     }
+
     try {
-      blackboard->set(bb_key, load_pose_stamped_prefix(node, param_prefix));
+      blackboard->set(prefix, load_pose_stamped_prefix(node, prefix));
       RCLCPP_INFO(
-        node->get_logger(), "Loaded pose blackboard key [%s] from params [%s]", bb_key,
-        param_prefix);
+        node->get_logger(), "Loaded pose blackboard key [%s] from params [%s]",
+        prefix.c_str(), prefix.c_str());
     } catch (const std::exception & e) {
       RCLCPP_WARN(
-        node->get_logger(), "Skip pose [%s] (%s): %s", bb_key, param_prefix, e.what());
+        node->get_logger(), "Skip pose [%s] (%s): %s", prefix.c_str(), prefix.c_str(),
+        e.what());
     }
   }
 }
