@@ -358,10 +358,10 @@ controller_server:
     FollowPath:
       plugin: "goal_approach_controller::GoalApproachController"
       inner_plugin: "nav2_mppi_controller::MPPIController"
-      approach_distance: 0.8
-      approach_velocity: 0.5
+      approach_distance: 2.5
+      approach_velocity: 0.2
       direct_approach_distance: 0.5
-      direct_approach_kp: 2.0
+      direct_approach_kp: 1.0
       time_steps: 80
       model_dt: 0.06
       batch_size: 1200

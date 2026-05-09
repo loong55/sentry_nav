@@ -89,6 +89,9 @@ list(APPEND plugin_libs send_nav2_goal)
 ament_auto_add_library(pub_nav2_goal SHARED plugins/action/pub_nav2_goal.cpp)
 list(APPEND plugin_libs pub_nav2_goal)
 
+ament_auto_add_library(wait_until_reached SHARED plugins/action/wait_until_reached.cpp)
+list(APPEND plugin_libs wait_until_reached)
+
 ament_auto_add_library(
   pub_nav2_goal_interval SHARED
   plugins/action/pub_nav2_goal_interval.cpp)

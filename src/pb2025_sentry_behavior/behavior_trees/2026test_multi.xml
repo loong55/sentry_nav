@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4" main_tree_to_execute="2026test_multi">
+  <!-- ========================= 子行为树 ========================= -->	
+	<!-- =====比赛开始条件，没收到裁判系统消息或在未开赛，都返回running===== -->
+	<BehaviorTree ID="check_game_started">
+		<IsGameStatus min_remain_time="0" max_remain_time="420"
+									expected_game_progress="4" key_port="{@referee_gameStatus}"
+									wait_for_message="true"	wait_until_expected="true"/>
+	</BehaviorTree>
+
+	<!-- ======================= 补给区到堡垒往返 ========================== -->
+	<BehaviorTree ID="supply_fort_loop">
+		<!-- 反应式选择，下一轮tick无论前面节点啥状态，都会从头tick,直到有一个成功 -->
+		<ReactiveFallback>
+
+			<!-- 反应式序列回补给区，低血低弹进入，直到高血高弹才退出 -->
+			<ReactiveSequence>
+				<!-- 门控条件：低血低弹进入，直到高血高弹才退出 -->
+				<NeedSupply key_port="{@referee_robotStatus}" enter_hp_below="150" enter_ammo_below="20" exit_hp_min="350" exit_ammo_min="200"/>
+				<!-- 导航前先关小陀螺，再发布移动姿态（3） -->
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+				<!-- 导航到补给区,关移动姿态（0） -->
+				<PubNav2Goal goal_pose="{@supply}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+				<IsRobotNearPose goal_pose="{@supply}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+				<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
+			</ReactiveSequence>
+
+			<!-- 高状态去堡垒反应式选择，先判断是否在堡垒，再发点；每轮tick，不论内部节点啥状态，都会从头tick到尾，直到全部成功 -->
+			<ReactiveFallback>				
+				<Sequence>
+					<!-- 判断是否到达堡垒，到达则关移动姿态开小陀螺，未到达则跳过 -->
+					<IsRobotNearPose goal_pose="{@fort}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+					<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
+				</Sequence>  
+
+				<Sequence>
+					<!-- 导航前确保不是小陀螺，并切到移动姿态 -->
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+					<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+					<PubNav2Goal goal_pose="{@fort}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+				</Sequence>   						
+			</ReactiveFallback>  
+
+			<!-- 保底选择成功，导致无限循环 -->
+			<AlwaysSuccess/>
+		</ReactiveFallback>
+	</BehaviorTree>
+
+  <!-- =======================前哨去补给区子树========================== -->
+	<BehaviorTree ID="outpost_to_supply">
+		<!-- 反应式选择，下一轮tick无论前面节点啥状态，都会从头tick,直到有一个成功 -->
+		<ReactiveFallback>
+			<SequenceWithMemory>
+
+				<!-- 导航前先关小陀螺发布移动姿态（3） -->
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+				<!-- 前哨-我方高地点-我方前哨-高地入口-公路出口 -->
+				<Fallback>
+					<IsRobotNearPose goal_pose="{@highway_out}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
+					<NavigateThroughPosesAction	action_name="navigate_through_poses"
+						waypoint_file="behavior_trees/waypoints/test/outpost_to_highway_out.csv"
+						frame_id="map" current_waypoint="{outpost_to_highway_out}"/>				
+				</Fallback> 
+				<!-- 公路出口-公路入口侧远处，先底盘复位2秒，再限制vy速度，出去后恢复速度 -->
+				<PublishChassisCmd topic_name="cmd_chassis" reset="1" rotate="0" vy_limit="0"/>
+				<Sleep msec="2000"/>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="1"/>
+				<ReactiveSequence>					
+					<PubNav2Goal goal_pose="{@highway_in_far}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@highway_in_far}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+				<!-- 公路入口侧远处-斜坡坡顶-斜坡坡底-堡垒出口侧-补给区 -->
+				<Fallback>
+					<IsRobotNearPose goal_pose="{@supply}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+					<NavigateThroughPosesAction	action_name="navigate_through_poses"
+						waypoint_file="behavior_trees/waypoints/test/highway_in_far_to_supply.csv"
+						frame_id="map" current_waypoint="{highway_in_far_to_supply}"/>				
+				</Fallback> 
+
+			</SequenceWithMemory>			
+			<!-- 保底选择成功，导致无限循环 -->
+			<AlwaysSuccess/>
+		</ReactiveFallback>
+	</BehaviorTree>
+
+	<!-- =======================补给区到前哨往返========================== -->
+	<BehaviorTree ID="supply_outpost_loop">
+		<!-- 反应式选择，下一轮tick无论前面节点啥状态，都会从头tick,直到有一个成功 -->
+		<ReactiveFallback>
+
+			<!-- 前哨去补给区记忆序列，低血低弹进入，直到高血高弹才退出 -->
+			<SequenceWithMemory>
+				<NeedSupply key_port="{@referee_robotStatus}" enter_hp_below="150" enter_ammo_below="20" exit_hp_min="350" exit_ammo_min="200"/>
+				<!-- 导航前先关小陀螺发布移动姿态（3） -->
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+				<!-- 前哨-我方高地点-我方前哨-高地入口-公路出口 -->
+				<Fallback>
+					<IsRobotNearPose goal_pose="{@highway_out}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
+					<NavigateThroughPosesAction	action_name="navigate_through_poses"
+						waypoint_file="behavior_trees/waypoints/test/outpost_to_highway_out.csv"
+						frame_id="map" current_waypoint="{outpost_to_highway_out}"/>				
+				</Fallback> 
+				<!-- 公路出口-公路入口侧远处，先底盘复位2秒，再限制vy速度，出去后恢复速度 -->
+				<PublishChassisCmd topic_name="cmd_chassis" reset="1" rotate="0" vy_limit="0"/>
+				<Sleep msec="2000"/>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="1"/>
+				<ReactiveSequence>					
+					<PubNav2Goal goal_pose="{@highway_in_far}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@highway_in_far}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+				<!-- 公路入口侧远处-斜坡坡顶-斜坡坡底-堡垒出口侧-补给区 -->
+				<Fallback>
+					<IsRobotNearPose goal_pose="{@supply}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+					<NavigateThroughPosesAction	action_name="navigate_through_poses"
+						waypoint_file="behavior_trees/waypoints/test/highway_in_far_to_supply.csv"
+						frame_id="map" current_waypoint="{highway_in_far_to_supply}"/>				
+				</Fallback> 
+			</SequenceWithMemory>
+
+			<!-- 补给区去前哨记忆序列（高血高弹出发），先判断是否在前哨，再发点 -->
+			<SequenceWithMemory>
+				<!-- 判断是否在前哨作门控，导航前发布移动姿态 -->
+				<Inverter>
+					<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.5" global_frame="map" robot_base_frame="chassis"/>
+				</Inverter>				
+				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+
+				<!-- 补给区-堡垒出口-斜坡底部-斜坡顶部-公路路口侧远处-公路入口 -->
+				<Fallback>
+					<IsRobotNearPose goal_pose="{@highway_in}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
+					<NavigateThroughPosesAction	action_name="navigate_through_poses"
+						waypoint_file="behavior_trees/waypoints/test/supply_to_highway_in.csv"
+						frame_id="map" current_waypoint="{supply_to_highway_in}"/>				
+				</Fallback> 			
+
+				<!-- 公路入口到高地入口，先底盘复位2秒，再限制vy速度，过起伏后恢复速度-->
+				<PublishChassisCmd topic_name="cmd_chassis" reset="1" rotate="0" vy_limit="0"/>
+				<Sleep msec="2000"/>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="1"/>
+				<ReactiveSequence>					
+					<PubNav2Goal goal_pose="{@highland_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@highland_in}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+
+				<!-- 高地入口-高地-前哨 -->
+				<Fallback>
+					<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
+					<NavigateThroughPosesAction	action_name="navigate_through_poses"
+						waypoint_file="behavior_trees/waypoints/test/highland_in_to_outpost.csv"
+						frame_id="map" current_waypoint="{highland_in_to_outpost}"/>				
+				</Fallback> 
+
+				<!-- 到达前哨后，先关移动姿态，再开小陀螺 -->
+        <PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
+			</SequenceWithMemory>  
+				
+			<!-- 保底选择成功，导致无限循环 -->
+			<AlwaysSuccess/>
+		</ReactiveFallback>
+	</BehaviorTree>
+
+	<!-- ========================= 主行为树 ========================= -->
+  <BehaviorTree ID="2026test_multi">
+    <Sequence>
+			<!-- 比赛开始条件，没收到裁判系统消息或在未开赛，都返回running -->
+			<SubTree ID="check_game_started"/>
+      <!-- 无限循环-->
+      <KeepRunningUntilFailure>
+        <!-- 反应式选择，下一轮tick无论前面节点啥状态，都会从头tick,直到有一个成功 -->
+        <ReactiveFallback>
+
+					<!-- 基地血量小于2500,进入守家策略；先判断机器人是否位于前哨，再选择执行前哨回补给区，还是直接补给区到堡垒-->
+					<Sequence>
+						<Inverter>
+							<IsBaseHPHealthy base_hp_min="2500" key_port="{@referee_allRobotHP}"/>
+						</Inverter>
+						<Fallback>
+							<Sequence>
+								<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.5" global_frame="map" robot_base_frame="chassis"/>
+								<SubTree ID="outpost_to_supply"/>
+								<Sleep msec="5000"/>
+							</Sequence>
+							<SubTree ID="supply_fort_loop"/>
+						</Fallback>
+					</Sequence>
+
+					<!-- 基地血量大于2500,进入推前哨策略-->
+					<SubTree ID="supply_outpost_loop"/>
+
+          <!-- 保底选择成功，导致无限循环 -->
+          <AlwaysSuccess/>
+        </ReactiveFallback>
+      </KeepRunningUntilFailure>                                                                             
+    </Sequence>  
+  </BehaviorTree>
+</root>

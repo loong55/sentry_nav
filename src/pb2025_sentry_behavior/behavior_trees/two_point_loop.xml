@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+  <BehaviorTree ID="two_point_loop">
+    <Repeat num_cycles="-1">
+			<SequenceWithMemory>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="1"/>
+				<Sleep msec="2000"/>
+				<ReactiveSequence>					
+					<PubNav2Goal goal="3.3;0.0;0.0" topic_name="goal_pose"
+											 min_pub_interval_ms="500"/>
+					<WaitUntilReached goal="3.3./;0.0;0.0" tolerance="0.3"
+														global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="1"/>
+				<Sleep msec="2000"/>
+				<ReactiveSequence>
+					<PubNav2Goal goal="-0.5;0.0;0.0" topic_name="goal_pose"
+											 min_pub_interval_ms="500"/>
+					<WaitUntilReached goal="-0.5;0.0;0.0" tolerance="0.3"	global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+			</SequenceWithMemory>
+    </Repeat>
+  </BehaviorTree>
+</root>

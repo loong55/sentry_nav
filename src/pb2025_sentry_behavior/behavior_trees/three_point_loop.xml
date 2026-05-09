@@ -2,144 +2,133 @@
 <root BTCPP_format="4">
   <!-- 三点循环运动行为树 -->
   <BehaviorTree ID="three_point_loop">
-    <Repeat num_cycles="-1">
-      <SequenceWithMemory>
-			  <PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="1"/>
+		<Sequence>
+			<!-- 开机门控条件，当前为空 -->
 
-				<!-- <Fallback>
-          <IsRobotNearPose goal="1.5;0.0;0.0" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
-          <ForceFailure>
-            <PubNav2Goal goal="1.5;0.0;0.0" topic_name="goal_pose" min_pub_interval_ms="500"/>
-          </ForceFailure>
-        </Fallback>
-				<Sleep msec="1000"/> -->
-
-				<RetryUntilSuccessful num_attempts="-1">
-					<Fallback>
-						<IsRobotNearPose goal="1.2;0.0;0.0" tolerance="0.3" odom_topic="odometry" linear_speed_tolerance="0.10" angular_speed_tolerance="0.30" global_frame="odom" robot_base_frame="gimbal_yaw_fake"/>
+			<KeepRunningUntilFailure>
+				<Fallback>
+					<Sequence>
+					<!-- <Fallback>
+						<IsRobotNearPose goal="1.5;0.0;0.0" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
 						<ForceFailure>
-							<PubNav2Goal goal="1.2;0.0;0.0" frame_id="odom" topic_name="goal_pose" min_pub_interval_ms="500"/>
+							<PubNav2Goal goal="1.5;0.0;0.0" topic_name="goal_pose" min_pub_interval_ms="500"/>
 						</ForceFailure>
-        	</Fallback>
-				</RetryUntilSuccessful>
+					</Fallback>
+					<Sleep msec="1000"/> -->
+  
 
-				<!-- <PublishChassisCmd topic_name="cmd_chassis" reset="1" rotate="0" vy_limit="0"/>
-        <Sleep msec="2000"/>
-				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/> -->
-				<RetryUntilSuccessful num_attempts="-1">
-					<Fallback>
-						<IsRobotNearPose goal="0.0;0.0;0.0" tolerance="0.3" odom_topic="odometry" linear_speed_tolerance="0.10" angular_speed_tolerance="0.30" global_frame="odom" robot_base_frame="gimbal_yaw_fake"/>
+					<!-- <PublishChassisCmd topic_name="cmd_chassis" reset="1" rotate="0" vy_limit="0"/>
+					<Sleep msec="2000"/>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/> -->
+
+					<!-- <Fallback>
+						<IsRobotNearPose goal="0.0;0.0;0.0" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
 						<ForceFailure>
-							<PubNav2Goal goal="0.0;0.0;0.0" frame_id="odom" topic_name="goal_pose" min_pub_interval_ms="500"/>
+							<PubNav2Goal goal="0.0;0.0;0.0" topic_name="goal_pose" min_pub_interval_ms="500"/>
 						</ForceFailure>
-        	</Fallback>
-				</RetryUntilSuccessful>
+					</Fallback>
+					<Sleep msec="1000"/>				 -->
 
-				<!-- <Fallback>
-          <IsRobotNearPose goal="0.0;0.0;0.0" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
-          <ForceFailure>
-            <PubNav2Goal goal="0.0;0.0;0.0" topic_name="goal_pose" min_pub_interval_ms="500"/>
-          </ForceFailure>
-        </Fallback>
-				<Sleep msec="1000"/>				 -->
-
-				<!-- <PublishChassisCmd topic_name="cmd_chassis" reset="1" rotate="0" vy_limit="0"/>
-        <Sleep msec="2000"/>
-				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/> -->
+					<!-- <PublishChassisCmd topic_name="cmd_chassis" reset="1" rotate="0" vy_limit="0"/>
+					<Sleep msec="2000"/>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/> -->
 
 
 
-        <!-- 强制发布移动姿态（3） -->
-        <!-- <PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/> -->
-        <!-- <Sleep msec="3000"/> -->
+					<!-- 强制发布移动姿态（3） -->
+					<!-- <PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/> -->
+					<!-- <Sleep msec="3000"/> -->
 
-        <!-- 关闭姿态切换（0） -->
-        <!-- <PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/> -->
-        <!-- <Sleep msec="3000"/> -->
+					<!-- 关闭姿态切换（0） -->
+					<!-- <PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/> -->
+					<!-- <Sleep msec="3000"/> -->
 
-        <!-- 开启底盘复位 -->
-        <!-- <PublishChassisCmd topic_name="cmd_chassis" reset="1" rotate="0" vy_limit="0"/> -->
-        <!-- <Sleep msec="2000"/> -->
+					<!-- 开启底盘复位 -->
+					<!-- <PublishChassisCmd topic_name="cmd_chassis" reset="1" rotate="0" vy_limit="0"/> -->
+					<!-- <Sleep msec="2000"/> -->
 
-        <!-- 关闭底盘复位 -->
-        <!-- <PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/> -->
-        <!-- <Sleep msec="2000"/> -->
+					<!-- 关闭底盘复位 -->
+					<!-- <PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/> -->
+					<!-- <Sleep msec="2000"/> -->
 
-        <!-- 开启底盘旋转 -->
-        <!-- <PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/> -->
-        <!-- <Sleep msec="3000"/> -->
+					<!-- 开启底盘旋转 -->
+					<!-- <PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/> -->
+					<!-- <Sleep msec="3000"/> -->
 
-        <!-- 关闭底盘旋转 -->
-        <!-- <PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/> -->
-        <!-- <Sleep msec="3000"/> -->
+					<!-- 关闭底盘旋转 -->
+					<!-- <PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/> -->
+					<!-- <Sleep msec="3000"/> -->
 
-        <!-- 开启底盘y轴速度限制 -->
-        <!-- <PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="1"/> -->
-        <!-- <Sleep msec="3000"/> -->
+					<!-- 开启底盘y轴速度限制 -->
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="1"/>
+					<Sleep msec="3000"/>
 
-        <!-- 关闭底盘y轴速度限制 -->
-        <!-- <PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/> -->
-        <!-- <Sleep msec="3000"/> -->
+					<!-- 关闭底盘y轴速度限制 -->
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+					<Sleep msec="3000"/>
 
-				<!-- <PubNav2Goal goal="0.0;0.0;0.0" topic_name="goal_pose" min_pub_interval_ms="500"/> -->
-        <!-- 目标点1：未到堡垒前持续发点，到达后才进入下一个目标点 -->
-        <!-- <Fallback>
-          <IsRobotNearPose goal_pose="{@fort}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
-          <ForceFailure>
-            <PubNav2Goal goal_pose="{@fort}" topic_name="goal_pose" min_pub_interval_ms="500"/>
-          </ForceFailure>
-        </Fallback> -->
+					<!-- <PubNav2Goal goal="0.0;0.0;0.0" topic_name="goal_pose" min_pub_interval_ms="500"/> -->
+					<!-- 目标点1：未到堡垒前持续发点，到达后才进入下一个目标点 -->
+					<!-- <Fallback>
+						<IsRobotNearPose goal_pose="{@fort}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+						<ForceFailure>
+							<PubNav2Goal goal_pose="{@fort}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						</ForceFailure>
+					</Fallback> -->
 
-        <!-- 目标点2：未到补给区前持续发点，到达后本轮序列结束 -->
-        <!-- <Fallback>
-          <IsRobotNearPose goal_pose="{@supply}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
-          <ForceFailure>
-            <PubNav2Goal goal_pose="{@supply}" topic_name="goal_pose" min_pub_interval_ms="500"/>
-          </ForceFailure>
-        </Fallback> -->
+					<!-- 目标点2：未到补给区前持续发点，到达后本轮序列结束 -->
+					<!-- <Fallback>
+						<IsRobotNearPose goal_pose="{@supply}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+						<ForceFailure>
+							<PubNav2Goal goal_pose="{@supply}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						</ForceFailure>
+					</Fallback> -->
 
-        <!-- <Fallback>
-          <IsRobotNearPose goal="0.0;1.0;0.0" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
-          <ForceFailure>
-            <PubNav2Goal goal="0.0;1.0;0.0" topic_name="goal_pose" min_pub_interval_ms="500"/>
-          </ForceFailure>
-        </Fallback> -->
+					<!-- <Fallback>
+						<IsRobotNearPose goal="0.0;1.0;0.0" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+						<ForceFailure>
+							<PubNav2Goal goal="0.0;1.0;0.0" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						</ForceFailure>
+					</Fallback> -->
 
-        <!-- <Fallback>
-          <IsRobotNearPose goal="1.0;1.0;0.0" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
-          <ForceFailure>
-            <PubNav2Goal goal="1.0;1.0;0.0" topic_name="goal_pose" min_pub_interval_ms="500"/>
-          </ForceFailure>
-        </Fallback> -->
+					<!-- <Fallback>
+						<IsRobotNearPose goal="1.0;1.0;0.0" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+						<ForceFailure>
+							<PubNav2Goal goal="1.0;1.0;0.0" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						</ForceFailure>
+					</Fallback> -->
 
 
-        <!-- 按同样结构继续追加更多目标点即可实现多点导航 -->
-        <!--
-        <Fallback>
-          <IsRobotNearPose goal_pose="{@outpost}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
-          <ForceFailure>
-            <PubNav2Goal goal_pose="{@outpost}" topic_name="goal_pose" min_pub_interval_ms="500"/>
-          </ForceFailure>
-        </Fallback>
-        -->
-                  
-        <!-- 第一个目标点，等待导航完成 -->
-        <!-- <PubNav2Goal goal="1.0;0;0" topic_name="goal_pose"/> -->
-        <!-- <Sleep msec="5000"/> -->
+					<!-- 按同样结构继续追加更多目标点即可实现多点导航 -->
+					<!--
+					<Fallback>
+						<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+						<ForceFailure>
+							<PubNav2Goal goal_pose="{@outpost}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						</ForceFailure>
+					</Fallback>
+					-->
+										
+					<!-- 第一个目标点，等待导航完成 -->
+					<!-- <PubNav2Goal goal="1.0;0;0" topic_name="goal_pose"/> -->
+					<!-- <Sleep msec="5000"/> -->
 
-        <!-- 第二个目标点，等待导航完成 -->
-        <!-- <PubNav2Goal goal="4.0;-3.0;0" topic_name="goal_pose"/> -->
-        <!-- <Sleep msec="3000"/> -->
+					<!-- 第二个目标点，等待导航完成 -->
+					<!-- <PubNav2Goal goal="4.0;-3.0;0" topic_name="goal_pose"/> -->
+					<!-- <Sleep msec="3000"/> -->
 
-        <!-- 第一个目标点，等待导航完成 -->
-        <!-- <PubNav2Goal goal="-0.5;0;0" topic_name="goal_pose"/> -->
-        <!-- <Sleep msec="3000"/> -->
+					<!-- 第一个目标点，等待导航完成 -->
+					<!-- <PubNav2Goal goal="-0.5;0;0" topic_name="goal_pose"/> -->
+					<!-- <Sleep msec="3000"/> -->
 
-        <!-- 第二个目标点，等待导航完成 -->
-        <!-- <PubNav2Goal goal="0;0;0" topic_name="goal_pose"/> -->
-        <!-- <Sleep msec="5000"/> -->
-         
-      </SequenceWithMemory>
-    </Repeat>
+					<!-- 第二个目标点，等待导航完成 -->
+					<!-- <PubNav2Goal goal="0;0;0" topic_name="goal_pose"/> -->
+					<!-- <Sleep msec="5000"/> -->
+					</Sequence>
+					<!-- 保底选择成功，导致无限循环 -->
+					<AlwaysSuccess/>
+				</Fallback>
+			</KeepRunningUntilFailure>
+		</Sequence>
   </BehaviorTree>
 </root>

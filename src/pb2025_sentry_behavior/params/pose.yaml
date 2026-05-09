@@ -74,15 +74,6 @@ pb2025_sentry_behavior_server:
       orientation:
         w: 1.0
 
-    highway_out_far:  # 公路出口侧远处
-      frame_id: "map"
-      position:
-        x: 3.25
-        y: -3.20
-        z: 0.0
-      orientation:
-        w: 1.0
-
     highland_in:  # 高地入口侧
       frame_id: "map"
       position:
