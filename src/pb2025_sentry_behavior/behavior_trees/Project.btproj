@@ -72,6 +72,7 @@
         <Action ID="PublishChassisCmd">
             <input_port name="reset" default="0" type="unsigned int">Reset chassis</input_port>
             <input_port name="rotate" default="0" type="unsigned int">Rotate chassis</input_port>
+            <input_port name="vy_limit" default="0" type="unsigned int">Limit chassis y-axis velocity</input_port>
             <input_port name="duration" type="std::chrono::milliseconds">Publish then sleep duration in milliseconds</input_port>
             <input_port name="topic_name" default="cmd_chassis" type="std::string">Topic name</input_port>
         </Action>

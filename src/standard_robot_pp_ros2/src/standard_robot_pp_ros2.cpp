@@ -907,7 +907,7 @@ void StandardRobotPpRos2Node::logCombinedRefereeDebug()
   RCLCPP_INFO_THROTTLE(
     get_logger(), *this->get_clock(), 1000,
     "referee hp=%u bullets_remaining=%u angle=%.3f game_progress=%u stage_remain_time=%u ally_base_hp=%u\n"
-    "Sending data: vx=%.2f, vy=%.2f, wz=%.2f, posture=%u(%s), chassis_reset=%u(%s), chassis_rotate=%u(%s)",
+    "Sending data: vx=%.2f, vy=%.2f, wz=%.2f, posture=%u(%s), chassis_reset=%u(%s), chassis_rotate=%u(%s), chassis_vy_limit=%u(%s)",
     latest_robot_hp_debug_, latest_bullets_remaining_, latest_robot_angle_,
     latest_game_progress_debug_, latest_stage_remain_time_, latest_ally_base_hp_,
     send_robot_cmd_data_.data.speed_vector.vx,
@@ -918,7 +918,9 @@ void StandardRobotPpRos2Node::logCombinedRefereeDebug()
     send_robot_cmd_data_.data.chassis_cmd.reset,
     chassisCmdStateToString(send_robot_cmd_data_.data.chassis_cmd.reset),
     send_robot_cmd_data_.data.chassis_cmd.rotate,
-    chassisCmdStateToString(send_robot_cmd_data_.data.chassis_cmd.rotate));
+    chassisCmdStateToString(send_robot_cmd_data_.data.chassis_cmd.rotate),
+    send_robot_cmd_data_.data.chassis_cmd.vy_limit,
+    chassisCmdStateToString(send_robot_cmd_data_.data.chassis_cmd.vy_limit));
 }
 
 // 保存云台的俯仰和偏航角度，供publishImuData使用
@@ -959,6 +961,7 @@ void StandardRobotPpRos2Node::sendData()
   send_robot_cmd_data_.data.speed_vector.wz = 0;
   send_robot_cmd_data_.data.chassis_cmd.reset = pb_rm_interfaces::msg::ChassisCmd::DISABLE;
   send_robot_cmd_data_.data.chassis_cmd.rotate = pb_rm_interfaces::msg::ChassisCmd::DISABLE;
+  send_robot_cmd_data_.data.chassis_cmd.vy_limit = pb_rm_interfaces::msg::ChassisCmd::DISABLE;
   send_robot_cmd_data_.data.posture.posture = pb_rm_interfaces::msg::PostureCmd::MOVE;
 
   // 计算帧头CRC8校验
@@ -1063,6 +1066,9 @@ void StandardRobotPpRos2Node::cmdChassisCallback(
     pb_rm_interfaces::msg::ChassisCmd::ENABLE : pb_rm_interfaces::msg::ChassisCmd::DISABLE;
   send_robot_cmd_data_.data.chassis_cmd.rotate =
     msg->rotate == pb_rm_interfaces::msg::ChassisCmd::ENABLE ?
+    pb_rm_interfaces::msg::ChassisCmd::ENABLE : pb_rm_interfaces::msg::ChassisCmd::DISABLE;
+  send_robot_cmd_data_.data.chassis_cmd.vy_limit =
+    msg->vy_limit == pb_rm_interfaces::msg::ChassisCmd::ENABLE ?
     pb_rm_interfaces::msg::ChassisCmd::ENABLE : pb_rm_interfaces::msg::ChassisCmd::DISABLE;
 }
 

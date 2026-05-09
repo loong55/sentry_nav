@@ -31,6 +31,8 @@ BT::PortsList PublishChassisCmdAction::providedPorts()
     BT::InputPort<unsigned>("reset", pb_rm_interfaces::msg::ChassisCmd::DISABLE, "Reset chassis"),
     BT::InputPort<unsigned>(
       "rotate", pb_rm_interfaces::msg::ChassisCmd::DISABLE, "Rotate chassis"),
+    BT::InputPort<unsigned>(
+      "vy_limit", pb_rm_interfaces::msg::ChassisCmd::DISABLE, "Limit chassis y-axis velocity"),
   });
 }
 
@@ -38,14 +40,18 @@ bool PublishChassisCmdAction::setMessage(pb_rm_interfaces::msg::ChassisCmd & msg
 {
   unsigned reset = pb_rm_interfaces::msg::ChassisCmd::DISABLE;
   unsigned rotate = pb_rm_interfaces::msg::ChassisCmd::DISABLE;
+  unsigned vy_limit = pb_rm_interfaces::msg::ChassisCmd::DISABLE;
 
   getInput("reset", reset);
   getInput("rotate", rotate);
+  getInput("vy_limit", vy_limit);
 
   msg.stamp = rclcpp::Clock(RCL_ROS_TIME).now();
   msg.reset = reset == pb_rm_interfaces::msg::ChassisCmd::ENABLE ?
     pb_rm_interfaces::msg::ChassisCmd::ENABLE : pb_rm_interfaces::msg::ChassisCmd::DISABLE;
   msg.rotate = rotate == pb_rm_interfaces::msg::ChassisCmd::ENABLE ?
+    pb_rm_interfaces::msg::ChassisCmd::ENABLE : pb_rm_interfaces::msg::ChassisCmd::DISABLE;
+  msg.vy_limit = vy_limit == pb_rm_interfaces::msg::ChassisCmd::ENABLE ?
     pb_rm_interfaces::msg::ChassisCmd::ENABLE : pb_rm_interfaces::msg::ChassisCmd::DISABLE;
 
   return true;
@@ -56,6 +62,7 @@ bool PublishChassisCmdAction::setHaltMessage(pb_rm_interfaces::msg::ChassisCmd &
   msg.stamp = rclcpp::Clock(RCL_ROS_TIME).now();
   msg.reset = pb_rm_interfaces::msg::ChassisCmd::DISABLE;
   msg.rotate = pb_rm_interfaces::msg::ChassisCmd::DISABLE;
+  msg.vy_limit = pb_rm_interfaces::msg::ChassisCmd::DISABLE;
   return true;
 }
 

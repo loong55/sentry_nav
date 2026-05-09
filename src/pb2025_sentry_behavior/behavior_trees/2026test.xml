@@ -19,33 +19,33 @@
 				<!-- 门控条件：低血低弹进入，直到高血高弹才退出 -->
 				<NeedSupply key_port="{@referee_robotStatus}" enter_hp_below="150" enter_ammo_below="20" exit_hp_min="350" exit_ammo_min="200"/>
 				<!-- 导航前先关小陀螺，再发布移动姿态（3） -->
-				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0"/>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
 				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
 				<!-- 导航到补给区 -->
 				<PubNav2Goal goal_pose="{@supply}" topic_name="goal_pose" min_pub_interval_ms="500"/>
 				<!-- 判断是否在补给区 -->
-				<IsRobotNearPose goal_pose="{@supply}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
+				<IsRobotNearPose goal_pose="{@supply}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
 				<!-- 到达目标点关闭移动姿态（0） -->
 				<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
 			</ReactiveSequence>
 
-			<!-- 高状态去堡垒反应式序列，先判断是否在堡垒，再发点；每轮tick，不论内部节点啥状态，都会从头tick到尾，直到全部成功 -->
-			<Fallback>				
+			<!-- 高状态去堡垒反应式选择，先判断是否在堡垒，再发点；每轮tick，不论内部节点啥状态，都会从头tick到尾，直到全部成功 -->
+			<ReactiveFallback>				
 				<Sequence>
 					<!-- 判断是否到达堡垒，到达则关移动姿态开小陀螺，未到达则跳过 -->
-					<IsRobotNearPose goal_pose="{@fort}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
+					<IsRobotNearPose goal_pose="{@fort}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
 					<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
-					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1"/>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
 				</Sequence>  
 
 				<Sequence>
 					<!-- 导航前确保不是小陀螺，并切到移动姿态 -->
-					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0"/>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
 					<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
 					<!-- 未到堡垒时持续发点，频率由 min_pub_interval_ms 限制 -->
 					<PubNav2Goal goal_pose="{@fort}" topic_name="goal_pose" min_pub_interval_ms="500"/>
 				</Sequence>   						
-			</Fallback>  
+			</ReactiveFallback>  
 
 			<!-- 保底选择成功，导致无限循环 -->
 			<AlwaysSuccess/>
@@ -58,32 +58,76 @@
 		<ReactiveFallback>
 			<Sequence>
 				<!-- 导航前先关小陀螺发布移动姿态（3） -->
-				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0"/>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
 				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
-				<!-- 前哨到公路出口 -->
+				<!-- 前哨到我方高地点 -->
 				<Fallback>
-					<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.5" global_frame="map" robot_base_frame="chassis"/>
-					<NavigateThroughPosesAction action_name="navigate_through_poses"
-						waypoint_file="behavior_trees/waypoints/test/outpost_to_highway_out.csv"
-						frame_id="map" current_waypoint="{outpost_to_highway_out}"/>
+					<IsRobotNearPose goal_pose="{@highland_my}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+					<ForceFailure>
+						<PubNav2Goal goal_pose="{@highland_my}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					</ForceFailure>
 				</Fallback>
-				<!-- 先底盘复位2秒，再公路出口到公路入口-->
-				<PublishChassisCmd topic_name="cmd_chassis" reset="1" rotate="0"/>
-				<Sleep msec="2000"/>
-				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0"/>
-        <Fallback>
-          <IsRobotNearPose goal_pose="{@highway_in}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
-          <!-- 每0.5秒发布一次，发布后立刻返回success，然后0.5秒内不tick此节点 -->
-          <PubNav2Goal goal_pose="{@highway_in}" topic_name="goal_pose" min_pub_interval_ms="500"/> 						
-        </Fallback> 
-				<!-- 公路入口到补给区 -->
+				<!-- 前哨到我方前哨 -->
 				<Fallback>
-          <IsRobotNearPose goal_pose="{@supply}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
-          <!-- 每0.5秒发布一次，发布后立刻返回success，然后0.5秒内不tick此节点 -->
-					<NavigateThroughPosesAction action_name="navigate_through_poses"
-						waypoint_file="behavior_trees/waypoints/test/highway_in_to_supply.csv"
-						frame_id="map" current_waypoint="{highway_in_to_supply}"/>						
-        </Fallback>  						
+					<IsRobotNearPose goal_pose="{@outpost_my}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+					<ForceFailure>
+						<PubNav2Goal goal_pose="{@outpost_my}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					</ForceFailure>
+				</Fallback>
+				<!-- 我方前哨到高地入口 -->
+				<Fallback>
+          <IsRobotNearPose goal_pose="{@highland_in}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+          <ForceFailure>
+            <PubNav2Goal goal_pose="{@highland_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+          </ForceFailure>
+        </Fallback>
+				<!-- 高地入口公路出口 -->
+				<Fallback>
+          <IsRobotNearPose goal_pose="{@highway_out}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+          <ForceFailure>
+            <PubNav2Goal goal_pose="{@highway_out}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+          </ForceFailure>
+        </Fallback>
+				<!-- 先底盘复位2秒，再限制vy速度，再公路出口到公路入口侧远处 -->
+				<PublishChassisCmd topic_name="cmd_chassis" reset="1" rotate="0" vy_limit="0"/>
+				<Sleep msec="2000"/>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="1"/>
+				<Fallback>
+          <IsRobotNearPose goal_pose="{@highway_out_far}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+          <ForceFailure>
+            <PubNav2Goal goal_pose="{@highway_out_far}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+          </ForceFailure>
+        </Fallback>
+				<!-- 公路入口侧远处到斜坡坡顶，先恢复vy速度 -->
+				<Fallback>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+          <IsRobotNearPose goal_pose="{@ramp_top}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+          <ForceFailure>
+            <PubNav2Goal goal_pose="{@ramp_top}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+          </ForceFailure>
+        </Fallback>
+				<!-- 斜坡坡顶到斜坡坡底 -->
+				<Fallback>
+          <IsRobotNearPose goal_pose="{@ramp_base}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+          <ForceFailure>
+            <PubNav2Goal goal_pose="{@ramp_base}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+          </ForceFailure>
+        </Fallback>
+				<!-- 斜坡坡底到堡垒出口侧 -->
+				<Fallback>
+          <IsRobotNearPose goal_pose="{@fort_out}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+          <ForceFailure>
+            <PubNav2Goal goal_pose="{@fort_out}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+          </ForceFailure>
+        </Fallback>
+				<!-- 堡垒出口侧补给区 -->
+				<Fallback>
+          <IsRobotNearPose goal_pose="{@supply}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+          <ForceFailure>
+            <PubNav2Goal goal_pose="{@supply}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+          </ForceFailure>
+        </Fallback>
+
 			</Sequence>			
 			<!-- 保底选择成功，导致无限循环 -->
 			<AlwaysSuccess/>
@@ -99,32 +143,61 @@
 			<Sequence>
 				<NeedSupply key_port="{@referee_robotStatus}" enter_hp_below="150" enter_ammo_below="20" exit_hp_min="350" exit_ammo_min="200"/>
 				<!-- 导航前先关小陀螺发布移动姿态（3） -->
-				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0"/>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
 				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
-				<!-- 前哨到公路出口 -->
+				<!-- 前哨到我方高地点 -->
 				<Fallback>
-					<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.5" global_frame="map" robot_base_frame="chassis"/>
-					<NavigateThroughPosesAction action_name="navigate_through_poses"
-						waypoint_file="behavior_trees/waypoints/test/outpost_to_highway_out.csv"
-						frame_id="map" current_waypoint="{outpost_to_highway_out}"/>
+					<IsRobotNearPose goal_pose="{@highland_my}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+					<ForceFailure>
+						<PubNav2Goal goal_pose="{@highland_my}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					</ForceFailure>
 				</Fallback>
-				<!-- 先底盘复位2秒，再公路出口到公路入口-->
-				<PublishChassisCmd topic_name="cmd_chassis" reset="1" rotate="0"/>
-				<Sleep msec="2000"/>
-				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0"/>
-        <Fallback>
-          <IsRobotNearPose goal_pose="{@highway_in}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
-          <!-- 每0.5秒发布一次，发布后立刻返回success，然后0.5秒内不tick此节点 -->
-          <PubNav2Goal goal_pose="{@highway_in}" topic_name="goal_pose" min_pub_interval_ms="500"/> 						
-        </Fallback> 
-				<!-- 公路入口到补给区 -->
+				<!-- 我方高地点到公路出口 -->
 				<Fallback>
-          <IsRobotNearPose goal_pose="{@supply}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
-          <!-- 每0.5秒发布一次，发布后立刻返回success，然后0.5秒内不tick此节点 -->
-					<NavigateThroughPosesAction action_name="navigate_through_poses"
-						waypoint_file="behavior_trees/waypoints/test/highway_in_to_supply.csv"
-						frame_id="map" current_waypoint="{highway_in_to_supply}"/>						
-        </Fallback>  						
+					<IsRobotNearPose goal_pose="{@highway_out}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+					<ForceFailure>
+						<PubNav2Goal goal_pose="{@highway_out}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					</ForceFailure>
+				</Fallback>
+				<!-- 先底盘复位2秒，再限制vy速度，再公路出口到公路入口侧远处-->
+				<PublishChassisCmd topic_name="cmd_chassis" reset="1" rotate="0" vy_limit="0"/>
+				<Sleep msec="2000"/>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="1"/>
+				<Fallback>
+					<IsRobotNearPose goal_pose="{@highway_in_far}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+					<ForceFailure>
+						<PubNav2Goal goal_pose="{@highway_in_far}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					</ForceFailure>
+				</Fallback>
+				<!-- 公路入口侧远处到斜坡坡顶，先恢复vy速度 -->				
+				<Fallback>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+					<IsRobotNearPose goal_pose="{@ramp_top}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+					<ForceFailure>
+						<PubNav2Goal goal_pose="{@ramp_top}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					</ForceFailure>
+				</Fallback>
+				<!-- 斜坡坡顶到斜坡坡底 -->
+				<Fallback>
+					<IsRobotNearPose goal_pose="{@ramp_base}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+					<ForceFailure>
+						<PubNav2Goal goal_pose="{@ramp_base}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					</ForceFailure>
+				</Fallback>
+				<!-- 斜坡坡底到堡垒出口侧 -->
+				<Fallback>
+					<IsRobotNearPose goal_pose="{@fort_out}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+					<ForceFailure>
+						<PubNav2Goal goal_pose="{@fort_out}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					</ForceFailure>
+				</Fallback>
+				<!-- 堡垒出口侧到补给区 -->	
+				<Fallback>
+					<IsRobotNearPose goal_pose="{@supply}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+					<ForceFailure>
+						<PubNav2Goal goal_pose="{@supply}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					</ForceFailure>
+				</Fallback>
 			</Sequence>
 
 			<!-- 高状态从补给区去前哨序列，先判断是否在前哨，再发点 -->
@@ -135,31 +208,72 @@
 				</Inverter>				
 				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
 
-				<!-- 补给区到公路路口-->
+				<!-- 补给区到堡垒出口-->
 				<Fallback>
-          <IsRobotNearPose goal_pose="{@highway_in}" tolerance="0.5" global_frame="map" robot_base_frame="chassis"/>
-					<NavigateThroughPosesAction action_name="navigate_through_poses"
-						waypoint_file="behavior_trees/waypoints/test/supply_to_highway_in.csv"
-						frame_id="map" current_waypoint="{supply_to_highway_in}"/>					
+					<IsRobotNearPose goal_pose="{@fort_out}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+					<ForceFailure>
+						<PubNav2Goal goal_pose="{@fort_out}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					</ForceFailure>
 				</Fallback>
-				<!-- 先底盘复位2秒，再公路入口到公路出口-->
-				<PublishChassisCmd topic_name="cmd_chassis" reset="1" rotate="0"/>
+				<!-- 堡垒出口到斜坡底部-->
+				<Fallback>
+					<IsRobotNearPose goal_pose="{@ramp_base}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+					<ForceFailure>
+						<PubNav2Goal goal_pose="{@ramp_base}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					</ForceFailure>
+				</Fallback>
+				<!-- 斜坡底部到斜坡顶部-->
+				<Fallback>
+					<IsRobotNearPose goal_pose="{@ramp_top}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+					<ForceFailure>
+						<PubNav2Goal goal_pose="{@ramp_top}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					</ForceFailure>
+				</Fallback>
+				<!-- 斜坡顶部到公路入口侧远处-->
+				<Fallback>
+					<IsRobotNearPose goal_pose="{@highway_in_far}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+					<ForceFailure>
+						<PubNav2Goal goal_pose="{@highway_in_far}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					</ForceFailure>
+				</Fallback>
+				<!-- 公路入口侧远处到公路入口-->
+				<Fallback>
+					<IsRobotNearPose goal_pose="{@highway_in}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+					<ForceFailure>
+						<PubNav2Goal goal_pose="{@highway_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					</ForceFailure>
+				</Fallback>
+			
+				<!-- 先底盘复位2秒，再限制vy速度，再公路入口到高地入口-->
+				<PublishChassisCmd topic_name="cmd_chassis" reset="1" rotate="0" vy_limit="0"/>
 				<Sleep msec="2000"/>
-				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0"/>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="1"/>
 				<Fallback>
-					<IsRobotNearPose goal_pose="{@highway_out}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
-					<PubNav2Goal goal_pose="{@highway_out}" topic_name="goal_pose" min_pub_interval_ms="500"/>						
+					<IsRobotNearPose goal_pose="{@highland_in}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+					<ForceFailure>
+						<PubNav2Goal goal_pose="{@highland_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					</ForceFailure>
 				</Fallback>
-				<!-- 公路出口到前哨 -->
+
+				<!-- 高地入口到高地，先恢复vy速度 -->
 				<Fallback>
-          <IsRobotNearPose goal_pose="{@outpost}" tolerance="0.5" global_frame="map" robot_base_frame="chassis"/>
-					<NavigateThroughPosesAction action_name="navigate_through_poses"
-						waypoint_file="behavior_trees/waypoints/test/highway_out_to_outpost.csv"
-						frame_id="map" current_waypoint="{highway_out_to_outpost}"/>					
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+					<IsRobotNearPose goal_pose="{@highland}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+					<ForceFailure>
+						<PubNav2Goal goal_pose="{@highland}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					</ForceFailure>
 				</Fallback>
+				<!-- 高地到前哨 -->
+				<Fallback>
+					<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+					<ForceFailure>
+						<PubNav2Goal goal_pose="{@outpost}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					</ForceFailure>
+				</Fallback>
+
 				<!-- 到达前哨后，先关移动姿态，再开小陀螺 -->
         <PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
-        <PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1"/>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
 			</Sequence>  
 				
 			<!-- 保底选择成功，导致无限循环 -->
@@ -184,7 +298,7 @@
 						</Inverter>
 						<Fallback>
 							<Sequence>
-								<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.5" global_frame="map" robot_base_frame="chassis"/>
+								<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
 								<SubTree ID="outpost_to_supply"/>
 							</Sequence>
 							<SubTree ID="supply_fort_loop"/>

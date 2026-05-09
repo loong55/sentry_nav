@@ -405,6 +405,7 @@ struct SendRobotCmdData
     {
       uint8_t reset; // 底盘复位命令，1=复位，0=关闭
       uint8_t rotate; // 底盘旋转命令，1=旋转，0=关闭
+      uint8_t vy_limit; // 底盘y轴速度限制，1=限制,0=不限制，
     } __attribute__((packed)) chassis_cmd;
 
     struct

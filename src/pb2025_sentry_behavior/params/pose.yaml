@@ -56,11 +56,29 @@ pb2025_sentry_behavior_server:
       orientation:
         w: 1.0
 
+    highway_in_far:  # 公路入口侧远处
+      frame_id: "map"
+      position:
+        x: -0.25
+        y: -3.30
+        z: 0.0
+      orientation:
+        w: 1.0    
+
     highway_out:  # 公路出口侧
       frame_id: "map"
       position:
         x: 3.25
-        y: -3.30
+        y: -3.20
+        z: 0.0
+      orientation:
+        w: 1.0
+
+    highway_out_far:  # 公路出口侧远处
+      frame_id: "map"
+      position:
+        x: 3.25
+        y: -3.20
         z: 0.0
       orientation:
         w: 1.0
@@ -69,7 +87,7 @@ pb2025_sentry_behavior_server:
       frame_id: "map"
       position:
         x: 4.5
-        y: -3.3
+        y: -3.2
         z: 0.0
       orientation:
         w: 1.0
@@ -91,3 +109,21 @@ pb2025_sentry_behavior_server:
         z: 0.0
       orientation:
         w: 1.0
+
+    highland_my:  # 我方高地点
+      frame_id: "map"
+      position:
+        x: 4.5
+        y: -1.0
+        z: 0.0
+      orientation:
+        w: 1.0
+
+    outpost_my:  # 我方前哨点
+      frame_id: "map"
+      position:
+        x: 6.0
+        y: -0.5
+        z: 0.0
+      orientation:
+        w: 1.0        

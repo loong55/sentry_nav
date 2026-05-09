@@ -1,4 +1,10 @@
 {
+    "xmlTools.format.indentSize": 2,
+    "[xml]": {
+        "editor.insertSpaces": false,
+        "editor.tabSize": 2,
+        "editor.detectIndentation": false
+    },
     "Codegeex.RepoIndex": true,
     "C_Cpp.default.compilerPath": "/usr/bin/g++",
     "cmake.configureOnOpen": false,
