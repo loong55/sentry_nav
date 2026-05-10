@@ -230,7 +230,7 @@ slam_toolbox:
     max_laser_range: 10.0                         # for rastering images
     minimum_time_interval: 0.2
     transform_timeout: 0.2
-    tf_buffer_duration: 10.
+    tf_buffer_duration: 10.0
     stack_size_to_use: 40000000                   # program needs a larger stack size to serialize large maps
     enable_interactive_mode: true
 
@@ -351,20 +351,20 @@ controller_server:
     general_goal_checker:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.20
+      xy_goal_tolerance: 0.20   #目标点容忍值
       yaw_goal_tolerance: 6.28
       path_length_tolerance: 0.5
 
     FollowPath:
       plugin: "goal_approach_controller::GoalApproachController"
       inner_plugin: "nav2_mppi_controller::MPPIController"
-      approach_distance: 2.5
-      approach_velocity: 0.2
-      direct_approach_distance: 0.5
-      direct_approach_kp: 1.0
+      approach_distance: 0.8    #距目标时开始限速
+      approach_velocity: 0.5    #限速速度
+      direct_approach_distance: 0.5   #进入直接驱动模式的距离，绕过MPPI防止画弧
+      direct_approach_kp: 3.0   #直接驱动P控制增益
       time_steps: 80
-      model_dt: 0.06
-      batch_size: 1200
+      model_dt: 0.06      #稍微放大步长，配合time_steps延长预测时域
+      batch_size: 1500    #控制器的采样数。
 
       vx_std: 0.35
       vy_std: 0.35   # 走直线
