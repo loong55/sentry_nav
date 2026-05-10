@@ -22,7 +22,7 @@
 				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
 				<!-- 导航到补给区,关移动姿态（0） -->
 				<PubNav2Goal goal_pose="{@supply}" topic_name="goal_pose" min_pub_interval_ms="500"/>
-				<IsRobotNearPose goal_pose="{@supply}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+				<IsRobotNearPose goal_pose="{@supply}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
 				<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
 			</ReactiveSequence>
 
@@ -30,7 +30,7 @@
 			<ReactiveFallback>				
 				<Sequence>
 					<!-- 判断是否到达堡垒，到达则关移动姿态开小陀螺，未到达则跳过 -->
-					<IsRobotNearPose goal_pose="{@fort}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+					<IsRobotNearPose goal_pose="{@fort}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
 					<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
 					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
 				</Sequence>  
@@ -75,7 +75,7 @@
 				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
 				<!-- 公路入口侧远处-斜坡坡顶-斜坡坡底-堡垒出口侧-补给区 -->
 				<Fallback>
-					<IsRobotNearPose goal_pose="{@supply}" tolerance="0.2" global_frame="map" robot_base_frame="chassis"/>
+					<IsRobotNearPose goal_pose="{@supply}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
 					<NavigateThroughPosesAction	action_name="navigate_through_poses"
 						waypoint_file="behavior_trees/waypoints/test/highway_in_far_to_supply.csv"
 						frame_id="map" current_waypoint="{highway_in_far_to_supply}"/>				
@@ -182,14 +182,11 @@
 						<Inverter>
 							<IsBaseHPHealthy base_hp_min="2500" key_port="{@referee_allRobotHP}"/>
 						</Inverter>
-						<Fallback>
-							<Sequence>
-								<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.5" global_frame="map" robot_base_frame="chassis"/>
-								<SubTree ID="outpost_to_supply"/>
-								<Sleep msec="5000"/>
-							</Sequence>
-							<SubTree ID="supply_fort_loop"/>
-						</Fallback>
+						<!-- 如果不在前哨，为防止路径规划从台阶掉落，先去前哨，再回家 -->
+						<IsRobotNearPose goal_pose="{@outpost}" tolerance="2.0" global_frame="map" robot_base_frame="chassis"/>
+						<SubTree ID="outpost_to_supply"/>
+						<Sleep msec="5000"/>
+						<SubTree ID="supply_fort_loop"/>
 					</Sequence>
 
 					<!-- 基地血量大于2500,进入推前哨策略-->
