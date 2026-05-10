@@ -158,7 +158,7 @@ fake_vel_transform:
     input_cmd_vel_topic: "cmd_vel_nav2_result"
     output_cmd_vel_topic: "cmd_vel"
     cmd_spin_topic: "cmd_spin"
-    init_spin_speed: 0.0
+    init_spin_speed: 3.14
 
 small_gicp_relocalization:
   ros__parameters:
@@ -348,7 +348,7 @@ controller_server:
     general_goal_checker:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.20
+      xy_goal_tolerance: 0.30
       yaw_goal_tolerance: 6.28
       path_length_tolerance: 0.5
 

@@ -22,7 +22,7 @@
 				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
 				<!-- 导航到补给区,关移动姿态（0） -->
 				<PubNav2Goal goal_pose="{@supply}" topic_name="goal_pose" min_pub_interval_ms="500"/>
-				<IsRobotNearPose goal_pose="{@supply}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
+				<IsRobotNearPose goal_pose="{@supply}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
 				<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
 			</ReactiveSequence>
 
@@ -30,7 +30,7 @@
 			<ReactiveFallback>				
 				<Sequence>
 					<!-- 判断是否到达堡垒，到达则关移动姿态开小陀螺，未到达则跳过 -->
-					<IsRobotNearPose goal_pose="{@fort}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
+					<IsRobotNearPose goal_pose="{@fort}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
 					<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
 					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
 				</Sequence>  
@@ -59,7 +59,7 @@
 				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
 				<!-- 前哨-我方高地点-我方前哨-高地入口-公路出口 -->
 				<Fallback>
-					<IsRobotNearPose goal_pose="{@highway_out}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
+					<IsRobotNearPose goal_pose="{@highway_out}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
 					<NavigateThroughPosesAction	action_name="navigate_through_poses"
 						waypoint_file="behavior_trees/waypoints/test/outpost_to_highway_out.csv"
 						frame_id="map" current_waypoint="{outpost_to_highway_out}"/>				
@@ -70,12 +70,12 @@
 				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="1"/>
 				<ReactiveSequence>					
 					<PubNav2Goal goal_pose="{@highway_in_far}" topic_name="goal_pose" min_pub_interval_ms="500"/>
-					<WaitUntilReached goal_pose="{@highway_in_far}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
+					<WaitUntilReached goal_pose="{@highway_in_far}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
 				</ReactiveSequence>
 				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
 				<!-- 公路入口侧远处-斜坡坡顶-斜坡坡底-堡垒出口侧-补给区 -->
 				<Fallback>
-					<IsRobotNearPose goal_pose="{@supply}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
+					<IsRobotNearPose goal_pose="{@supply}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
 					<NavigateThroughPosesAction	action_name="navigate_through_poses"
 						waypoint_file="behavior_trees/waypoints/test/highway_in_far_to_supply.csv"
 						frame_id="map" current_waypoint="{highway_in_far_to_supply}"/>				
@@ -100,7 +100,7 @@
 				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
 				<!-- 前哨-我方高地点-我方前哨-高地入口-公路出口 -->
 				<Fallback>
-					<IsRobotNearPose goal_pose="{@highway_out}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
+					<IsRobotNearPose goal_pose="{@highway_out}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
 					<NavigateThroughPosesAction	action_name="navigate_through_poses"
 						waypoint_file="behavior_trees/waypoints/test/outpost_to_highway_out.csv"
 						frame_id="map" current_waypoint="{outpost_to_highway_out}"/>				
@@ -111,7 +111,7 @@
 				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="1"/>
 				<ReactiveSequence>					
 					<PubNav2Goal goal_pose="{@highway_in_far}" topic_name="goal_pose" min_pub_interval_ms="500"/>
-					<WaitUntilReached goal_pose="{@highway_in_far}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
+					<WaitUntilReached goal_pose="{@highway_in_far}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
 				</ReactiveSequence>
 				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
 				<!-- 公路入口侧远处-斜坡坡顶-斜坡坡底-堡垒出口侧-补给区 -->
@@ -133,7 +133,7 @@
 
 				<!-- 补给区-堡垒出口-斜坡底部-斜坡顶部-公路路口侧远处-公路入口 -->
 				<Fallback>
-					<IsRobotNearPose goal_pose="{@highway_in}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
+					<IsRobotNearPose goal_pose="{@highway_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
 					<NavigateThroughPosesAction	action_name="navigate_through_poses"
 						waypoint_file="behavior_trees/waypoints/test/supply_to_highway_in.csv"
 						frame_id="map" current_waypoint="{supply_to_highway_in}"/>				
@@ -145,13 +145,13 @@
 				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="1"/>
 				<ReactiveSequence>					
 					<PubNav2Goal goal_pose="{@highland_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
-					<WaitUntilReached goal_pose="{@highland_in}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
+					<WaitUntilReached goal_pose="{@highland_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
 				</ReactiveSequence>
 				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
 
 				<!-- 高地入口-高地-前哨 -->
 				<Fallback>
-					<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
+					<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
 					<NavigateThroughPosesAction	action_name="navigate_through_poses"
 						waypoint_file="behavior_trees/waypoints/test/highland_in_to_outpost.csv"
 						frame_id="map" current_waypoint="{highland_in_to_outpost}"/>				
