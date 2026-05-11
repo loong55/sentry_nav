@@ -1,127 +1,65 @@
 #!/bin/bash
 
-# 首先关闭行为树，再关闭其他ros节点
-# 注意：不使用 set -e，避免 pkill 找不到进程时脚本提前退出
+# 仅关闭 ROS_DOMAIN_ID=5 下启动的 ROS 相关进程，避免影响其他域。
 
-PROCESS_NAMES=(
-  "pb2025_sentry_behavior_client"
-  "pb2025_sentry_behavior_server"
-  "referee_sim_node"
-)
+TARGET_DOMAIN_ID=5
 
-echo "[INFO] 尝试优雅关闭进程: ${PROCESS_NAMES[*]}"
-for name in "${PROCESS_NAMES[@]}"; do
-  if pgrep -f "$name" >/dev/null 2>&1; then
-    pkill -f "$name" || true
-    echo "[INFO] 已发送 SIGTERM -> $name"
+is_target_domain_pid() {
+  local pid="$1"
+  [[ -r "/proc/$pid/environ" ]] || return 1
+
+  tr '\0' '\n' < "/proc/$pid/environ" | grep -qx "ROS_DOMAIN_ID=$TARGET_DOMAIN_ID"
+}
+
+collect_target_pids() {
+  local pid
+  for pid_dir in /proc/[0-9]*; do
+    pid="${pid_dir##*/}"
+    if is_target_domain_pid "$pid"; then
+      printf '%s\n' "$pid"
+    fi
+  done
+}
+
+terminate_target_pids() {
+  local signal="$1"
+  local pid
+  shift
+
+  for pid in "$@"; do
+    if kill "$signal" "$pid" 2>/dev/null; then
+      echo "[INFO] 已发送 $signal -> PID $pid"
+    fi
+  done
+}
+
+echo "--- ROS Domain Reset Script ---"
+echo "[INFO] 目标 ROS_DOMAIN_ID=$TARGET_DOMAIN_ID"
+
+mapfile -t target_pids < <(collect_target_pids)
+
+if [[ ${#target_pids[@]} -eq 0 ]]; then
+  echo "[INFO] 未发现 ROS_DOMAIN_ID=$TARGET_DOMAIN_ID 的进程"
+else
+  echo "[1/3] 优雅关闭目标域进程..."
+  terminate_target_pids -TERM "${target_pids[@]}"
+
+  sleep 2
+
+  mapfile -t remaining_pids < <(collect_target_pids)
+  if [[ ${#remaining_pids[@]} -gt 0 ]]; then
+    echo "[2/3] 强制关闭残留目标域进程..."
+    terminate_target_pids -KILL "${remaining_pids[@]}"
   else
-    echo "[INFO] 未发现进程 -> $name"
+    echo "[2/3] 目标域进程已全部退出"
   fi
-done
+fi
 
+echo "[3/3] 重置 ROS 2 daemon (ROS_DOMAIN_ID=$TARGET_DOMAIN_ID)..."
+export ROS_DOMAIN_ID="$TARGET_DOMAIN_ID"
+ros2 daemon stop >/dev/null 2>&1 || true
 sleep 1
-
-echo "[INFO] 检查并强制关闭残留进程"
-for name in "${PROCESS_NAMES[@]}"; do
-  if pgrep -f "$name" >/dev/null 2>&1; then
-    pkill -9 -f "$name" || true
-    echo "[OK] 已强制关闭 -> $name"
-  else
-    echo "[OK] 已关闭 -> $name"
-  fi
-done
-
-echo "--- ROS 2 Environment Reset Script ---"
-
-# 1. 停止ROS 2守护进程，清理DDS域状态
-echo "[1/4] Stopping ROS 2 daemon..."
-ros2 daemon stop || true
-
-# 2. 强制杀死所有仿真相关进程
-echo "[2/4] Killing simulation and nav2 processes..."
-SIM_PATTERNS=(
-  "refree_sim.sh"
-  "ros2 launch referee_sim referee_sim.launch.py"
-  "referee_sim.launch.py"
-  "referee_sim_node"
-  "gazebo.sh"
-  "simulation_nav.sh"
-  "nav_no_map.sh"
-  "ros2 launch rmu_gazebo_simulator bringup_sim.launch.py"
-  "ros2 launch standard_robot_pp_ros2 standard_robot_pp_ros2.launch.py"
-  "ros2 launch pb2025_nav_bringup rm_navigation_reality_launch.py"
-  "ros2 launch pb2025_nav_bringup rm_navigation_simulation_launch.py"
-  "ros2 launch pb2025_sentry_behavior pb2025_sentry_behavior_launch.py"
-  "bringup_sim.launch.py"
-  "standard_robot_pp_ros2.launch.py"
-  "rm_navigation_reality_launch.py"
-  "rm_navigation_simulation_launch.py"
-  "pb2025_sentry_behavior_launch.py"
-  "ign"
-  "gazebo"
-  "ruby /opt/ros/humble/bin/ros2 launch"
-  "launch_ros"
-  "component_container_isolated"
-  "pointlio_mapping"
-  "slam_toolbox"
-  "terrainAnalysis"
-  "terrainAnalysisExt"
-  "loam_interface"
-  "sensor_scan_generation"
-  "fake_vel_transform"
-  "small_gicp"
-  "pointcloud_to_laserscan"
-  "standard_robot_pp_ros2"
-  "standard_robot_pp_ros2_node"
-  "gimbal_manager"
-  "joint_state_publisher"
-  "robot_state_publisher"
-  "rmu_gazebo_simulator"
-  "joy_node"
-  "pb_teleop_twist_joy_node"
-  "livox_ros_driver2_node"
-  "map_saver_server"
-  "lifecycle_manager"
-  "lifecycle_manager_slam"
-  "lifecycle_manager_navigation"
-  "controller_server"
-  "smoother_server"
-  "planner_server"
-  "behavior_server"
-  "bt_navigator"
-  "waypoint_follower"
-  "velocity_smoother"
-  "static_transform_publisher"
-  "pb2025_nav_bringup"
-  "pb2025_sentry"
-  "rviz2"
-)
-for pattern in "${SIM_PATTERNS[@]}"; do
-  pkill -f "$pattern" || true
-done
-
-# 3. 等待进程退出
-echo "Waiting for processes to exit..."
-sleep 3
-
-# 强制清理残留
-for pattern in "${SIM_PATTERNS[@]}"; do
-  pkill -9 -f "$pattern" || true
-done
-
-# 4. 清理DDS共享内存，防止下次启动时参数加载失败
-echo "[3/4] Cleaning up DDS shared memory..."
-# 清理 FastDDS/CycloneDDS 遗留的共享内存段
-rm -f /dev/shm/fastrtps_* 2>/dev/null || true
-rm -f /dev/shm/*ros* 2>/dev/null || true
-# 清理 boost interprocess 共享内存（ign/gazebo 使用）
-find /dev/shm -maxdepth 1 -name "*.bp" -delete 2>/dev/null || true
-find /tmp -maxdepth 1 -name "launch_params_*" -delete 2>/dev/null || true
-
-# 5. 重新启动ROS 2守护进程
-echo "[4/4] Starting ROS 2 daemon..."
-sleep 1
-ros2 daemon start || true
+ros2 daemon start >/dev/null 2>&1 || true
 
 echo "--- Reset Complete! ---"
-echo "You can now run ./simulation_nav.sh"
+echo "仅处理了 ROS_DOMAIN_ID=$TARGET_DOMAIN_ID 的进程"
