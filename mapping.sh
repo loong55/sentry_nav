@@ -5,6 +5,7 @@ NAV2_PARAMS_NAME="nav2_params.yaml"
 
 source /opt/ros/humble/setup.bash
 source install/setup.bash
+export ROS_DOMAIN_ID=5  # 宿主机在 5 号网段
 
 # Remove known conflicting SDK libusb paths from LD_LIBRARY_PATH for ROS runtime.
 if [ -n "${LD_LIBRARY_PATH}" ]; then

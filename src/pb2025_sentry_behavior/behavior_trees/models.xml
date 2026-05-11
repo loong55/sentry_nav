@@ -55,6 +55,14 @@
             <input_port name="friendly_fortress_gain_point" type="bool" default="false">己方堡垒增益点</input_port>
             <input_port name="key_port" type="pb_rm_interfaces::msg::RfidStatus_&lt;std::allocator&lt;void&gt; &gt;" default="{@referee_rfidStatus}">RfidStatus port on blackboard</input_port>
         </Condition>
+        <Condition ID="IsRobotInAxisAlignedBox">
+            <input_port name="robot_base_frame" type="std::string" default="chassis">Robot base frame</input_port>
+            <input_port name="global_frame" type="std::string" default="map">Global frame for bounds</input_port>
+            <input_port name="max_y" type="double">Upper y bound in global frame</input_port>
+            <input_port name="min_y" type="double">Lower y bound in global frame</input_port>
+            <input_port name="max_x" type="double">Upper x bound in global frame</input_port>
+            <input_port name="min_x" type="double">Lower x bound in global frame</input_port>
+        </Condition>
         <Condition ID="IsRobotNearPose">
             <input_port name="robot_base_frame" type="std::string" default="chassis">Robot base frame</input_port>
             <input_port name="global_frame" type="std::string" default="map">Global frame for the goal pose</input_port>
@@ -141,14 +149,6 @@
         <Action ID="SendNav2Goal">
             <input_port name="goal" type="geometry_msgs::msg::PoseStamped_&lt;std::allocator&lt;void&gt; &gt;" default="0;0;0">Expected goal pose that send to nav2. Fill with format `x;y;yaw`</input_port>
             <input_port name="action_name" type="std::string" default="">Action server name</input_port>
-        </Action>
-        <Action ID="SetControllerSpeedLimit">
-            <input_port name="timeout_ms" type="unsigned int" default="1000">Parameter service timeout in milliseconds</input_port>
-            <input_port name="restore" type="bool" default="false">Restore the cached original vx/vy limits</input_port>
-            <input_port name="vy_max" type="double">Maximum absolute linear Y speed after limiting</input_port>
-            <input_port name="vx_max" type="double">Maximum absolute linear X speed after limiting</input_port>
-            <input_port name="plugin_name" type="std::string" default="FollowPath">Controller plugin name</input_port>
-            <input_port name="controller_node" type="std::string" default="controller_server">Nav2 controller node</input_port>
         </Action>
         <Decorator ID="TickAfterTimeout">
             <input_port name="timeout" type="float">time in s to wait before ticking child again</input_port>

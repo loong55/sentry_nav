@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<root BTCPP_format="4" main_tree_to_execute="supply_outpost_fort">
+<root BTCPP_format="4" main_tree_to_execute="2026test">
   <!-- ========================= 子行为树 ========================= -->	
 	<!-- =====比赛开始条件，没收到裁判系统消息或在未开赛，都返回running===== -->
 	<BehaviorTree ID="check_game_started">
@@ -282,7 +282,7 @@
 	</BehaviorTree>
 
 	<!-- ========================= 主行为树 ========================= -->
-  <BehaviorTree ID="supply_outpost_fort">
+  <BehaviorTree ID="2026test">
     <Sequence>
 			<!-- 比赛开始条件，没收到裁判系统消息或在未开赛，都返回running -->
 			<SubTree ID="check_game_started"/>

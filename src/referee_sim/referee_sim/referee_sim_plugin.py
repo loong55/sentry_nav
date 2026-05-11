@@ -28,8 +28,7 @@ from rclpy.node import Node
 from rqt_gui_py.plugin import Plugin
 from std_srvs.srv import Trigger
 
-from pb_rm_interfaces.msg import GameStatus
-from pb_rm_interfaces.msg import PostureCmd
+from pb_rm_interfaces.msg import ChassisCmd, GameStatus, PostureCmd
 
 
 class RefereeSimPlugin(Plugin):
@@ -46,6 +45,7 @@ class RefereeSimPlugin(Plugin):
         self._start_client = None
         self._game_status_sub = None
         self._posture_sub = None
+        self._chassis_cmd_sub = None
 
         self._widget = QWidget()
         self._widget.setWindowTitle("Referee Simulator")
@@ -60,6 +60,9 @@ class RefereeSimPlugin(Plugin):
         self._ammo_slider, self._ammo_spin = self._make_slider_spin(0, 3000, 300)
 
         self._posture_label = QLabel("MOVE(3)")
+        self._reset_label = QLabel("DISABLE(0)")
+        self._rotate_label = QLabel("DISABLE(0)")
+        self._vy_limit_label = QLabel("DISABLE(0)")
         self._target_label = QLabel("未连接")
 
         self._game_progress_label = QLabel("NOT_START(0)")
@@ -73,6 +76,9 @@ class RefereeSimPlugin(Plugin):
         form.addRow("允许发弹量", self._row_widget(self._ammo_slider, self._ammo_spin))
         form.addRow("连接目标", self._target_label)
         form.addRow("姿态(监听)", self._posture_label)
+        form.addRow("底盘复位(监听)", self._reset_label)
+        form.addRow("底盘旋转(监听)", self._rotate_label)
+        form.addRow("底盘vy限制(监听)", self._vy_limit_label)
         form.addRow("比赛控制", self._start_btn)
         form.addRow("比赛状态", self._game_progress_label)
         form.addRow("剩余时间(s)", self._remain_time_label)
@@ -173,6 +179,12 @@ class RefereeSimPlugin(Plugin):
             self._posture_cb,
             10,
         )
+        self._chassis_cmd_sub = self._node.create_subscription(
+            ChassisCmd,
+            f"{prefix}/cmd_chassis",
+            self._chassis_cmd_cb,
+            10,
+        )
         self._target_label.setText(node_name)
 
     def _disconnect_target(self):
@@ -182,6 +194,9 @@ class RefereeSimPlugin(Plugin):
         if self._posture_sub is not None:
             self._node.destroy_subscription(self._posture_sub)
             self._posture_sub = None
+        if self._chassis_cmd_sub is not None:
+            self._node.destroy_subscription(self._chassis_cmd_sub)
+            self._chassis_cmd_sub = None
         if self._start_client is not None:
             self._node.destroy_client(self._start_client)
             self._start_client = None
@@ -216,6 +231,11 @@ class RefereeSimPlugin(Plugin):
     def _posture_cb(self, msg: PostureCmd):
         self._posture_label.setText(self._posture_to_text(int(msg.posture)))
 
+    def _chassis_cmd_cb(self, msg: ChassisCmd):
+        self._reset_label.setText(self._chassis_flag_to_text(int(msg.reset)))
+        self._rotate_label.setText(self._chassis_flag_to_text(int(msg.rotate)))
+        self._vy_limit_label.setText(self._chassis_flag_to_text(int(msg.vy_limit)))
+
     @staticmethod
     def _progress_to_text(progress: int) -> str:
         mapping = {
@@ -237,6 +257,14 @@ class RefereeSimPlugin(Plugin):
             int(PostureCmd.SPIN): "SPIN(4)",
         }
         return mapping.get(posture, f"UNKNOWN({posture})")
+
+    @staticmethod
+    def _chassis_flag_to_text(value: int) -> str:
+        if value == int(ChassisCmd.ENABLE):
+            return "ENABLE(1)"
+        if value == int(ChassisCmd.DISABLE):
+            return "DISABLE(0)"
+        return f"UNKNOWN({value})"
 
     @staticmethod
     def _make_slider_spin(min_value: int, max_value: int, default_value: int):

@@ -60,6 +60,9 @@ list(APPEND plugin_libs is_detect_enemy)
 ament_auto_add_library(is_robot_near_pose SHARED plugins/condition/is_robot_near_pose.cpp)
 list(APPEND plugin_libs is_robot_near_pose)
 
+ament_auto_add_library(is_robot_in_axis_aligned_box SHARED plugins/condition/is_robot_in_axis_aligned_box.cpp)
+list(APPEND plugin_libs is_robot_in_axis_aligned_box)
+
 ament_auto_add_library(is_atk_op SHARED plugins/condition/is_atk_op.cpp)
 list(APPEND plugin_libs is_atk_op)
 

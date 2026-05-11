@@ -1,3 +1,4 @@
+// Copyright 2026 Huang Hao
 #include "pb2025_sentry_behavior/plugins/condition/is_outpost_hp_healthy.hpp"
 
 namespace pb2025_sentry_behavior

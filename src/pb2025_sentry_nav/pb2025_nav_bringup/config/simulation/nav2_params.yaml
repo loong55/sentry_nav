@@ -390,10 +390,10 @@ controller_server:
       approach_distance: 0.8  #只在最后 0.8m 才限速，避免 1m 以上长时间爬行
       approach_velocity: 0.5  #接近目标时最大速度
       direct_approach_distance: 0.5  #最后 0.5m 直接朝目标点驱动，减少近目标粘滞
-      direct_approach_kp: 3.0  #直接驱动P控制增益
+      direct_approach_kp: 2.0  #直接驱动P控制增益
       time_steps: 80  #增加到80，预测时域4.8s，让MPPI能看到冲过目标的后果
       model_dt: 0.06  #进一步拉长预测时域，降低多点导航时接近路点的绕圈倾向
-      batch_size: 1500 #保留较高采样质量，同时把单周期计算压回 50Hz 预算内。
+      batch_size: 1200 #保留较高采样质量，同时把单周期计算压回 50Hz 预算内。
 
       vx_std: 0.35 #增大采样多样性，让MPPI能采到更多减速/停止轨迹
       vy_std: 0.35

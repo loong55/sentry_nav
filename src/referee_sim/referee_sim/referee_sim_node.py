@@ -7,7 +7,7 @@ from rcl_interfaces.msg import SetParametersResult
 from rclpy.node import Node
 from std_srvs.srv import Trigger
 
-from pb_rm_interfaces.msg import GameRobotHP, GameStatus, PostureCmd, RobotStatus
+from pb_rm_interfaces.msg import ChassisCmd, GameRobotHP, GameStatus, PostureCmd, RobotStatus
 
 
 class RefereeSimNode(Node):
@@ -25,6 +25,9 @@ class RefereeSimNode(Node):
         self._robot_hp = 400
         self._projectile_allowance_17mm = 300
         self._posture = int(PostureCmd.MOVE)
+        self._chassis_reset = int(ChassisCmd.DISABLE)
+        self._chassis_rotate = int(ChassisCmd.DISABLE)
+        self._chassis_vy_limit = int(ChassisCmd.DISABLE)
 
         self._last_robot_hp = self._robot_hp
 
@@ -37,6 +40,9 @@ class RefereeSimNode(Node):
         self._game_status_pub = self.create_publisher(GameStatus, "referee/game_status", 10)
         self._posture_sub = self.create_subscription(
             PostureCmd, "cmd_posture", self._posture_cb, 10
+        )
+        self._chassis_cmd_sub = self.create_subscription(
+            ChassisCmd, "cmd_chassis", self._chassis_cmd_cb, 10
         )
 
         self.create_service(Trigger, "referee_sim/start_game", self._start_game_cb)
@@ -75,6 +81,11 @@ class RefereeSimNode(Node):
 
     def _posture_cb(self, msg: PostureCmd) -> None:
         self._posture = self._normalize_posture(int(msg.posture))
+
+    def _chassis_cmd_cb(self, msg: ChassisCmd) -> None:
+        self._chassis_reset = self._normalize_chassis_flag(int(msg.reset))
+        self._chassis_rotate = self._normalize_chassis_flag(int(msg.rotate))
+        self._chassis_vy_limit = self._normalize_chassis_flag(int(msg.vy_limit))
 
     def _start_game_cb(self, _request: Trigger.Request, response: Trigger.Response) -> Trigger.Response:
         self._phase = "countdown"
@@ -156,6 +167,7 @@ class RefereeSimNode(Node):
         self.get_logger().info(
             (
                 "base_hp=%d outpost_hp=%d robot_hp=%d ammo=%d posture=%d "
+                "reset=%s rotate=%s vy_limit=%s "
                 "game_status=%s remain_time=%ds"
             )
             % (
@@ -164,6 +176,9 @@ class RefereeSimNode(Node):
                 self._robot_hp,
                 self._projectile_allowance_17mm,
                 self._posture,
+                self._chassis_flag_to_text(self._chassis_reset),
+                self._chassis_flag_to_text(self._chassis_rotate),
+                self._chassis_flag_to_text(self._chassis_vy_limit),
                 status_text,
                 self._remain_time,
             )
@@ -188,6 +203,18 @@ class RefereeSimNode(Node):
         ):
             return value
         return int(PostureCmd.OFF)
+
+    @staticmethod
+    def _normalize_chassis_flag(value: int) -> int:
+        if value == int(ChassisCmd.ENABLE):
+            return int(ChassisCmd.ENABLE)
+        return int(ChassisCmd.DISABLE)
+
+    @staticmethod
+    def _chassis_flag_to_text(value: int) -> str:
+        if value == int(ChassisCmd.ENABLE):
+            return "ENABLE(1)"
+        return "DISABLE(0)"
 
     @staticmethod
     def _progress_to_text(progress: int) -> str:
