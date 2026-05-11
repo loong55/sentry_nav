@@ -23,7 +23,7 @@ pb2025_sentry_behavior_server:
     fort_out:  # 堡垒出口侧  
       frame_id: "map"
       position:
-        x: 2.00
+        x: 1.6
         y: 0.00
         z: 0.0
       orientation:

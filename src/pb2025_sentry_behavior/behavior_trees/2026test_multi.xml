@@ -388,7 +388,7 @@
 				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="1"/>
 				<ReactiveSequence>					
 					<PubNav2Goal goal_pose="{@highland_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
-					<WaitUntilReached goal_pose="{@highland_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					<WaitUntilReached goal_pose="{@highland_in}" tolerance="0.5" global_frame="map" robot_base_frame="chassis"/>
 				</ReactiveSequence>
 				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
 
