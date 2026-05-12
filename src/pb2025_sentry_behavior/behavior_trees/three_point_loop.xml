@@ -61,11 +61,11 @@
 
 					<!-- 开启底盘y轴速度限制 -->
 					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="1"/>
-					<Sleep msec="3000"/>
+					<Sleep msec="5000"/>
 
 					<!-- 关闭底盘y轴速度限制 -->
-					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
-					<Sleep msec="3000"/>
+					<!-- <PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/> -->
+					<!-- <Sleep msec="5000"/> -->
 
 					<!-- <PubNav2Goal goal="0.0;0.0;0.0" topic_name="goal_pose" min_pub_interval_ms="500"/> -->
 					<!-- 目标点1：未到堡垒前持续发点，到达后才进入下一个目标点 -->
