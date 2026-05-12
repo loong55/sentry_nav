@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4" main_tree_to_execute="supply_to_highway_in_loop">
+	<!-- =======================补给区到前哨往返========================== -->
+	<BehaviorTree ID="supply_to_highway_in_loop">
+		<Repeat num_cycles="-1">
+			<SequenceWithMemory>
+				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+				<Sleep msec="2000"/>
+				<!-- 补给区-堡垒出口-斜坡底部-斜坡顶部-公路入口侧远处-前哨入口 -->
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@fort_out}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@fort_out}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@ramp_base}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@ramp_base}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@ramp_top}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@ramp_top}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@highway_in_far}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@highway_in_far}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@highway_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@highway_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+
+				<!-- 到前哨入口后停留10秒 -->
+				<Sleep msec="10000"/>
+
+				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+
+				<!-- 原路返回补给区 -->
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@highway_in_far}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@highway_in_far}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@ramp_top}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@ramp_top}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@ramp_base}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@ramp_base}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@fort_out}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@fort_out}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@supply}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@supply}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+			</SequenceWithMemory>
+		</Repeat>
+	</BehaviorTree>
+</root>
