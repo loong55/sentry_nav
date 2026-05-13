@@ -27,6 +27,7 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "nav_msgs/msg/path.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "tf2/LinearMath/Quaternion.h"
 #include "tf2_ros/transform_broadcaster.h"
 
 namespace fake_vel_transform
@@ -75,6 +76,7 @@ private:
   std::mutex cmd_vel_mutex_;
   geometry_msgs::msg::Twist::SharedPtr latest_cmd_vel_;
   double current_robot_base_angle_;
+  tf2::Quaternion current_robot_base_orientation_;
   rclcpp::Time last_controller_activate_time_;
 };
 

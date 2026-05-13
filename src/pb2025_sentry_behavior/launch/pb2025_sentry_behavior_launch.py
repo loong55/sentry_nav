@@ -18,7 +18,7 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, GroupAction, SetEnvironmentVariable
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node, PushRosNamespace, SetRemap
 from launch_ros.descriptions import ParameterFile
 from nav2_common.launch import RewrittenYaml
@@ -32,11 +32,15 @@ def generate_launch_description():
     namespace = LaunchConfiguration("namespace")
     use_sim_time = LaunchConfiguration("use_sim_time")
     params_file = LaunchConfiguration("params_file")
-    pose_params_file = LaunchConfiguration("pose_params_file")
+    pose = LaunchConfiguration("pose")
+    target_tree = LaunchConfiguration("target_tree")
     log_level = LaunchConfiguration("log_level")
 
     # Create our own temporary YAML files that include substitutions
-    param_substitutions = {"use_sim_time": use_sim_time}
+    param_substitutions = {
+        "use_sim_time": use_sim_time,
+        "target_tree": target_tree,
+    }
 
     configured_params = ParameterFile(
         RewrittenYaml(
@@ -50,7 +54,7 @@ def generate_launch_description():
 
     configured_pose_params = ParameterFile(
         RewrittenYaml(
-            source_file=pose_params_file,
+            source_file=PathJoinSubstitution([bringup_dir, "params", pose]),
             root_key=namespace,
             param_rewrites=param_substitutions,
             convert_types=True,
@@ -83,10 +87,16 @@ def generate_launch_description():
         description="Full path to the ROS2 parameters file to use for all launched nodes",
     )
 
-    declare_pose_params_file_cmd = DeclareLaunchArgument(
-        "pose_params_file",
-        default_value=os.path.join(bringup_dir, "params", "pose.yaml"),
-        description="Full path to the pose parameters file loaded into the behavior tree blackboard",
+    declare_pose_cmd = DeclareLaunchArgument(
+        "pose",
+        default_value="pose.yaml",
+        description="Pose parameter file name under pb2025_sentry_behavior/params",
+    )
+
+    declare_target_tree_cmd = DeclareLaunchArgument(
+        "target_tree",
+        default_value="2026rmuc",
+        description="Behavior tree name requested by pb2025_sentry_behavior_client",
     )
 
     declare_log_level_cmd = DeclareLaunchArgument(
@@ -128,7 +138,8 @@ def generate_launch_description():
     ld.add_action(declare_namespace_cmd)
     ld.add_action(declare_use_sim_time_cmd)
     ld.add_action(declare_params_file_cmd)
-    ld.add_action(declare_pose_params_file_cmd)
+    ld.add_action(declare_pose_cmd)
+    ld.add_action(declare_target_tree_cmd)
     ld.add_action(declare_log_level_cmd)
 
     # Add the actions to launch the nodes

@@ -5,17 +5,8 @@ pb2025_sentry_behavior_server:
     supply:  # 补给区
       frame_id: "map"
       position:
-        x: -1.79393
-        y: -4.63973
-        z: 0.0
-      orientation:
-        w: 1.0
-
-    supply_in:  # 补给区入口
-      frame_id: "map"
-      position:
-        x: -0.556565
-        y: -1.43198
+        x: 0.0
+        y: 0.0
         z: 0.0
       orientation:
         w: 1.0
@@ -23,17 +14,17 @@ pb2025_sentry_behavior_server:
     fort:  # 堡垒 
       frame_id: "map"
       position:
-        x: 2.69885
-        y: 0.551228
+        x: 0.75
+        y: 1.80
         z: 0.0
       orientation:
         w: 1.0
     
-    ramp_base_in:  # 斜坡坡底入口  
+    fort_out:  # 堡垒出口侧  
       frame_id: "map"
       position:
-        x: 4.12507
-        y: -2.22003
+        x: 1.6
+        y: 0.00
         z: 0.0
       orientation:
         w: 1.0
@@ -41,8 +32,8 @@ pb2025_sentry_behavior_server:
     ramp_base:  # 斜坡坡底 
       frame_id: "map"
       position:
-        x: 4.09349
-        y: -3.87275
+        x: 2.32
+        y: -1.70
         z: 0.0
       orientation:
         w: 1.0
@@ -50,54 +41,44 @@ pb2025_sentry_behavior_server:
     ramp_top:  # 斜坡坡顶  
       frame_id: "map"
       position:
-        x: 0.59566
-        y: -3.9733
+        x: -0.50
+        y: -1.70
         z: 0.0
       orientation:
         w: 1.0
 
-    highway_in:  # 公路入口
+    highway_in:  # 公路入口侧
       frame_id: "map"
       position:
-        x: 0.775022
-        y: -5.90292
+        x: -0.10
+        y: -3.15
         z: 0.0
       orientation:
         w: 1.0
 
-    highway_in_far:  # 公路入口远处
+    highway_in_far:  # 公路入口侧远处
       frame_id: "map"
       position:
-        x: 0.291161
-        y: -5.90667
+        x: -0.8
+        y: -3.15
         z: 0.0
       orientation:
         w: 1.0    
 
-    highway_out:  # 公路出口
+    highway_out:  # 公路出口侧
       frame_id: "map"
       position:
-        x: 4.33052
-        y: -5.89746
+        x: 2.80
+        y: -3.30
         z: 0.0
       orientation:
         w: 1.0
 
-    highway_out_far:  # 公路出口远处
+    highland_in:  # 高地入口侧
       frame_id: "map"
       position:
-        x: 7.06813
-        y: -5.88858
-        z: 0.0
-      orientation:
-        w: 1.0
-        
-
-    highland_in:  # 高地入口
-      frame_id: "map"
-      position:
-        x: 9.76482
-        y: -3.35477
+        x: 4.5
+        y: -3.15
         z: 0.0
       orientation:
         w: 1.0
@@ -105,8 +86,8 @@ pb2025_sentry_behavior_server:
     highland:  # 高地
       frame_id: "map"
       position:
-        x: 13.2577
-        y: -0.64544
+        x: 5.0
+        y: -1.5
         z: 0.0
       orientation:
         w: 1.0
@@ -114,35 +95,26 @@ pb2025_sentry_behavior_server:
     outpost:  # 前哨
       frame_id: "map"
       position:
-        x: 12.425
-        y: 2.891
+        x: 6.0
+        y: -0.5
         z: 0.0
       orientation:
         w: 1.0
 
-    outpost_out:  # 前哨出口
+    highland_my:  # 我方高地点
       frame_id: "map"
       position:
-        x: 7.7124
-        y: 3.33622
+        x: 4.5
+        y: 0.0
         z: 0.0
       orientation:
         w: 1.0
 
-    highland_my:  # 我方高地
+    outpost_my:  # 我方前哨点
       frame_id: "map"
       position:
-        x: 7.05861
-        y: -0.646481
-        z: 0.0
-      orientation:
-        w: 1.0
-
-    outpost_my:  # 我方前哨
-      frame_id: "map"
-      position:
-        x: 8.18607
-        y: -3.28241
+        x: 5.0
+        y: -2.0
         z: 0.0
       orientation:
         w: 1.0        

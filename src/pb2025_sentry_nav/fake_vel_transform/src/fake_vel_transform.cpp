@@ -75,6 +75,8 @@ FakeVelTransform::FakeVelTransform(const rclcpp::NodeOptions & options)
   // 50Hz Timer to send transform from `robot_base_frame` to `fake_robot_base_frame`
   timer_ = this->create_wall_timer(
     std::chrono::milliseconds(20), std::bind(&FakeVelTransform::publishTransform, this));
+
+  current_robot_base_orientation_.setRPY(0.0, 0.0, 0.0);
 }
 
 void FakeVelTransform::cmdSpinCallback(const example_interfaces::msg::Float32::SharedPtr msg)
@@ -86,7 +88,12 @@ void FakeVelTransform::odometryCallback(const nav_msgs::msg::Odometry::ConstShar
 {
   // NOTE: Haven't synced with local_plan
   if ((rclcpp::Clock().now() - last_controller_activate_time_).seconds() > CONTROLLER_TIMEOUT) {
-    current_robot_base_angle_ = tf2::getYaw(msg->pose.pose.orientation);
+    current_robot_base_orientation_ = tf2::Quaternion(
+      msg->pose.pose.orientation.x,
+      msg->pose.pose.orientation.y,
+      msg->pose.pose.orientation.z,
+      msg->pose.pose.orientation.w);
+    current_robot_base_angle_ = tf2::getYaw(current_robot_base_orientation_);
   }
 }
 
@@ -125,7 +132,12 @@ void FakeVelTransform::syncCallback(
     current_cmd_vel = latest_cmd_vel_;
   }
 
-  current_robot_base_angle_ = tf2::getYaw(odom_msg->pose.pose.orientation);
+  current_robot_base_orientation_ = tf2::Quaternion(
+    odom_msg->pose.pose.orientation.x,
+    odom_msg->pose.pose.orientation.y,
+    odom_msg->pose.pose.orientation.z,
+    odom_msg->pose.pose.orientation.w);
+  current_robot_base_angle_ = tf2::getYaw(current_robot_base_orientation_);
   float yaw_diff = current_robot_base_angle_;
   geometry_msgs::msg::Twist aft_tf_vel = transformVelocity(current_cmd_vel, yaw_diff);
 
@@ -138,8 +150,8 @@ void FakeVelTransform::publishTransform()
   t.header.stamp = this->get_clock()->now();
   t.header.frame_id = robot_base_frame_;
   t.child_frame_id = fake_robot_base_frame_;
-  tf2::Quaternion q;
-  q.setRPY(0, 0, -current_robot_base_angle_);
+  tf2::Quaternion q = current_robot_base_orientation_.inverse();
+  q.normalize();
   t.transform.rotation = tf2::toMsg(q);
   tf_broadcaster_->sendTransform(t);
 }
