@@ -25,6 +25,7 @@ src/pb2025_sentry_nav/pb2025_nav_bringup/pcd/simulation/*.pcd
 
 # 例外：允许跟踪行为树位姿参数（全局 *.yaml 规则会忽略否则）
 !src/pb2025_sentry_behavior/params/pose.yaml
+!src/pb2025_sentry_behavior/params/pose_rmuc.yaml
 
 # 允许完整跟踪 pb2025_nav_bringup 目录
 !src/pb2025_sentry_nav/pb2025_nav_bringup/**

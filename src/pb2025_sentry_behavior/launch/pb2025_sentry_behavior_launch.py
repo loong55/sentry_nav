@@ -32,6 +32,7 @@ def generate_launch_description():
     namespace = LaunchConfiguration("namespace")
     use_sim_time = LaunchConfiguration("use_sim_time")
     params_file = LaunchConfiguration("params_file")
+    pose_params_file = LaunchConfiguration("pose_params_file")
     log_level = LaunchConfiguration("log_level")
 
     # Create our own temporary YAML files that include substitutions
@@ -47,10 +48,9 @@ def generate_launch_description():
         allow_substs=True,
     )
 
-    pose_yaml_path = os.path.join(bringup_dir, "params", "pose.yaml")
     configured_pose_params = ParameterFile(
         RewrittenYaml(
-            source_file=pose_yaml_path,
+            source_file=pose_params_file,
             root_key=namespace,
             param_rewrites=param_substitutions,
             convert_types=True,
@@ -81,6 +81,12 @@ def generate_launch_description():
         "params_file",
         default_value=os.path.join(bringup_dir, "params", "sentry_behavior.yaml"),
         description="Full path to the ROS2 parameters file to use for all launched nodes",
+    )
+
+    declare_pose_params_file_cmd = DeclareLaunchArgument(
+        "pose_params_file",
+        default_value=os.path.join(bringup_dir, "params", "pose.yaml"),
+        description="Full path to the pose parameters file loaded into the behavior tree blackboard",
     )
 
     declare_log_level_cmd = DeclareLaunchArgument(
@@ -122,6 +128,7 @@ def generate_launch_description():
     ld.add_action(declare_namespace_cmd)
     ld.add_action(declare_use_sim_time_cmd)
     ld.add_action(declare_params_file_cmd)
+    ld.add_action(declare_pose_params_file_cmd)
     ld.add_action(declare_log_level_cmd)
 
     # Add the actions to launch the nodes

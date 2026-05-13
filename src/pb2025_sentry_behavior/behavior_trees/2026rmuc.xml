@@ -1,87 +1,680 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<root BTCPP_format="4">
-  <!-- ========================= 子行为树 ========================= -->
-  <BehaviorTree ID="check_game_started">
-    <IsGameStatus min_remain_time="0" max_remain_time="420"
-                  expected_game_progress="4" key_port="{@referee_gameStatus}"/>
-  </BehaviorTree>
+<root BTCPP_format="4" main_tree_to_execute="2026rmuc">
+  <!-- ========================= 子行为树 ========================= -->	
+	<!-- =====比赛开始条件，没收到裁判系统消息或在未开赛，都返回running===== -->
+	<BehaviorTree ID="check_game_started_2026rmuc">
+		<IsGameStatus min_remain_time="0" max_remain_time="420"
+									expected_game_progress="4" key_port="{@referee_gameStatus}"
+									wait_for_message="true"	wait_until_expected="true"/>
+	</BehaviorTree>
 
-  <BehaviorTree ID="return_to_supply_on_bad_status">
-    <Sequence>
-      <Inverter>
-        <IsStatusOK ammo_min="20" hp_min="150" key_port="{@referee_robotStatus}"/>
-      </Inverter>
-      <PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
-      <PubNav2Goal goal="-0.73;-6.33;0" topic_name="goal_pose"/>
-    </Sequence>
-  </BehaviorTree>
+	<!-- ======================= 补给区到堡垒往返 ========================== -->
+	<BehaviorTree ID="supply_fort_loop_2026rmuc">
+		<!-- 反应式选择，下一轮tick无论前面节点啥状态，都会从头tick,直到有一个成功 -->
+		<ReactiveFallback>
 
-  <BehaviorTree ID="return_to_fortress_on_bad_base">
-    <Sequence>
-      <Inverter>
-        <IsBaseHPHealthy base_hp_min="3000" key_port="{@referee_allRobotHP}"/>
-      </Inverter>
-      <PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
-      <PubNav2Goal goal="2.8;-0.2;0" topic_name="goal_pose"/>
-    </Sequence>
-  </BehaviorTree>
+			<!-- 低血低弹时持续占住回补分支，直到真的到补给区并补健康 -->
+			<SequenceWithMemory>
+				<NeedSupply key_port="{@referee_robotStatus}" enter_hp_below="150" enter_ammo_below="20" exit_hp_min="350" exit_ammo_min="200"/>
+				<Fallback>
+					<Sequence>
+						<IsRobotNearPose goal_pose="{@supply}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
+						<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
+						<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
+					</Sequence>			
 
-  <BehaviorTree ID="attack_outpost">
-    <Sequence>
-      <PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
-      <PubNav2Goal goal="11.75;1.25;0" topic_name="goal_pose"/>
-      <PubNav2Goal goal="12.3;-3.35;0" topic_name="goal_pose"/>
-      <PublishPostureCmd topic_name="cmd_posture" posture="4" reason="0" force_switch="true"/>
-    </Sequence>
-  </BehaviorTree>
+					<!-- 已经进入补给区但被挤开时，直接重发补给区点 -->
+					<Sequence>
+						<IsRobotNearPose goal_pose="{@supply}" tolerance="1.0" global_frame="map" robot_base_frame="chassis"/>
+						<Inverter>
+							<IsRobotNearPose goal_pose="{@supply}" tolerance="0.4" global_frame="map" robot_base_frame="chassis"/>
+						</Inverter>
+						<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+						<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+						<ReactiveSequence>
+							<PubNav2Goal goal_pose="{@supply}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+							<WaitUntilReached goal_pose="{@supply}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
+						</ReactiveSequence>
+						<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
+						<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
+					</Sequence>
 
-  <!-- ========================= 主行为树 ========================= -->
+					<!-- 不在以上位置，则执行堡垒-补给区入口-补给区 -->
+					<SequenceWithMemory>
+						<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+						<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+						<ReactiveSequence>
+							<PubNav2Goal goal_pose="{@supply_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+							<WaitUntilReached goal_pose="{@supply_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+						</ReactiveSequence>
+						<ReactiveSequence>
+							<PubNav2Goal goal_pose="{@supply}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+							<WaitUntilReached goal_pose="{@supply}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
+						</ReactiveSequence>
+						<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
+						<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
+					</SequenceWithMemory>
+				</Fallback>
+			</SequenceWithMemory>
+
+			<!-- 已经站上堡垒或仅有轻微扰动时，保持驻守，不要立刻触发重占振荡 -->
+			<Sequence>
+				<IsRobotNearPose goal_pose="{@fort}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
+			</Sequence>
+
+			<!-- 已经进入堡垒作战区但被挤开时，直接重发堡垒点，不回退到补给区侧首点 -->
+			<Sequence>
+				<IsRobotNearPose goal_pose="{@fort}" tolerance="1.2" global_frame="map" robot_base_frame="chassis"/>
+				<Inverter>
+					<IsRobotNearPose goal_pose="{@fort}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</Inverter>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@fort}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@fort}" tolerance="0.25" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
+			</Sequence>
+
+			<!-- 补给区去堡垒记忆序列（高血高弹出发），按补给区入口再到堡垒逐点通过 -->
+			<SequenceWithMemory>
+				<Inverter>
+					<IsRobotNearPose goal_pose="{@fort}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</Inverter>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@supply_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@supply_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@fort}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@fort}" tolerance="0.25" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
+			</SequenceWithMemory>
+
+			<!-- 保底选择成功，导致无限循环 -->
+			<AlwaysSuccess/>
+		</ReactiveFallback>
+	</BehaviorTree>
+
+  <!-- =======================前哨去补给区子树========================== -->
+	<BehaviorTree ID="outpost_to_supply_2026rmuc">
+		<!-- 反应式选择，下一轮tick无论前面节点啥状态，都会从头tick,直到有一个成功 -->
+		<ReactiveFallback>
+			<SequenceWithMemory>
+
+				<!-- 导航前先关小陀螺发布移动姿态（3） -->
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+				<!-- 前哨-前哨出口-我方高地点-我方前哨-公路出口远处-公路出口 -->
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@outpost_out}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@outpost_out}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>				 
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@highland_my}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@highland_my}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@outpost_my}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@outpost_my}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@highway_out_far}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@highway_out_far}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@highway_out}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@highway_out}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<!-- 公路出口-公路入口侧远处，先底盘复位2秒，再限制vy速度，出去后恢复速度 -->
+				<PublishChassisCmd topic_name="cmd_chassis" reset="1" rotate="0" vy_limit="0"/>
+				<Sleep msec="2000"/>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="1"/>
+				<ReactiveSequence>					
+					<PubNav2Goal goal_pose="{@highway_in_far}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@highway_in_far}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+				<!-- 公路入口侧远处-斜坡坡顶-斜坡坡底-斜坡坡底入口-补给区入口-补给区 -->
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@ramp_top}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@ramp_top}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@ramp_base}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@ramp_base}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@ramp_base_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@ramp_base_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@supply_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@supply_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@supply}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@supply}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
+			</SequenceWithMemory>			
+			<!-- 保底选择成功，导致无限循环 -->
+			<AlwaysSuccess/>
+		</ReactiveFallback>
+	</BehaviorTree>
+
+	<!-- =======================基地低血时安全回补给区========================== -->
+	<BehaviorTree ID="base_low_return_to_supply_2026rmuc">
+		<ReactiveFallback>
+			<!-- 位于公路区间内时，不复位，只限制vy通过公路 -->
+			<Sequence>
+				<IsRobotInAxisAlignedBox min_x="1.3" max_x="3.77" min_y="-6.9" max_y="-4.97" global_frame="map" robot_base_frame="chassis"/>
+				<SequenceWithMemory>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="1"/>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@highway_in_far}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@highway_in_far}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@ramp_top}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@ramp_top}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@ramp_base}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@ramp_base}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@ramp_base_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@ramp_base_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@supply_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@supply_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@supply}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@supply}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
+				</SequenceWithMemory>
+			</Sequence>
+
+			<!-- 已经在前哨出口/我方高地/我方前哨时，优先扩大覆盖范围；与 highland_in 靠近允许少量重叠 -->
+			<Sequence>
+				<Fallback>
+					<IsRobotNearPose goal_pose="{@outpost_out}" tolerance="1.4" global_frame="map" robot_base_frame="chassis"/>
+					<IsRobotNearPose goal_pose="{@highland_my}" tolerance="1.8" global_frame="map" robot_base_frame="chassis"/>
+					<IsRobotNearPose goal_pose="{@outpost_my}" tolerance="1.6" global_frame="map" robot_base_frame="chassis"/>
+				</Fallback>
+				<SequenceWithMemory>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+					<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@highland_my}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@highland_my}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@outpost_my}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@outpost_my}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@highway_out_far}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@highway_out_far}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@highway_out}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@highway_out}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="1" rotate="0" vy_limit="0"/>
+					<Sleep msec="2000"/>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="1"/>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@highway_in_far}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@highway_in_far}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@ramp_top}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@ramp_top}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@ramp_base}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@ramp_base}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@ramp_base_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@ramp_base_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@supply_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@supply_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@supply}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@supply}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
+				</SequenceWithMemory>
+			</Sequence>
+
+			<!-- 已经在公路出口远侧/高地/前哨时，放宽覆盖；和 outpost_my / highland_in 的近邻重叠允许存在 -->
+			<Sequence>
+				<Fallback>
+					<IsRobotNearPose goal_pose="{@outpost}" tolerance="2.4" global_frame="map" robot_base_frame="chassis"/>
+					<IsRobotNearPose goal_pose="{@highland}" tolerance="1.8" global_frame="map" robot_base_frame="chassis"/>
+					<IsRobotNearPose goal_pose="{@highland_in}" tolerance="1.6" global_frame="map" robot_base_frame="chassis"/>
+					<IsRobotNearPose goal_pose="{@highway_out_far}" tolerance="1.2" global_frame="map" robot_base_frame="chassis"/>
+				</Fallback>
+				<SequenceWithMemory>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+					<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@highland}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@highland}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@highland_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@highland_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@highway_out_far}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@highway_out_far}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>					
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@highway_out}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@highway_out}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="1" rotate="0" vy_limit="0"/>
+					<Sleep msec="2000"/>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="1"/>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@highway_in_far}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@highway_in_far}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@ramp_top}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@ramp_top}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@ramp_base}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@ramp_base}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@ramp_base_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@ramp_base_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@supply_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@supply_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@supply}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@supply}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
+				</SequenceWithMemory>
+			</Sequence>
+
+			<!-- 不在公路区间内但还在出口外侧时，保留 highway_out 独立分支，避免公路中段误选 -->
+			<Sequence>
+				<Inverter>
+					<IsRobotInAxisAlignedBox min_x="1.3" max_x="3.77" min_y="-6.9" max_y="-4.97" global_frame="map" robot_base_frame="chassis"/>
+				</Inverter>
+				<IsRobotNearPose goal_pose="{@highway_out}" tolerance="1.1" global_frame="map" robot_base_frame="chassis"/>
+				<SequenceWithMemory>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+					<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="1" rotate="0" vy_limit="0"/>
+					<Sleep msec="2000"/>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="1"/>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@highway_in_far}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@highway_in_far}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@ramp_top}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@ramp_top}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@ramp_base}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@ramp_base}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@ramp_base_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@ramp_base_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@supply_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@supply_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@supply}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@supply}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
+				</SequenceWithMemory>
+			</Sequence>
+
+			<!-- 已经回到公路补给侧附近时，优先覆盖公路内侧到坡顶这一整段 -->
+			<Sequence>
+				<Fallback>
+					<IsRobotNearPose goal_pose="{@highway_in_far}" tolerance="1.2" global_frame="map" robot_base_frame="chassis"/>
+					<IsRobotNearPose goal_pose="{@ramp_top}" tolerance="1.4" global_frame="map" robot_base_frame="chassis"/>
+				</Fallback>
+				<SequenceWithMemory>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+					<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@highway_in_far}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@highway_in_far}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@ramp_top}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@ramp_top}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@ramp_base}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@ramp_base}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@ramp_base_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@ramp_base_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@supply_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@supply_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@supply}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@supply}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
+				</SequenceWithMemory>
+			</Sequence>
+
+			<!-- 已经在斜坡下半段或补给区入口前时，优先走坡底入口回补，覆盖斜坡回家场景 -->
+			<Sequence>
+				<Fallback>
+					<IsRobotNearPose goal_pose="{@ramp_base}" tolerance="1.8" global_frame="map" robot_base_frame="chassis"/>
+					<IsRobotNearPose goal_pose="{@ramp_base_in}" tolerance="2.2" global_frame="map" robot_base_frame="chassis"/>
+				</Fallback>
+				<SequenceWithMemory>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+					<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@ramp_base_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@ramp_base_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@supply_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@supply_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@supply}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@supply}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
+				</SequenceWithMemory>
+			</Sequence>
+
+			<!-- 已经进入补给区入口附近或补给区内时，直接走最后一段，避免和斜坡回家互相干涉 -->
+			<Sequence>
+				<Fallback>
+					<IsRobotNearPose goal_pose="{@supply_in}" tolerance="1.8" global_frame="map" robot_base_frame="chassis"/>
+					<IsRobotNearPose goal_pose="{@supply}" tolerance="1.0" global_frame="map" robot_base_frame="chassis"/>
+				</Fallback>
+				<SequenceWithMemory>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+					<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@supply_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@supply_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<ReactiveSequence>
+						<PubNav2Goal goal_pose="{@supply}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+						<WaitUntilReached goal_pose="{@supply}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					</ReactiveSequence>
+					<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
+					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
+				</SequenceWithMemory>
+			</Sequence>
+
+			<!-- 兜底仍走逐点返程，不允许低基地血时直线回拉 -->
+			<SubTree ID="outpost_to_supply_2026rmuc"/>
+		</ReactiveFallback>
+	</BehaviorTree>
+
+	<!-- =======================补给区到前哨往返========================== -->
+	<BehaviorTree ID="supply_outpost_loop_2026rmuc">
+		<!-- 反应式选择，下一轮tick无论前面节点啥状态，都会从头tick,直到有一个成功 -->
+		<ReactiveFallback>
+
+			<!-- 前哨回补给区反应式序列，低血低弹时持续门控，回血后立刻退出回补 -->
+			<ReactiveSequence>
+				<NeedSupply key_port="{@referee_robotStatus}" enter_hp_below="150" enter_ammo_below="20" exit_hp_min="350" exit_ammo_min="200"/>
+				<Fallback>
+					<!-- 在补给区，关移动姿态回血-->
+					<Sequence>
+						<IsRobotNearPose goal_pose="{@supply}" tolerance="0.5" global_frame="map" robot_base_frame="chassis"/>
+						<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
+						<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+					</Sequence>
+					<!-- 在补给区附近但被挤开，自动回去-->
+					<Sequence>
+						<Fallback>
+							<IsRobotNearPose goal_pose="{@supply}" tolerance="1.5" global_frame="map" robot_base_frame="chassis"/>
+							<IsRobotNearPose goal_pose="{@supply_in}" tolerance="0.8" global_frame="map" robot_base_frame="chassis"/>
+						</Fallback>
+						<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+						<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+						<ReactiveSequence>
+							<PubNav2Goal goal_pose="{@supply}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+							<WaitUntilReached goal_pose="{@supply}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+						</ReactiveSequence>
+						<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
+						<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+					</Sequence>
+					<!-- 不在补给区附近，说明在前哨，从前哨回补给区-->
+					<SequenceWithMemory>
+						<!-- 导航前先关小陀螺发布移动姿态（3） -->
+						<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+						<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+						<!-- 前哨-前哨出口-我方高地点-我方前哨-公路出口远处-公路出口，逐点确认避免穿越导航在前几段间回拉 -->
+						<ReactiveSequence>
+							<PubNav2Goal goal_pose="{@outpost_out}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+							<WaitUntilReached goal_pose="{@outpost_out}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+						</ReactiveSequence>
+						<ReactiveSequence>
+							<PubNav2Goal goal_pose="{@highland_my}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+							<WaitUntilReached goal_pose="{@highland_my}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+						</ReactiveSequence>
+						<ReactiveSequence>
+							<PubNav2Goal goal_pose="{@outpost_my}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+							<WaitUntilReached goal_pose="{@outpost_my}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+						</ReactiveSequence>
+						<ReactiveSequence>
+							<PubNav2Goal goal_pose="{@highway_out_far}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+							<WaitUntilReached goal_pose="{@highway_out_far}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+						</ReactiveSequence>
+						<ReactiveSequence>
+							<PubNav2Goal goal_pose="{@highway_out}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+							<WaitUntilReached goal_pose="{@highway_out}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+						</ReactiveSequence>
+						<!-- 公路出口-公路入口侧远处，先底盘复位2秒，再限制vy速度，出去后恢复速度 -->
+						<PublishChassisCmd topic_name="cmd_chassis" reset="1" rotate="0" vy_limit="0"/>
+						<Sleep msec="2000"/>
+						<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="1"/>
+						<ReactiveSequence>
+							<PubNav2Goal goal_pose="{@highway_in_far}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+							<WaitUntilReached goal_pose="{@highway_in_far}" tolerance="0.5" global_frame="map" robot_base_frame="chassis"/>
+						</ReactiveSequence>
+						<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+						<!-- 公路入口侧远处-斜坡坡顶-斜坡坡底-斜坡坡底入口-补给区入口-补给区，逐点确认避免穿越导航在前两点间回拉 -->
+						<ReactiveSequence>
+							<PubNav2Goal goal_pose="{@ramp_top}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+							<WaitUntilReached goal_pose="{@ramp_top}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+						</ReactiveSequence>
+						<ReactiveSequence>
+							<PubNav2Goal goal_pose="{@ramp_base}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+							<WaitUntilReached goal_pose="{@ramp_base}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+						</ReactiveSequence>
+						<ReactiveSequence>
+							<PubNav2Goal goal_pose="{@ramp_base_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+							<WaitUntilReached goal_pose="{@ramp_base_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+						</ReactiveSequence>
+						<ReactiveSequence>
+							<PubNav2Goal goal_pose="{@supply_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+							<WaitUntilReached goal_pose="{@supply_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+						</ReactiveSequence>
+						<ReactiveSequence>
+							<PubNav2Goal goal_pose="{@supply}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+							<WaitUntilReached goal_pose="{@supply}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+						</ReactiveSequence>
+						<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
+						<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+					</SequenceWithMemory>
+				</Fallback>
+			</ReactiveSequence>
+
+			<!-- 已经站上前哨或仅有轻微扰动时，保持驻守，不要立刻触发重占振荡 -->
+			<Sequence>
+				<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.4" global_frame="map" robot_base_frame="chassis"/>
+				<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
+			</Sequence>
+
+			<!-- 已经进入前哨作战区（2.5m）但被挤开时，直接重发前哨点，不回退到补给侧首点 -->
+			<Sequence>
+				<IsRobotNearPose goal_pose="{@outpost}" tolerance="2.5" global_frame="map" robot_base_frame="chassis"/>
+				<Inverter>
+					<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.4" global_frame="map" robot_base_frame="chassis"/>
+				</Inverter>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@outpost}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@outpost}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
+			</Sequence>
+
+			<!-- 补给区去前哨记忆序列（高血高弹出发），先判断是否在前哨，再发点 -->
+			<SequenceWithMemory>
+				<!-- 判断是否在前哨作门控，2.5m门控，防止下次在前哨时，直接从家出发，导航前发布移动姿态 -->
+				<Inverter>
+					<IsRobotNearPose goal_pose="{@outpost}" tolerance="2.5" global_frame="map" robot_base_frame="chassis"/>
+				</Inverter>				
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+
+				<!-- 补给区-补给区入口-斜坡坡底入口-斜坡底部-斜坡顶部-公路入口 -->
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@supply_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@supply_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>				 
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@ramp_base_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@ramp_base_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@ramp_base}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@ramp_base}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@ramp_top}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@ramp_top}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@highway_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@highway_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+
+				<!-- 公路入口到公路出口远处，先底盘复位2秒，再限制vy速度，过起伏后恢复速度-->
+				<PublishChassisCmd topic_name="cmd_chassis" reset="1" rotate="0" vy_limit="0"/>
+				<Sleep msec="2000"/>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="1"/>
+				<ReactiveSequence>					
+					<PubNav2Goal goal_pose="{@highway_out_far}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@highway_out_far}" tolerance="1.0" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+
+				<!-- 公路出口远处-高地入口-高地-前哨，逐点确认避免穿越导航在前两点间回拉 -->
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@highland_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@highland_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>				 
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@highland}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@highland}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@outpost}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@outpost}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+
+				<!-- 到达前哨后，先关移动姿态，再开小陀螺 -->
+        <PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
+			</SequenceWithMemory>  
+				
+			<!-- 保底选择成功，导致无限循环 -->
+			<AlwaysSuccess/>
+		</ReactiveFallback>
+	</BehaviorTree>
+
+	<!-- ========================= 主行为树 ========================= -->
   <BehaviorTree ID="2026rmuc">
-    <KeepRunningUntilFailure>
-      <ForceSuccess>
-        <ReactiveSequence>
-          <!-- 优先级1：比赛开始后才执行 -->
-          <SubTree ID="check_game_started"/>
-          <!-- 优先级2/3/4：状态异常回补给 > 基地异常回堡垒 > 进攻前哨站 -->
-          <Fallback>
-            <SubTree ID="return_to_supply_on_bad_status"/>
-            <SubTree ID="return_to_fortress_on_bad_base"/>
-            <SubTree ID="attack_outpost"/>
-          </Fallback>
-        </ReactiveSequence>
-      </ForceSuccess>
-    </KeepRunningUntilFailure>
+    <Sequence>
+			<!-- 比赛开始条件，没收到裁判系统消息或在未开赛，都返回running -->
+			<SubTree ID="check_game_started_2026rmuc"/>
+      <!-- 无限循环-->
+      <KeepRunningUntilFailure>
+        <!-- 反应式选择，下一轮tick无论前面节点啥状态，都会从头tick,直到有一个成功 -->
+        <ReactiveFallback>
+
+					<!-- 基地血量小于2500,进入守家策略；-->
+					<Sequence>
+						<Inverter>
+							<IsBaseHPHealthy base_hp_min="2500" key_port="{@referee_allRobotHP}"/>
+						</Inverter>
+						<!-- 低基地血时强制先回补给区，再进入堡垒-补给区往返，不允许回落到推前哨 -->
+						<SequenceWithMemory>
+							<SubTree ID="base_low_return_to_supply_2026rmuc"/>
+							<Sleep msec="5000"/>
+							<KeepRunningUntilFailure>
+								<SubTree ID="supply_fort_loop_2026rmuc"/>
+							</KeepRunningUntilFailure>
+						</SequenceWithMemory>
+					</Sequence>
+
+					<!-- 基地血量大于2500,进入推前哨策略-->
+					<SubTree ID="supply_outpost_loop_2026rmuc"/>
+
+          <!-- 保底选择成功，导致无限循环 -->
+          <AlwaysSuccess/>
+        </ReactiveFallback>
+      </KeepRunningUntilFailure>                                                                             
+    </Sequence>  
   </BehaviorTree>
-
-  <TreeNodesModel>
-    <Condition ID="IsGameStatus">
-      <input_port name="max_remain_time" default="420" type="int">Maximum remaining time (s)</input_port>
-      <input_port name="min_remain_time" default="0" type="int">Minimum remaining time (s)</input_port>
-      <input_port name="expected_game_progress" default="4" type="int">Expected game progress stage</input_port>
-      <input_port name="key_port" default="{@referee_gameStatus}" type="pb_rm_interfaces::msg::GameStatus_&lt;std::allocator&lt;void&gt; &gt;">GameStatus port on blackboard</input_port>
-    </Condition>
-
-    <Condition ID="IsStatusOK">
-      <input_port name="ammo_min" default="0" type="int">Lower then minimum ammo will return FAILURE</input_port>
-      <input_port name="hp_min" default="300" type="int">Minimum HP. NOTE: Sentry init/max HP is 400</input_port>
-      <input_port name="key_port" default="{@referee_robotStatus}" type="pb_rm_interfaces::msg::RobotStatus_&lt;std::allocator&lt;void&gt; &gt;">RobotStatus port on blackboard</input_port>
-    </Condition>
-
-    <Condition ID="IsBaseHPHealthy">
-      <input_port name="base_hp_min" default="3000" type="int">Minimum ally base HP</input_port>
-      <input_port name="key_port" default="{@referee_allRobotHP}" type="pb_rm_interfaces::msg::GameRobotHP_&lt;std::allocator&lt;void&gt; &gt;">GameRobotHP port on blackboard</input_port>
-    </Condition>
-
-    <Condition ID="PubNav2Goal">
-      <input_port name="goal" default="0;0;0" type="geometry_msgs::msg::PoseStamped_&lt;std::allocator&lt;void&gt; &gt;">Expected goal pose that send to nav2. Fill with format x;y;yaw</input_port>
-      <input_port name="topic_name" default="__default__placeholder__" type="std::string">Topic name</input_port>
-    </Condition>
-
-    <Action ID="PublishPostureCmd">
-      <input_port name="posture" default="3" type="unsigned int">Posture mode</input_port>
-      <input_port name="reason" default="0" type="unsigned int">Posture switch reason</input_port>
-      <input_port name="force_switch" default="false" type="bool">Force posture switch</input_port>
-      <input_port name="topic_name" default="cmd_posture" type="std::string">Topic name</input_port>
-    </Action>
-  </TreeNodesModel>
 </root>
