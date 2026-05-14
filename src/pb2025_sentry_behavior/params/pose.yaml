@@ -14,8 +14,8 @@ pb2025_sentry_behavior_server:
     supply_in:  # 补给区入口
       frame_id: "map"
       position:
-        x: -0.599334
-        y: -0.865349
+        x: -0.464971
+        y: -1.25691
         z: 0.0
       orientation:
         w: 1.0
@@ -92,7 +92,6 @@ pb2025_sentry_behavior_server:
       orientation:
         w: 1.0
         
-
     highland_in:  # 高地入口
       frame_id: "map"
       position:

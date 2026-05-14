@@ -84,6 +84,11 @@
             <input_port name="frame_id" type="std::string" default="map">Waypoint frame id</input_port>
             <input_port name="action_name" type="std::string" default="navigate_through_poses">Action server name</input_port>
         </Action>
+        <Condition ID="NeedOutpostDefense">
+            <input_port name="exit_outpost_hp_min" type="int" default="300">Exit defense mode when outpost hp is above this value</input_port>
+            <input_port name="enter_outpost_hp_below" type="int" default="20">Enter defense mode when outpost hp is below this value</input_port>
+            <input_port name="key_port" type="pb_rm_interfaces::msg::GameRobotHP_&lt;std::allocator&lt;void&gt; &gt;" default="{@referee_allRobotHP}">GameRobotHP port on blackboard</input_port>
+        </Condition>
         <Condition ID="NeedSupply">
             <input_port name="exit_ammo_min" type="int" default="200">Exit supply mode when ammo reaches this value</input_port>
             <input_port name="exit_hp_min" type="int" default="350">Exit supply mode when hp reaches this value</input_port>

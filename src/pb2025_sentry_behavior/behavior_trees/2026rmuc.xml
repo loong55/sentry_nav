@@ -669,7 +669,28 @@
 						</SequenceWithMemory>
 					</Sequence>
 
-					<!-- 基地血量大于2500,进入推前哨策略-->
+					<!-- 前哨掉血后先完成回家；回家完成后若前哨已恢复到300以上，才允许切回推前哨 -->
+					<SequenceWithMemory>
+						<NeedOutpostDefense
+							enter_outpost_hp_below="20"
+							exit_outpost_hp_min="300"
+							key_port="{@referee_allRobotHP}"/>
+						<SubTree ID="base_low_return_to_supply_2026rmuc"/>
+						<ReactiveSequence>
+							<NeedOutpostDefense
+								enter_outpost_hp_below="20"
+								exit_outpost_hp_min="300"
+								key_port="{@referee_allRobotHP}"/>
+							<SequenceWithMemory>
+								<Sleep msec="5000"/>
+								<KeepRunningUntilFailure>
+									<SubTree ID="supply_fort_loop_2026rmuc"/>
+								</KeepRunningUntilFailure>
+							</SequenceWithMemory>
+						</ReactiveSequence>
+					</SequenceWithMemory>
+
+					<!-- 基地安全且前哨恢复到300以上后，进入推前哨策略 -->
 					<SubTree ID="supply_outpost_loop_2026rmuc"/>
 
           <!-- 保底选择成功，导致无限循环 -->
