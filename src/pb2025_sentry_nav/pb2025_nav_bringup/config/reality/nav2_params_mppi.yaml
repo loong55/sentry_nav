@@ -110,7 +110,7 @@ terrain_analysis:
     noDecayDis: 0.0                     # 点云距离阈值 小于该阈值不考虑时间差
     clearingDis: 0.0                    # 该距离外的点会被清除
     useSorting: True                    # 这个参数开起来就能上坡了，否则最点判定为地面，坡判定为障碍物；如果 use_sorting,那么就以周围点中的分位点作为地面点，否则以最低点作为地面点；周围其余点相对于地面点的高度作为通过代价，所以对于坡面，有的点的代价是正，有的是负，就相互抵消了；不要与 consider_drop 同时开启，计算上会有冲突
-    quantileZ: 0.5                      # 0.4改；在0.15-0.25微调；越大，地面抬得越高，越“容易上坡”，但也越可能吞掉低矮障碍。useful if use_sorting is enabled.
+    quantileZ: 0.4                      # 仿真0.4；在0.15-0.25微调；越大，地面抬得越高，越“容易上坡”，但也越可能吞掉低矮障碍。useful if use_sorting is enabled.
     considerDrop: False                  # 考虑上坡时，不建议开启；考虑凹下去的地面,开启则将相对于地面点的高度取绝对值,因为有的点在地面点下面，取绝对值后就变成了正的了，就相当于不考虑凹下去的地面了
     limitGroundLift: False               # 出现“坡上障碍被吞”，开 limitGroundLift=true，maxGroundLift 先试 0.10 到 0.15
     maxGroundLift: 0.5
@@ -140,7 +140,7 @@ terrain_analysis_ext:
     noDecayDis: 0.0
     clearingDis: 20.0
     useSorting: True
-    quantileZ: 0.5         # 原0.4；越大，地面抬得越高，越“容易上坡”，但也越可能吞掉低矮障碍。useful if use_sorting is enabled.
+    quantileZ: 0.4         # 仿真0.4；越大，地面抬得越高，越“容易上坡”，但也越可能吞掉低矮障碍。useful if use_sorting is enabled.
     vehicleHeight: 0.6      #参与地形分析的最大高度
     voxelPointUpdateThre: 100
     voxelTimeUpdateThre: 0.5          # 原2.0,决定这些 voxel 多久才重新整理一次
@@ -478,9 +478,9 @@ local_costmap:
         unknown_threshold: 5
         z_resolution: 0.05
         z_voxels: 16
-        min_obstacle_height: 0.15  #地面高度过滤，0.12m
+        min_obstacle_height: 0.12  #地面高度过滤，0.12m
         max_obstacle_height: 2.0
-        min_obstacle_intensity: 0.15        # 地面高度过滤；已调：local costmap 仅把相对地面高度不低于 10cm 的点标为障碍
+        min_obstacle_intensity: 0.12        # 地面高度过滤；已调：local costmap 仅把相对地面高度不低于 10cm 的点标为障碍
         max_obstacle_intensity: 2.0
         observation_sources: terrain_map
         terrain_map:
@@ -489,7 +489,7 @@ local_costmap:
           # It doesn't need to start with '/'
           topic: <robot_namespace>/terrain_map
           sensor_frame: front_mid360      #根据仿真新加的，后续测试看看要不删除
-          min_obstacle_height: 0.15  #地面高度过滤，0.12m
+          min_obstacle_height: 0.12  #地面高度过滤，0.12m
           max_obstacle_height: 2.0
           obstacle_max_range: 5.0
           obstacle_min_range: 0.4   #离传感器原点多近的不算障碍
@@ -499,7 +499,7 @@ local_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 8.0    #调大代价衰减更快，机器人更敢靠近障碍物；调小代价衰减更慢。
-        inflation_radius: 0.4       #机器人离障碍物多近才算有代价；过大可能导致过于畏惧障碍物，过小可能导致碰撞；
+        inflation_radius: 0.5       #机器人离障碍物多近才算有代价；过大可能导致过于畏惧障碍物，过小可能导致碰撞；
       always_send_full_costmap: False
 
 global_costmap:
@@ -529,9 +529,9 @@ global_costmap:
         unknown_threshold: 5
         z_resolution: 0.05
         z_voxels: 16
-        min_obstacle_height: 0.15  #地面高度过滤，0.12m
+        min_obstacle_height: 0.12  #地面高度过滤，0.12m
         max_obstacle_height: 2.0
-        min_obstacle_intensity: 0.15        # 地面高度过滤；已调：global costmap 仅把相对地面高度不低于 10cm 的点标为障碍
+        min_obstacle_intensity: 0.12        # 地面高度过滤；已调：global costmap 仅把相对地面高度不低于 10cm 的点标为障碍
         max_obstacle_intensity: 2.0
         observation_sources: terrain_map_ext
         terrain_map_ext:
@@ -540,7 +540,7 @@ global_costmap:
           # It doesn't need to start with '/'
           topic: <robot_namespace>/terrain_map_ext
           sensor_frame: front_mid360    #根据仿真新加的，后续测试看看要不删除
-          min_obstacle_height: 0.15  #地面高度过滤，0.12m
+          min_obstacle_height: 0.12  #地面高度过滤，0.12m
           max_obstacle_height: 2.0
           obstacle_max_range: 10.0
           obstacle_min_range: 0.4   #离传感器原点多近的不算障碍
@@ -550,7 +550,7 @@ global_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 8.0
-        inflation_radius: 0.4
+        inflation_radius: 0.5
       always_send_full_costmap: False
 
 # The yaml_filename does not need to be specified since it going to be set by defaults in launch.

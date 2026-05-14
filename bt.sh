@@ -14,7 +14,7 @@ export ROS_DOMAIN_ID=5  # 宿主机在 5 号网段
 
 # 仿真行为树（默认使用 params/pose.yaml;超抗行为树和位姿坐标：2026rmuc，pose.yaml;场地位姿坐标：pose_test.yaml）
 ros2 launch pb2025_sentry_behavior pb2025_sentry_behavior_launch.py \
-    pose:=pose.yaml \
+    pose:=pose_test.yaml \
     target_tree:=2026rmuc \
     use_sim_time:=True \
     namespace:=red_standard_robot1
