@@ -83,6 +83,15 @@ pb2025_sentry_behavior_server:
       orientation:
         w: 1.0
 
+    highway_out_v_unlock:  # 公路出口速度解锁点
+      frame_id: "map"
+      position:
+        x: 4.83052
+        y: -5.89746
+        z: 0.0
+      orientation:
+        w: 1.0
+
     highway_out_far:  # 公路出口远处
       frame_id: "map"
       position:
