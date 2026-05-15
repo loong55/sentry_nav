@@ -499,7 +499,7 @@ local_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 8.0    #调大代价衰减更快，机器人更敢靠近障碍物；调小代价衰减更慢。
-        inflation_radius: 0.5       #机器人离障碍物多近才算有代价；过大可能导致过于畏惧障碍物，过小可能导致碰撞；
+        inflation_radius: 0.4       #机器人离障碍物多近才算有代价；过大可能导致过于畏惧障碍物，过小可能导致碰撞；
       always_send_full_costmap: False
 
 global_costmap:
@@ -550,7 +550,7 @@ global_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 8.0
-        inflation_radius: 0.5
+        inflation_radius: 0.4
       always_send_full_costmap: False
 
 # The yaml_filename does not need to be specified since it going to be set by defaults in launch.
