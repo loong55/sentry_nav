@@ -28,7 +28,16 @@ pb2025_sentry_behavior_server:
         z: 0.0
       orientation:
         w: 1.0
-    
+
+    fort_out:  # 堡垒 
+      frame_id: "map"
+      position:
+        x: 1.6
+        y: 0.00
+        z: 0.0
+      orientation:
+        w: 1.0
+
     ramp_base_in:  # 斜坡坡底入口
       frame_id: "map"
       position:

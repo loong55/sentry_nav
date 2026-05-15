@@ -42,7 +42,7 @@ point_lio:
       lidar_type: 1                                     # 1 for Livox serials LiDAR, 2 for Velodyne LiDAR, 3 for ouster LiDAR
       scan_line: 4
       timestamp_unit: 3                                 # the unit of time/t field in the PointCloud2 rostopic: 0-second, 1-milisecond, 2-microsecond, 3-nanosecond.
-      blind: 0.45                                       # 点云半径 滤波半径 of LiDAR, unit: meter  
+      blind: 0.45                                       # 恢复 0.45m 近距过滤，先把车架点从点云源头滤掉
 
     mapping:
       imu_en: True
@@ -106,28 +106,29 @@ sensor_scan_generation:
 terrain_analysis:
   ros__parameters:
     scanVoxelSize: 0.05                 # 点云下采样
-    decayTime: 0.15                      # 原0.5 点云时间差阈值 大于则不会被处理，决定旧点能活多久
+    decayTime: 0.08                      # 进一步缩短旧点寿命，平台减速带残影在新帧扫空后更快过期
     noDecayDis: 0.0                     # 点云距离阈值 小于该阈值不考虑时间差
     clearingDis: 0.0                    # 该距离外的点会被清除
+    replaceTouchedVoxelDistance: 2.0    # 扩大近场“扫到即替换”范围，把右侧平台与坡顶附近历史点一起覆盖掉
     useSorting: True                    # 这个参数开起来就能上坡了，否则最点判定为地面，坡判定为障碍物；如果 use_sorting,那么就以周围点中的分位点作为地面点，否则以最低点作为地面点；周围其余点相对于地面点的高度作为通过代价，所以对于坡面，有的点的代价是正，有的是负，就相互抵消了；不要与 consider_drop 同时开启，计算上会有冲突
-    quantileZ: 0.4                      # 仿真0.4；在0.15-0.25微调；越大，地面抬得越高，越“容易上坡”，但也越可能吞掉低矮障碍。useful if use_sorting is enabled.
+    quantileZ: 0.5                      # 仿真0.4；在0.15-0.25微调；越大，地面抬得越高，越“容易上坡”，但也越可能吞掉低矮障碍。useful if use_sorting is enabled.
     considerDrop: False                  # 考虑上坡时，不建议开启；考虑凹下去的地面,开启则将相对于地面点的高度取绝对值,因为有的点在地面点下面，取绝对值后就变成了正的了，就相当于不考虑凹下去的地面了
     limitGroundLift: False               # 出现“坡上障碍被吞”，开 limitGroundLift=true，maxGroundLift 先试 0.10 到 0.15
     maxGroundLift: 0.5
     clearDyObs: True                    # 清除动态物体的话，有动态物体走过的地方就走不了了
-    minDyObsDis: 0.3                    # 原0.8 以下参数都是在 clear_dy_obs 的情况下才有用的，若出现静态坡边被误清，先放宽 minDyObsAngle 或缩窄 VFOV（minDyObsVFOV/maxDyObsVFOV）。
+    minDyObsDis: 0.60                    # 扩大近距离“直接按动态残影清除”的范围，优先消掉平台起伏带残留
     minDyObsAngle: 0.0                  # 原0.0；动态物体相对于地面点的最小水平夹角，单位度；过大可能导致残影过多，过小可能导致残影过少；建议设置为机器人在仿真中每个控制周期内的平均水平转角，例如 0.0 度 对应 20Hz 控制频率下平均每次不转弯的情况；如果机器人经常转弯，可以适当增大这个值，例如 10.0 度；如果机器人基本不转弯，可以适当减小这个值，例如 -10.0 度。
     minDyObsRelZ: -0.3                  # 原-0.3；动态物体相对于地面点的最小高度，单位米；过大可能导致残影过多，过小可能导致残影过少；建议设置为机器人在仿真中每个控制周期内的平均移动距离，例如 0.5m 对应 20Hz 控制频率下平均每次移动0.6m/s的情况；如果机器人速度较快，可以适当增大这个值，例如 0.7m；如果机器人速度较慢，可以适当减小这个值，例如 0.3m。
-    absDyObsRelZThre: 0.2              # 原0.2；动态物体相对于地面点的绝对高度阈值，单位米；过大可能导致残影过多，过小可能导致残影过少；建议设置为机器人在仿真中每个控制周期内的平均移动距离，例如 0.32m 对应 20Hz 控制频率下平均每次移动0.6m/s的情况；如果机器人速度较快，可以适当增大这个值，例如 0.5m；如果机器人速度较慢，可以适当减小这个值，例如 0.2m。
+    absDyObsRelZThre: 0.38              # 原0.2；动态物体相对于地面点的绝对高度阈值，单位米；过大可能导致残影过多，过小可能导致残影过少；建议设置为机器人在仿真中每个控制周期内的平均移动距离，例如 0.32m 对应 20Hz 控制频率下平均每次移动0.6m/s的情况；如果机器人速度较快，可以适当增大这个值，例如 0.5m；如果机器人速度较慢，可以适当减小这个值，例如 0.2m。
     minDyObsVFOV: -28.0                 # 原-28.0；动态物体相对于地面点的最小垂直夹角，单位度；过大可能导致残影过多，过小可能导致残影过少；建议设置为机器人在仿真中每个控制周期内的平均垂直转角，例如 -40.0 度 对应 20Hz 控制频率下平均每次向下看40度的情况；如果机器人经常向下看，可以适当增大这个值，例如 -30.0 度；如果机器人基本不向下看，可以适当减小这个值，例如 -50.0 度。
     maxDyObsVFOV: 33.0                  # 原33.0；动态物体相对于地面点的最大垂直夹角，单位度；过大可能导致残影过多，过小可能导致残影过少；建议设置为机器人在仿真中每个控制周期内的平均垂直转角，例如 45.0 度 对应 20Hz 控制频率下平均每次向上看45度的情况；如果机器人经常向上看，可以适当增大这个值，例如 60.0 度；如果机器人基本不向上看，可以适当减小这个值，例如 30.0 度。
-    minDyObsPointNum: 3                 # 若动态残影多，适当提高 minDyObsPointNum（1 到 2/3）。
+    minDyObsPointNum: 1                 # 稀疏起伏点只要被判定一次无遮挡/动态，就立即进入清除路径
     noDataObstacle: False               # treat no data as obstacle
     noDataBlockSkipNum: 0
     minBlockPointNum: 10                # 原15，地形块最少点数，太小：噪声多，太大：小障碍被吞掉
     vehicleHeight: 0.6                  # 小于车辆高度的点才会进行处理
     voxelPointUpdateThre: 100
-    voxelTimeUpdateThre: 0.2            # 原1.0,决定这些 voxel 多久才重新整理一次
+    voxelTimeUpdateThre: 0.02           # 压到接近逐帧刷新，减少新扫描到来后旧点再滞留一个循环
     minRelZ: -1.5                       # 地面最低处理高度；太高：地面点被截掉，地面估计发飘。
     maxRelZ: 0.5                        # 地面最高处理高度；坡顶/近车体障碍被截掉。
     disRatioZ: 0.2                      # Z 值的最大最小范围由这两个值决定，但是并不等于这两个值，是有一个比例关系的，距离机器人越远，限定范围就越大，这其中考虑了坡度
@@ -140,7 +141,7 @@ terrain_analysis_ext:
     noDecayDis: 0.0
     clearingDis: 20.0
     useSorting: True
-    quantileZ: 0.4         # 仿真0.4；越大，地面抬得越高，越“容易上坡”，但也越可能吞掉低矮障碍。useful if use_sorting is enabled.
+    quantileZ: 0.5         # 仿真0.4；越大，地面抬得越高，越“容易上坡”，但也越可能吞掉低矮障碍。useful if use_sorting is enabled.
     vehicleHeight: 0.6      #参与地形分析的最大高度
     voxelPointUpdateThre: 100
     voxelTimeUpdateThre: 0.5          # 原2.0,决定这些 voxel 多久才重新整理一次
@@ -186,13 +187,13 @@ pointcloud_to_laserscan:
     target_frame: base_footprint
     min_height: -0.5
     max_height: 6.0
-    min_intensity: 0.12                      # 地面高度过滤0.1m，点云强度过滤，min_intensity 以上的点才会被标为障碍物
+    min_intensity: 0.20                      # 地面高度过滤0.1m，点云强度过滤，min_intensity 以上的点才会被标为障碍物
     max_intensity: 20.0                    # 点云强度阈值，高于该值的点将被忽略，默认2.0 
     angle_min: -3.1415926                   # -M_PI/2
     angle_max: 3.1415926                    # M_PI/2
     angle_increment: 0.00872665             # M_PI/360.0
     scan_time: 0.05                         # 点云投影成激光雷达扫描的时间，单位：秒,与livox的 publish_freq 20Hz 对应 0.05s  
-    range_min: 0.45                          # 点云半径 点云投影成激光雷达扫描时的最小范围，单位：米         
+    range_min: 0.45                          # 恢复 0.45m 近距过滤，避免车架点进入 obstacle_scan
     range_max: 10.0
     use_inf: true
 
@@ -478,9 +479,9 @@ local_costmap:
         unknown_threshold: 5
         z_resolution: 0.05
         z_voxels: 16
-        min_obstacle_height: 0.12  #地面高度过滤，0.12m
+        min_obstacle_height: 0.20  #地面高度过滤，0.12m
         max_obstacle_height: 2.0
-        min_obstacle_intensity: 0.12        # 地面高度过滤；已调：local costmap 仅把相对地面高度不低于 10cm 的点标为障碍
+        min_obstacle_intensity: 0.20        # 地面高度过滤；已调：local costmap 仅把相对地面高度不低于 10cm 的点标为障碍
         max_obstacle_intensity: 2.0
         observation_sources: terrain_map
         terrain_map:
@@ -489,17 +490,17 @@ local_costmap:
           # It doesn't need to start with '/'
           topic: <robot_namespace>/terrain_map
           sensor_frame: front_mid360      #根据仿真新加的，后续测试看看要不删除
-          min_obstacle_height: 0.12  #地面高度过滤，0.12m
+          min_obstacle_height: 0.20  #地面高度过滤，0.12m
           max_obstacle_height: 2.0
           obstacle_max_range: 5.0
-          obstacle_min_range: 0.4   #离传感器原点多近的不算障碍
+          obstacle_min_range: 0.45   # 恢复 0.45m 近距过滤，避免车架点进入局部代价地图
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 8.0    #调大代价衰减更快，机器人更敢靠近障碍物；调小代价衰减更慢。
-        inflation_radius: 0.4       #机器人离障碍物多近才算有代价；过大可能导致过于畏惧障碍物，过小可能导致碰撞；
+        inflation_radius: 0.3       #机器人离障碍物多近才算有代价；过大可能导致过于畏惧障碍物，过小可能导致碰撞；
       always_send_full_costmap: False
 
 global_costmap:
@@ -529,9 +530,9 @@ global_costmap:
         unknown_threshold: 5
         z_resolution: 0.05
         z_voxels: 16
-        min_obstacle_height: 0.12  #地面高度过滤，0.12m
+        min_obstacle_height: 0.20  #地面高度过滤，0.12m
         max_obstacle_height: 2.0
-        min_obstacle_intensity: 0.12        # 地面高度过滤；已调：global costmap 仅把相对地面高度不低于 10cm 的点标为障碍
+        min_obstacle_intensity: 0.20        # 地面高度过滤；已调：global costmap 仅把相对地面高度不低于 10cm 的点标为障碍
         max_obstacle_intensity: 2.0
         observation_sources: terrain_map_ext
         terrain_map_ext:
@@ -540,17 +541,17 @@ global_costmap:
           # It doesn't need to start with '/'
           topic: <robot_namespace>/terrain_map_ext
           sensor_frame: front_mid360    #根据仿真新加的，后续测试看看要不删除
-          min_obstacle_height: 0.12  #地面高度过滤，0.12m
+          min_obstacle_height: 0.20  #地面高度过滤，0.12m
           max_obstacle_height: 2.0
           obstacle_max_range: 10.0
-          obstacle_min_range: 0.4   #离传感器原点多近的不算障碍
+          obstacle_min_range: 0.45   # 恢复 0.45m 近距过滤，避免车架点进入全局滚动窗口
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 8.0
-        inflation_radius: 0.4
+        inflation_radius: 0.3
       always_send_full_costmap: False
 
 # The yaml_filename does not need to be specified since it going to be set by defaults in launch.

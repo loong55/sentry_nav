@@ -33,6 +33,7 @@ double decayTime = 2.0;
 double noDecayDis = 4.0;
 double clearingDis = 8.0;
 bool clearingCloud = false;
+double replaceTouchedVoxelDistance = 0.0;
 bool useSorting = true;
 double quantileZ = 0.25;
 bool considerDrop = false;
@@ -201,6 +202,8 @@ int main(int argc, char **argv) {
   nh->declare_parameter<double>("decayTime", decayTime);
   nh->declare_parameter<double>("noDecayDis", noDecayDis);
   nh->declare_parameter<double>("clearingDis", clearingDis);
+  nh->declare_parameter<double>("replaceTouchedVoxelDistance",
+                                replaceTouchedVoxelDistance);
   nh->declare_parameter<bool>("useSorting", useSorting);
   nh->declare_parameter<double>("quantileZ", quantileZ);
   nh->declare_parameter<bool>("considerDrop", considerDrop);
@@ -228,6 +231,8 @@ int main(int argc, char **argv) {
   nh->get_parameter("decayTime", decayTime);
   nh->get_parameter("noDecayDis", noDecayDis);
   nh->get_parameter("clearingDis", clearingDis);
+  nh->get_parameter("replaceTouchedVoxelDistance",
+                    replaceTouchedVoxelDistance);
   nh->get_parameter("useSorting", useSorting);
   nh->get_parameter("quantileZ", quantileZ);
   nh->get_parameter("considerDrop", considerDrop);
@@ -351,6 +356,7 @@ int main(int argc, char **argv) {
 
       // stack registered laser scans
       pcl::PointXYZI point;
+      bool terrainVoxelReplaced[kTerrainVoxelNum] = {false};
       int laserCloudCropSize = laserCloudCrop->points.size();
       for (int i = 0; i < laserCloudCropSize; i++) {
         point = laserCloudCrop->points[i];
@@ -371,8 +377,20 @@ int main(int argc, char **argv) {
 
         if (indX >= 0 && indX < terrainVoxelWidth && indY >= 0 &&
             indY < terrainVoxelWidth) {
-          terrainVoxelCloud[terrainVoxelWidth * indX + indY]->push_back(point);
-          terrainVoxelUpdateNum[terrainVoxelWidth * indX + indY]++;
+          int voxelIndex = terrainVoxelWidth * indX + indY;
+          float dis = sqrt((point.x - vehicleX) * (point.x - vehicleX) +
+                           (point.y - vehicleY) * (point.y - vehicleY));
+
+          if (replaceTouchedVoxelDistance > 0.0 &&
+              dis < replaceTouchedVoxelDistance &&
+              !terrainVoxelReplaced[voxelIndex]) {
+            terrainVoxelCloud[voxelIndex]->clear();
+            terrainVoxelUpdateNum[voxelIndex] = 0;
+            terrainVoxelReplaced[voxelIndex] = true;
+          }
+
+          terrainVoxelCloud[voxelIndex]->push_back(point);
+          terrainVoxelUpdateNum[voxelIndex]++;
         }
       }
 

@@ -466,7 +466,7 @@
 		<ReactiveFallback>
 
 			<!-- 前哨回补给区反应式序列，低血低弹时持续门控，回血后立刻退出回补 -->
-			<ReactiveSequence>
+			<SequenceWithMemory>
 				<NeedSupply key_port="{@referee_robotStatus}" enter_hp_below="150" enter_ammo_below="20" exit_hp_min="350" exit_ammo_min="200"/>
 				<Fallback>
 					<!-- 在补给区，关移动姿态回血-->
@@ -495,7 +495,7 @@
 					<!-- 不在补给区附近，用低状态回补给区子树-->
 					<SubTree ID="state_low_return_to_supply_2026rmuc"/>
 				</Fallback>
-			</ReactiveSequence>
+			</SequenceWithMemory>
 
 			<!-- 已经站上前哨或仅有轻微扰动时，保持驻守，不要立刻触发重占振荡 -->
 			<Sequence>
@@ -521,7 +521,7 @@
 			</Sequence>
 
 			<!-- 补给区去前哨逐点序列（高血高弹出发），回血后强制从补给区首段重新走，避免直接续到前哨终点 -->
-			<Sequence>
+			<SequenceWithMemory>
 				<!-- 判断是否在前哨作门控，3.0m门控，防止下次在前哨时，直接从家出发，导航前发布移动姿态 -->
 				<Inverter>
 					<IsRobotNearPose goal_pose="{@outpost}" tolerance="3.0" global_frame="map" robot_base_frame="chassis"/>
@@ -583,7 +583,7 @@
 				<!-- 到达前哨后，先关移动姿态，再开小陀螺 -->
         <PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
 				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
-			</Sequence>  
+			</SequenceWithMemory>  
 				
 			<!-- 保底选择成功，导致无限循环 -->
 			<AlwaysSuccess/>

@@ -906,10 +906,11 @@ void StandardRobotPpRos2Node::logCombinedRefereeDebug()
 
   RCLCPP_INFO_THROTTLE(
     get_logger(), *this->get_clock(), 1000,
-    "referee hp=%u bullets_remaining=%u angle=%.3f game_progress=%u stage_remain_time=%u ally_base_hp=%u\n"
+    "referee hp=%u bullets_remaining=%u angle=%.3f game_progress=%u stage_remain_time=%u ally_outpost_hp=%u ally_base_hp=%u\n"
     "Sending data: vx=%.2f, vy=%.2f, wz=%.2f, posture=%u(%s), chassis_reset=%u(%s), chassis_rotate=%u(%s), chassis_vy_limit=%u(%s)",
     latest_robot_hp_debug_, latest_bullets_remaining_, latest_robot_angle_,
-    latest_game_progress_debug_, latest_stage_remain_time_, latest_ally_base_hp_,
+    latest_game_progress_debug_, latest_stage_remain_time_, latest_ally_outpost_hp_,
+    latest_ally_base_hp_,
     send_robot_cmd_data_.data.speed_vector.vx,
     send_robot_cmd_data_.data.speed_vector.vy,
     send_robot_cmd_data_.data.speed_vector.wz,
