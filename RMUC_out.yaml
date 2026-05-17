@@ -1,4 +1,4 @@
-image: RMUC2026_0.05.pgm
+image: RMUC_out.pgm
 mode: trinary
 resolution: 0.05
 origin: [-3.895, -6.964, 0]
