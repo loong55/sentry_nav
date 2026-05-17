@@ -69,7 +69,7 @@
 			<Sequence>
 				<IsRobotNearPose goal_pose="{@fort}" tolerance="1.5" global_frame="map" robot_base_frame="chassis"/>
 				<Inverter>
-					<IsRobotNearPose goal_pose="{@fort}" tolerance="0.25" global_frame="map" robot_base_frame="chassis"/>8" global_frame="map" robot_base_frame="chassis"/>
+					<IsRobotNearPose goal_pose="{@fort}" tolerance="0.25" global_frame="map" robot_base_frame="chassis"/>
 				</Inverter>
 				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
 				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
@@ -247,7 +247,7 @@
 			<Sequence>
 				<Fallback>
 					<IsRobotNearPose goal_pose="{@supply_in}" tolerance="1.5" global_frame="map" robot_base_frame="chassis"/>
-					<IsRobotNearPose goal_pose="{@supply}" tolerance="1.5" global_frame="map" robot_base_frame="chassis"/>1.0" global_frame="map" robot_base_frame="chassis"/>
+					<IsRobotNearPose goal_pose="{@supply}" tolerance="1.5" global_frame="map" robot_base_frame="chassis"/>
 				</Fallback>
 				<SequenceWithMemory>
 					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
@@ -318,7 +318,7 @@
 
 			<!-- 已经站上前哨或仅有轻微扰动时，保持驻守，不要立刻触发重占振荡 -->
 			<Sequence>
-				<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.25" global_frame="map" robot_base_frame="chassis"/>
 				<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
 				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
 			</Sequence>
@@ -327,12 +327,12 @@
 			<Sequence>
 				<IsRobotNearPose goal_pose="{@outpost}" tolerance="2.0" global_frame="map" robot_base_frame="chassis"/>
 				<Inverter>
-					<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.25" global_frame="map" robot_base_frame="chassis"/>
 				</Inverter>
 				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
 				<ReactiveSequence>
 					<PubNav2Goal goal_pose="{@outpost}" topic_name="goal_pose" min_pub_interval_ms="500"/>
-					<WaitUntilReached goal_pose="{@outpost}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					<WaitUntilReached goal_pose="{@outpost}" tolerance="0.25" global_frame="map" robot_base_frame="chassis"/>
 				</ReactiveSequence>
 				<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
 				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
@@ -382,11 +382,72 @@
 		</ReactiveFallback>
 	</BehaviorTree>
 
+	<!-- =======================起点去前哨========================== -->
+	<BehaviorTree ID="start_to_outpost_2026rmuc_in">
+		<!-- 反应式选择，下一轮tick无论前面节点啥状态，都会从头tick,直到有一个成功 -->
+		<ReactiveFallback>
+
+			<!-- 已经站上前哨或仅有轻微扰动时，保持驻守，不要立刻触发重占振荡 -->
+			<Sequence>
+				<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
+			</Sequence>
+
+			<!-- 已经进入前哨作战区（2m）但被挤开时，直接重发前哨点，不回退到补给侧首点 -->
+			<Sequence>
+				<IsRobotNearPose goal_pose="{@outpost}" tolerance="2.0" global_frame="map" robot_base_frame="chassis"/>
+				<Inverter>
+					<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</Inverter>
+				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@outpost}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@outpost}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
+			</Sequence>
+
+			<!-- 起点去前哨记忆序列，先判断是否在前哨，再发点 -->
+			<SequenceWithMemory>
+				<!-- 判断是否在前哨作门控，导航前发布移动姿态 -->
+				<Inverter>
+					<IsRobotNearPose goal_pose="{@outpost}" tolerance="1.0" global_frame="map" robot_base_frame="chassis"/>
+				</Inverter>				
+				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
+
+				<!-- 起点-小道入口-小道末端-前哨 -->
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@path_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@path_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@path_end}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@path_end}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@outpost}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@outpost}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>				
+				<!-- 到达前哨后，先关移动姿态，再开小陀螺 -->
+        <PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
+				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
+			</SequenceWithMemory>  
+				
+			<!-- 保底选择成功，导致无限循环 -->
+			<AlwaysSuccess/>
+		</ReactiveFallback>
+	</BehaviorTree>
+
 	<!-- ========================= 主行为树 ========================= -->
   <BehaviorTree ID="2026rmuc_in">
     <Sequence>
 			<!-- 比赛开始条件，没收到裁判系统消息或在未开赛，都返回running -->
-			<SubTree ID="check_game_started_2026rmuc_in"/>
+			<SubTree ID="check_game_started_"/>
+			<!-- 比赛开始，先从起点去前哨 -->
+			<SubTree ID="start_to_outpost_2026rmuc_in"/>
       <!-- 无限循环-->
       <KeepRunningUntilFailure>
         <!-- 反应式选择，下一轮tick无论前面节点啥状态，都会从头tick,直到有一个成功 -->
