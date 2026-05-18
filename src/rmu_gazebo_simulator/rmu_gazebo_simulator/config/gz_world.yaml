@@ -92,6 +92,21 @@ robots:
       z_pose: "0.25"
       yaw: "3.14"
 
+  rmuc2026_in:
+    - name: "red_standard_robot1"
+      color: "red"
+      x_pose: "3.4"
+      y_pose: "10.8"
+      z_pose: "0.25"
+      yaw: "0.0"
+
+    - name: "blue_standard_robot1"
+      color: "blue"
+      x_pose: "23.6"
+      y_pose: "9.95"
+      z_pose: "0.25"
+      yaw: "3.14"
+
   gazebo_test_field:
     - name: "red_standard_robot1"
       color: "red"

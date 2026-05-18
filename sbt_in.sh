@@ -13,9 +13,3 @@ ros2 launch pb2025_sentry_behavior pb2025_sentry_behavior_launch.py \
     target_tree:=2026rmuc_in \
     use_sim_time:=True \
     namespace:=red_standard_robot1
-
-# ros2 launch pb2025_sentry_behavior pb2025_sentry_behavior_launch.py \
-#     pose:=pose_test.yaml \
-#     target_tree:=2026rmuc \
-#     use_sim_time:=True \
-#     namespace:=red_standard_robot1    
