@@ -600,24 +600,6 @@
         <!-- 反应式选择，下一轮tick无论前面节点啥状态，都会从头tick,直到有一个成功 -->
         <ReactiveFallback>
 
-					<!-- 基地血量小于2500,进入守家策略；-->
-					<Sequence>
-						<Inverter>
-							<IsBaseHPHealthy base_hp_min="2500" key_port="{@referee_allRobotHP}"/>
-						</Inverter>
-						<SubTree ID="state_low_return_to_supply_2026rmuc"/>
-						<Sleep msec="5000"/>
-						<!-- 低基地血时强制先回补给区，再进入堡垒-补给区往返 -->
-						<KeepRunningUntilFailure>
-							<Sequence>
-								<Inverter>
-									<IsBaseHPHealthy base_hp_min="2500" key_port="{@referee_allRobotHP}"/>
-								</Inverter>
-								<SubTree ID="supply_fort_loop_2026rmuc"/>
-							</Sequence>
-						</KeepRunningUntilFailure>
-					</Sequence>
-
 					<!-- 前哨血量低于50，进入守家策略； -->
 					<Sequence>
 						<Inverter>

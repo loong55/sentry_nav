@@ -12,8 +12,8 @@ export ROS_DOMAIN_ID=5  # 宿主机在 5 号网段
 
 # 实车行为树
 ros2 launch pb2025_sentry_behavior pb2025_sentry_behavior_launch.py \
-    pose:=pose_test.yaml \
-    target_tree:=2026test_multi \
+    pose:=pose_in.yaml \
+    target_tree:=2026rmuc_in \
     use_sim_time:=False \
 
 # ros2 launch pb2025_sentry_behavior pb2025_sentry_behavior_launch.py \

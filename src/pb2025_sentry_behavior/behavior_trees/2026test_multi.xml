@@ -361,7 +361,8 @@
 
 			<!-- 已经进入前哨作战区（2m）但被挤开时，直接重发前哨点，不回退到补给侧首点 -->
 			<Sequence>
-				<IsRobotNearPose goal_pose="{@outpost}" tolerance="2.0" global_frame="map" robot_base_frame="chassis"/>
+				<!-- 保持该门限小于 outpost_out / highland 到 outpost 的间距，避免在前一跳被提前切到重占分支 -->
+				<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.9" global_frame="map" robot_base_frame="chassis"/>
 				<Inverter>
 					<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.8" global_frame="map" robot_base_frame="chassis"/>
 				</Inverter>
