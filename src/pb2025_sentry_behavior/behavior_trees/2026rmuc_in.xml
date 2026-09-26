@@ -115,11 +115,7 @@
 				<!-- 导航前先关小陀螺发布移动姿态（3） -->
 				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
 				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
-				<!-- 前哨进攻点（已在前哨进攻点，不需要重发）-小道末端-小道入口-起点-堡垒入口-补给区入口-补给区 -->
-				<ReactiveSequence>
-					<PubNav2Goal goal_pose="{@path_end}" topic_name="goal_pose" min_pub_interval_ms="500"/>
-					<WaitUntilReached goal_pose="{@path_end}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
-				</ReactiveSequence>
+				<!-- 前哨进攻点（已在前哨进攻点，不需要重发）-小道入口-起点-堡垒入口-补给区入口-补给区 -->
 				<ReactiveSequence>
 					<PubNav2Goal goal_pose="{@path_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
 					<WaitUntilReached goal_pose="{@path_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
@@ -156,15 +152,10 @@
 			<Sequence>
 				<Fallback>
 					<IsRobotNearPose goal_pose="{@outpost}" tolerance="2.0" global_frame="map" robot_base_frame="chassis"/>
-					<IsRobotNearPose goal_pose="{@path_end}" tolerance="1.2" global_frame="map" robot_base_frame="chassis"/>
 				</Fallback>
 				<SequenceWithMemory>
 					<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
 					<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
-					<ReactiveSequence>
-						<PubNav2Goal goal_pose="{@path_end}" topic_name="goal_pose" min_pub_interval_ms="500"/>
-						<WaitUntilReached goal_pose="{@path_end}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
-					</ReactiveSequence>
 					<ReactiveSequence>
 						<PubNav2Goal goal_pose="{@path_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
 						<WaitUntilReached goal_pose="{@path_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
@@ -306,10 +297,6 @@
 				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
 				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
 				<ReactiveSequence>
-					<PubNav2Goal goal_pose="{@path_end}" topic_name="goal_pose" min_pub_interval_ms="500"/>
-					<WaitUntilReached goal_pose="{@path_end}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
-				</ReactiveSequence>
-				<ReactiveSequence>
 					<PubNav2Goal goal_pose="{@path_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
 					<WaitUntilReached goal_pose="{@path_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
 				</ReactiveSequence>
@@ -384,10 +371,6 @@
 					<WaitUntilReached goal_pose="{@path_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
 				</ReactiveSequence>
 				<ReactiveSequence>
-					<PubNav2Goal goal_pose="{@path_end}" topic_name="goal_pose" min_pub_interval_ms="500"/>
-					<WaitUntilReached goal_pose="{@path_end}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
-				</ReactiveSequence>
-				<ReactiveSequence>
 					<PubNav2Goal goal_pose="{@outpost}" topic_name="goal_pose" min_pub_interval_ms="500"/>
 					<WaitUntilReached goal_pose="{@outpost}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
 				</ReactiveSequence>				
@@ -459,10 +442,6 @@
 				<ReactiveSequence>
 					<PubNav2Goal goal_pose="{@path_in}" topic_name="goal_pose" min_pub_interval_ms="500"/>
 					<WaitUntilReached goal_pose="{@path_in}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
-				</ReactiveSequence>
-				<ReactiveSequence>
-					<PubNav2Goal goal_pose="{@path_end}" topic_name="goal_pose" min_pub_interval_ms="500"/>
-					<WaitUntilReached goal_pose="{@path_end}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
 				</ReactiveSequence>
 				<ReactiveSequence>
 					<PubNav2Goal goal_pose="{@outpost}" topic_name="goal_pose" min_pub_interval_ms="500"/>

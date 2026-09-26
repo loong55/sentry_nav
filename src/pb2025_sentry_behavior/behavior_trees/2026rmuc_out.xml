@@ -7,7 +7,6 @@
 									expected_game_progress="4" key_port="{@referee_gameStatus}"
 									wait_for_message="true"	wait_until_expected="true"/>
 	</BehaviorTree>
-
 	<!-- ======================= 补给区到堡垒往返 ========================== -->
 	<BehaviorTree ID="supply_fort_loop_2026rmuc_out">
 		<!-- 反应式选择，下一轮tick无论前面节点啥状态，都会从头tick,直到有一个成功 -->
@@ -106,7 +105,6 @@
 			<AlwaysSuccess/>
 		</ReactiveFallback>
 	</BehaviorTree>
-
   <!-- =======================前哨去补给区子树========================== -->
 	<BehaviorTree ID="outpost_to_supply_2026rmuc_out">
 		<!-- 反应式选择，下一轮tick无论前面节点啥状态，都会从头tick,直到有一个成功 -->
@@ -116,7 +114,7 @@
 				<!-- 导航前先关小陀螺发布移动姿态（3） -->
 				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
 				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
-				<!-- 前哨-前哨出口-我方高地点-我方前哨-公路出口远处-公路出口 -->
+				<!-- 前哨-前哨出口-我方高地点-我方高地点下侧-我方前哨-公路出口远处-公路出口 -->
 				<ReactiveSequence>
 					<PubNav2Goal goal_pose="{@outpost_out}" topic_name="goal_pose" min_pub_interval_ms="500"/>
 					<WaitUntilReached goal_pose="{@outpost_out}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
@@ -124,6 +122,10 @@
 				<ReactiveSequence>
 					<PubNav2Goal goal_pose="{@highland_my}" topic_name="goal_pose" min_pub_interval_ms="500"/>
 					<WaitUntilReached goal_pose="{@highland_my}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@highland_my_down}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@highland_my_down}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
 				</ReactiveSequence>
 				<ReactiveSequence>
 					<PubNav2Goal goal_pose="{@outpost_my}" topic_name="goal_pose" min_pub_interval_ms="500"/>
@@ -175,7 +177,6 @@
 			<AlwaysSuccess/>
 		</ReactiveFallback>
 	</BehaviorTree>
-
 	<!-- =======================前哨低血时安全回补给区========================== -->
 	<BehaviorTree ID="outpost_low_return_from_highway_box_2026rmuc_out">
 		<Sequence>
@@ -212,13 +213,13 @@
 			</SequenceWithMemory>
 		</Sequence>
 	</BehaviorTree>
-
 	<BehaviorTree ID="outpost_low_return_from_highland_side_2026rmuc_out">
 		<Sequence>
 			<Fallback>
 				<IsRobotNearPose goal_pose="{@outpost}" tolerance="2.0" global_frame="map" robot_base_frame="chassis"/>
 				<IsRobotNearPose goal_pose="{@outpost_out}" tolerance="1.2" global_frame="map" robot_base_frame="chassis"/>
 				<IsRobotNearPose goal_pose="{@highland_my}" tolerance="1.0" global_frame="map" robot_base_frame="chassis"/>
+				<IsRobotNearPose goal_pose="{@highland_my_down}" tolerance="1.0" global_frame="map" robot_base_frame="chassis"/>
 			</Fallback>
 			<SequenceWithMemory>
 				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
@@ -230,6 +231,10 @@
 				<ReactiveSequence>
 					<PubNav2Goal goal_pose="{@highland_my}" topic_name="goal_pose" min_pub_interval_ms="500"/>
 					<WaitUntilReached goal_pose="{@highland_my}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@highland_my_down}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@highland_my_down}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
 				</ReactiveSequence>
 				<ReactiveSequence>
 					<PubNav2Goal goal_pose="{@outpost_my}" topic_name="goal_pose" min_pub_interval_ms="500"/>
@@ -248,7 +253,7 @@
 				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="1"/>
 				<ReactiveSequence>
 					<PubNav2Goal goal_pose="{@highway_in_far}" topic_name="goal_pose" min_pub_interval_ms="500"/>
-					<WaitUntilReached goal_pose="{@highway_in_far}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					<WaitUntilReached goal_pose="{@highway_in_far}" tolerance="1.0" global_frame="map" robot_base_frame="chassis"/>
 				</ReactiveSequence>
 				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
 				<ReactiveSequence>
@@ -276,7 +281,6 @@
 			</SequenceWithMemory>
 		</Sequence>
 	</BehaviorTree>
-
 	<BehaviorTree ID="outpost_low_return_from_highway_out_side_2026rmuc_out">
 		<Sequence>
 			<Inverter>
@@ -291,7 +295,7 @@
 				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="1"/>
 				<ReactiveSequence>
 					<PubNav2Goal goal_pose="{@highway_in_far}" topic_name="goal_pose" min_pub_interval_ms="500"/>
-					<WaitUntilReached goal_pose="{@highway_in_far}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					<WaitUntilReached goal_pose="{@highway_in_far}" tolerance="1.0" global_frame="map" robot_base_frame="chassis"/>
 				</ReactiveSequence>
 				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
 				<ReactiveSequence>
@@ -319,7 +323,6 @@
 			</SequenceWithMemory>
 		</Sequence>
 	</BehaviorTree>
-
 	<BehaviorTree ID="outpost_low_return_from_highway_in_side_2026rmuc_out">
 		<Sequence>
 			<Fallback>
@@ -331,7 +334,7 @@
 				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
 				<ReactiveSequence>
 					<PubNav2Goal goal_pose="{@highway_in_far}" topic_name="goal_pose" min_pub_interval_ms="500"/>
-					<WaitUntilReached goal_pose="{@highway_in_far}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+					<WaitUntilReached goal_pose="{@highway_in_far}" tolerance="1.0" global_frame="map" robot_base_frame="chassis"/>
 				</ReactiveSequence>
 				<ReactiveSequence>
 					<PubNav2Goal goal_pose="{@ramp_top}" topic_name="goal_pose" min_pub_interval_ms="500"/>
@@ -358,7 +361,6 @@
 			</SequenceWithMemory>
 		</Sequence>
 	</BehaviorTree>
-
 	<BehaviorTree ID="outpost_low_return_from_ramp_side_2026rmuc_out">
 		<Sequence>
 			<Fallback>
@@ -386,7 +388,6 @@
 			</SequenceWithMemory>
 		</Sequence>
 	</BehaviorTree>
-
 	<BehaviorTree ID="outpost_low_return_to_supply_2026rmuc_out">
 		<Fallback>
 			<SubTree ID="outpost_low_return_from_highway_box_2026rmuc_out"/>
@@ -398,7 +399,6 @@
 			<SubTree ID="outpost_to_supply_blocking_2026rmuc_out"/>
 		</Fallback>
 	</BehaviorTree>
-
 	<!-- =======================补给区到前哨往返========================== -->
 	<BehaviorTree ID="outpost_to_supply_blocking_2026rmuc_out">
 		<!-- 阻塞式返程：补给模式进入后，完整走完当前返程分支 -->
@@ -425,7 +425,7 @@
 			<SequenceWithMemory>
 				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
 				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
-				<!-- 前哨-前哨出口-我方高地点-我方前哨-公路出口远处-公路出口，逐点确认避免穿越导航在前两点间回拉 -->
+				<!-- 前哨-前哨出口-我方高地点-我方高地点下侧-我方前哨-公路出口远处-公路出口，逐点确认避免穿越导航在前两点间回拉 -->
 				<ReactiveSequence>
 					<PubNav2Goal goal_pose="{@outpost_out}" topic_name="goal_pose" min_pub_interval_ms="500"/>
 					<WaitUntilReached goal_pose="{@outpost_out}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
@@ -434,6 +434,10 @@
 					<PubNav2Goal goal_pose="{@highland_my}" topic_name="goal_pose" min_pub_interval_ms="500"/>
 					<WaitUntilReached goal_pose="{@highland_my}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
 				</ReactiveSequence>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@highland_my_down}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@highland_my_down}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>				
 				<ReactiveSequence>
 					<PubNav2Goal goal_pose="{@outpost_my}" topic_name="goal_pose" min_pub_interval_ms="500"/>
 					<WaitUntilReached goal_pose="{@outpost_my}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
@@ -451,7 +455,7 @@
 				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="1"/>
 				<ReactiveSequence>
 					<PubNav2Goal goal_pose="{@highway_in_far}" topic_name="goal_pose" min_pub_interval_ms="500"/>
-					<WaitUntilReached goal_pose="{@highway_in_far}" tolerance="0.6" global_frame="map" robot_base_frame="chassis"/>
+					<WaitUntilReached goal_pose="{@highway_in_far}" tolerance="1.0" global_frame="map" robot_base_frame="chassis"/>
 				</ReactiveSequence>
 				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
 				<!-- 公路入口侧远处-斜坡坡顶-斜坡坡底-斜坡坡底入口-补给区入口-补给区 -->
@@ -480,13 +484,12 @@
 			</SequenceWithMemory>
 		</Fallback>
 	</BehaviorTree>
-
 	<BehaviorTree ID="supply_to_outpost_blocking_2026rmuc_out">
 		<!-- 阻塞式前进：一旦进入当前分支，不再被同层近区判定反复抢占 -->
 		<Fallback>
 			<!-- 已经站上前哨或仅有轻微扰动时，保持驻守，不要立刻触发重占振荡 -->
 			<Sequence>
-				<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.8" global_frame="map" robot_base_frame="chassis"/>
+				<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
 				<PublishPostureCmd topic_name="cmd_posture" posture="0" reason="0" force_switch="true"/>
 				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="1" vy_limit="0"/>
 			</Sequence>
@@ -495,7 +498,7 @@
 			<Sequence>
 				<IsRobotNearPose goal_pose="{@outpost}" tolerance="2.0" global_frame="map" robot_base_frame="chassis"/>
 				<Inverter>
-					<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.8" global_frame="map" robot_base_frame="chassis"/>
+					<IsRobotNearPose goal_pose="{@outpost}" tolerance="0.3" global_frame="map" robot_base_frame="chassis"/>
 				</Inverter>
 				<PublishPostureCmd topic_name="cmd_posture" posture="3" reason="0" force_switch="true"/>
 				<ReactiveSequence>
@@ -546,7 +549,7 @@
 				</ReactiveSequence>
 				<PublishChassisCmd topic_name="cmd_chassis" reset="0" rotate="0" vy_limit="0"/>
 
-				<!-- 公路出口速度解锁点-公路出口远处-我方前哨-我方高地-前哨出口-前哨 -->
+				<!-- 公路出口速度解锁点-公路出口远处-我方前哨-我方高地下侧-我方高地-前哨出口-前哨 -->
 				<ReactiveSequence>
 					<PubNav2Goal goal_pose="{@highway_out_far}" topic_name="goal_pose" min_pub_interval_ms="500"/>
 					<WaitUntilReached goal_pose="{@highway_out_far}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
@@ -555,6 +558,10 @@
 					<PubNav2Goal goal_pose="{@outpost_my}" topic_name="goal_pose" min_pub_interval_ms="500"/>
 					<WaitUntilReached goal_pose="{@outpost_my}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
 				</ReactiveSequence>
+				<ReactiveSequence>
+					<PubNav2Goal goal_pose="{@highland_my_down}" topic_name="goal_pose" min_pub_interval_ms="500"/>
+					<WaitUntilReached goal_pose="{@highland_my_down}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
+				</ReactiveSequence>				
 				<ReactiveSequence>
 					<PubNav2Goal goal_pose="{@highland_my}" topic_name="goal_pose" min_pub_interval_ms="500"/>
 					<WaitUntilReached goal_pose="{@highland_my}" tolerance="0.35" global_frame="map" robot_base_frame="chassis"/>
@@ -572,7 +579,6 @@
 			</SequenceWithMemory>
 		</Fallback>
 	</BehaviorTree>
-
 	<BehaviorTree ID="supply_outpost_loop_2026rmuc_out">
 		<!-- 反应式选择，下一轮tick无论前面节点啥状态，都会从头tick,直到有一个成功 -->
 		<ReactiveFallback>
@@ -589,7 +595,6 @@
 			<AlwaysSuccess/>
 		</ReactiveFallback>
 	</BehaviorTree>
-
 	<!-- ========================= 主行为树 ========================= -->
   <BehaviorTree ID="2026rmuc_out">
     <Sequence>
@@ -599,7 +604,6 @@
       <KeepRunningUntilFailure>
         <!-- 反应式选择，下一轮tick无论前面节点啥状态，都会从头tick,直到有一个成功 -->
         <ReactiveFallback>
-
 					<!-- 前哨血量小于20,进入守家策略；-->
 					<Sequence>
 						<Inverter>
@@ -614,10 +618,8 @@
 							</KeepRunningUntilFailure>
 						</SequenceWithMemory>
 					</Sequence>
-
 					<!-- 前哨血量不低于20,进入推前哨策略-->
 					<SubTree ID="supply_outpost_loop_2026rmuc_out"/>
-
           <!-- 保底选择成功，导致无限循环 -->
           <AlwaysSuccess/>
         </ReactiveFallback>

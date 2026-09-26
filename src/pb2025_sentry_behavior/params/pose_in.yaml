@@ -2,7 +2,7 @@
 # 黑板键与下列名称一致：goal_pose="{@supply}" 等
 pb2025_sentry_behavior_server:
   ros__parameters:
-    supply:  # 补给区
+    supply:  # 0.补给区
       frame_id: "map"
       position:
         x: -1.67479
@@ -11,7 +11,7 @@ pb2025_sentry_behavior_server:
       orientation:
         w: 1.0
 
-    supply_in:  # 补给区入口
+    supply_in:  # 1.补给区入口
       frame_id: "map"
       position:
         x: -1.67479
@@ -20,7 +20,7 @@ pb2025_sentry_behavior_server:
       orientation:
         w: 1.0
 
-    fort_in:  # 堡垒入口 
+    fort_in:  # 2.堡垒入口 
       frame_id: "map"
       position:
         x: 0.47793
@@ -29,7 +29,7 @@ pb2025_sentry_behavior_server:
       orientation:
         w: 1.0
 
-    fort:  # 堡垒 
+    fort:  # 3.堡垒 
       frame_id: "map"
       position:
         x: 2.70516
@@ -38,38 +38,29 @@ pb2025_sentry_behavior_server:
       orientation:
         w: 1.0
 
-    start:  # 起点 
+    start:  # 4.起点 
       frame_id: "map"
       position:
-        x: 0.47793
-        y: 1.16771
+        x: 1.34067
+        y: 0.931726
         z: 0.0
       orientation:
         w: 1.0
 
-    path_in:  # 小道入口  
+    path_in:  # 5.小道入口  
       frame_id: "map"
       position:
-        x: 3.93474
-        y: 1.16771
+        x: 4.98847
+        y: 1.08043
         z: 0.0
       orientation:
         w: 1.0
 
-    path_end:  # 小道末端 
+    outpost:  # 6.前哨进攻点  
       frame_id: "map"
       position:
-        x: 6.84438
-        y: 5.32311
-        z: 0.0
-      orientation:
-        w: 1.0
-
-    outpost:  # 前哨进攻点  
-      frame_id: "map"
-      position:
-        x: 8.26155
-        y: 5.32311
+        x: 7.28503
+        y: 4.40758
         z: 0.0
       orientation:
         w: 1.0

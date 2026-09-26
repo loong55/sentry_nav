@@ -7,6 +7,9 @@ install/
 # 排除log目录
 log/
 
+# 排除录包目录
+bags/
+
 # 排除src/pb2025_sentry_nav/point_lio/PCD目录下的所有文件
 src/pb2025_sentry_nav/point_lio/PCD/*.pcd
 
