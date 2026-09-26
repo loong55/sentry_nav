@@ -1,14 +1,20 @@
-# sentry_nav_fjut
+# sentry_nav_fjut_2026
 
-##### 本套哨兵导航代码在pb2025_sentry_nav的基础上进行了修改和优化，以适应FJUT哨兵机器人。
-##### 其中包含：导航包（实车+仿真），机器人关节描述包，物理仿真包，串口通信包和行为树包，如图所示
+##### 本项目基于 [NAV2 导航框架](https://github.com/ros-navigation/navigation2) 并参考学习了 [autonomous_exploration_development_environment](https://github.com/HongbiaoZ/autonomous_exploration_development_environment/tree/humble) 与 [pb2025_sentry_nav](https://github.com/SMBU-PolarBear-Robotics-Team/pb2025_sentry_nav) 的设计。
+
+##### 具备无图自主探索式导航的能力。
+
+##### 主要功能包含：地图构建、路径规划、导航避障、行为树决策、导航仿真、裁判系统模拟等功能。
+
+##### 项目包含：导航包（实车+仿真），机器人关节描述包，物理仿真包，串口通信包和行为树包等，如图所示
 ![impb2025_sentry](./img/pb2025_sentry.png)
 ##### 建图数据流向图：
 ![impb2025_sentry](./img/create_map.png)
 ##### 导航数据流向图：
 ![impb2025_sentry](./img/nav.png)
 #####
-### 相较于pb2025更新内容：
+
+### 为适应RoboMaster机器人超级对抗赛2026新规，更新内容：
 ##### 1、pb_rm_interfaces 数据接口GameRobotHP
 ##### 2、pb2025_robot_description 增加了符合fjut的机器人模型和相应launch文件
 ##### 3、pb2025_sentry_behavior 增加了行为树相关的xml（src/pb2025_sentry_behavior/behavior_trees）
@@ -119,22 +125,13 @@ out_bt.sh
 ./waypoint_editor.sh
 ```
 先导入地图，再插入航点，最后导出csv文件。
-其他详细教程参考下面。
-
-## 1.导航包（实车+仿真）
-### 1.1 实车导航
-1.1.1 代码位置：sentry_nav_fjut/src/sentry_nav_fjut/sentry_nav
-1.1.2 代码功能：实车导航代码，包括地图构建、路径规划、路径跟踪、避障等功能
 
 
-深圳北理莫斯科大学 北极熊战队 2025 赛季哨兵导航仿真/实车包
 
-[BiliBili: 谁说在家不能调车！？更适合新手宝宝的 RM 导航仿真](https://www.bilibili.com/video/BV12qcXeHETR)
+更多详细内容说明如下。
 
 
 ## 1. Overview
-
-本项目基于 [NAV2 导航框架](https://github.com/ros-navigation/navigation2) 并参考学习了 [autonomous_exploration_development_environment](https://github.com/HongbiaoZ/autonomous_exploration_development_environment/tree/humble) 的设计。
 
 - 关于坐标变换：
 
@@ -214,7 +211,7 @@ docker run -it --rm --name pb2025_sentry_nav \
 
     ```bash
     sudo apt install -y libeigen3-dev libomp-dev
-
+    
     git clone https://github.com/koide3/small_gicp.git
     cd small_gicp
     mkdir build && cd build
